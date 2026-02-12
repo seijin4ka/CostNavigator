@@ -1,0 +1,93 @@
+import type { ProductTier } from "../../shared/types";
+
+// ティアリポジトリ
+export class TierRepository {
+  constructor(private db: D1Database) {}
+
+  async findByProductId(productId: string): Promise<ProductTier[]> {
+    const result = await this.db
+      .prepare("SELECT * FROM product_tiers WHERE product_id = ? ORDER BY display_order ASC")
+      .bind(productId)
+      .all<ProductTier>();
+    return result.results;
+  }
+
+  async findById(id: string): Promise<ProductTier | null> {
+    return await this.db
+      .prepare("SELECT * FROM product_tiers WHERE id = ?")
+      .bind(id)
+      .first<ProductTier>();
+  }
+
+  async create(data: {
+    product_id: string;
+    name: string;
+    slug: string;
+    base_price: number;
+    usage_unit: string | null;
+    usage_unit_price: number | null;
+    usage_included: number | null;
+    display_order: number;
+    is_active: boolean;
+  }): Promise<string> {
+    const id = crypto.randomUUID();
+    await this.db
+      .prepare(
+        `INSERT INTO product_tiers (id, product_id, name, slug, base_price, usage_unit, usage_unit_price, usage_included, display_order, is_active)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      )
+      .bind(
+        id,
+        data.product_id,
+        data.name,
+        data.slug,
+        data.base_price,
+        data.usage_unit,
+        data.usage_unit_price,
+        data.usage_included,
+        data.display_order,
+        data.is_active ? 1 : 0
+      )
+      .run();
+    return id;
+  }
+
+  async update(
+    id: string,
+    data: {
+      name: string;
+      slug: string;
+      base_price: number;
+      usage_unit: string | null;
+      usage_unit_price: number | null;
+      usage_included: number | null;
+      display_order: number;
+      is_active: boolean;
+    }
+  ): Promise<void> {
+    await this.db
+      .prepare(
+        `UPDATE product_tiers SET name = ?, slug = ?, base_price = ?, usage_unit = ?, usage_unit_price = ?, usage_included = ?, display_order = ?, is_active = ?
+         WHERE id = ?`
+      )
+      .bind(
+        data.name,
+        data.slug,
+        data.base_price,
+        data.usage_unit,
+        data.usage_unit_price,
+        data.usage_included,
+        data.display_order,
+        data.is_active ? 1 : 0,
+        id
+      )
+      .run();
+  }
+
+  async delete(id: string): Promise<void> {
+    await this.db
+      .prepare("DELETE FROM product_tiers WHERE id = ?")
+      .bind(id)
+      .run();
+  }
+}

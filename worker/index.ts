@@ -3,6 +3,9 @@ import { cors } from "hono/cors";
 import type { Env } from "./env";
 import { errorHandler } from "./middleware/error-handler";
 import authRoutes from "./routes/auth";
+import categoryRoutes from "./routes/categories";
+import productRoutes from "./routes/products";
+import tierRoutes from "./routes/tiers";
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -19,5 +22,10 @@ app.get("/api/health", (c) => {
 
 // 認証ルート
 app.route("/api/auth", authRoutes);
+
+// 管理API（認証はルート内で適用）
+app.route("/api/admin/categories", categoryRoutes);
+app.route("/api/admin/products", productRoutes);
+app.route("/api/admin/product-tiers", tierRoutes);
 
 export default app;
