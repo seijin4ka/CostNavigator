@@ -38,5 +38,11 @@ export const RETRY = {
   DELAY_MS: 10, // リトライ間隔（ミリ秒）
 } as const;
 
+// ローカルストレージキー（認証）
+export const STORAGE_KEYS = {
+  AUTH_TOKEN: "cn_auth_token",
+  REFRESH_TOKEN: "cn_refresh_token",
+} as const;
+
 // セキュリティ定数のre-export
 export { PASSWORD_HASH, JWT } from "./security";

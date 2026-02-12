@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from "react";
 import { apiClient } from "../api/client";
 import type { User, LoginResponse, RefreshTokenResponse } from "@shared/types";
+import { STORAGE_KEYS } from "@shared/constants";
 
 interface AuthContextType {
   user: User | null;
@@ -11,9 +12,6 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
-
-const TOKEN_KEY = "cn_auth_token";
-const REFRESH_TOKEN_KEY = "cn_refresh_token";
 
 // JWTペイロードのデコード（有効期限の取得用）
 function decodeJwt(token: string): { exp: number } | null {
@@ -45,8 +43,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       refreshTimerRef.current = null;
     }
 
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(REFRESH_TOKEN_KEY);
+    localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
+    localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
     apiClient.setToken(null);
     apiClient.setRefreshToken(null);
     setUser(null);
@@ -67,7 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const refreshIn = Math.max(0, expiresIn - 2 * 60 * 1000);
 
     refreshTimerRef.current = window.setTimeout(async () => {
-      const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
+      const refreshToken = localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
       if (!refreshToken) return;
 
       try {
@@ -75,8 +73,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const newToken = res.data.token;
         const newRefreshToken = res.data.refreshToken;
 
-        localStorage.setItem(TOKEN_KEY, newToken);
-        localStorage.setItem(REFRESH_TOKEN_KEY, newRefreshToken);
+        localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, newToken);
+        localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, newRefreshToken);
         apiClient.setToken(newToken);
         apiClient.setRefreshToken(newRefreshToken);
 
@@ -95,8 +93,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // トークンリフレッシュ失敗時のコールバックを設定
     apiClient.setOnTokenRefreshFailed(logout);
 
-    const token = localStorage.getItem(TOKEN_KEY);
-    const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
+    const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
+    const refreshToken = localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
 
     if (token && refreshToken) {
       apiClient.setToken(token);
@@ -127,8 +125,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (email: string, password: string) => {
     const res = await apiClient.post<LoginResponse>("/auth/login", { email, password });
-    localStorage.setItem(TOKEN_KEY, res.data.token);
-    localStorage.setItem(REFRESH_TOKEN_KEY, res.data.refreshToken);
+    localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, res.data.token);
+    localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, res.data.refreshToken);
     apiClient.setToken(res.data.token);
     apiClient.setRefreshToken(res.data.refreshToken);
     setUser(res.data.user);

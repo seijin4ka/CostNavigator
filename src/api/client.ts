@@ -1,4 +1,5 @@
 import type { ApiResponse, ApiError } from "@shared/types";
+import { STORAGE_KEYS } from "@shared/constants";
 
 const API_BASE = "/api";
 
@@ -112,8 +113,8 @@ class ApiClient {
         this.refreshToken = data.data.refreshToken;
 
         // localStorageにも保存
-        localStorage.setItem("token", data.data.token);
-        localStorage.setItem("refreshToken", data.data.refreshToken);
+        localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, data.data.token);
+        localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, data.data.refreshToken);
 
         return true;
       }
