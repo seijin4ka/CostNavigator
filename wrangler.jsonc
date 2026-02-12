@@ -1,0 +1,23 @@
+{
+  "name": "cost-navigator",
+  "compatibility_date": "2025-01-01",
+  "main": "./worker/index.ts",
+  // 静的アセット設定（SPAルーティング対応）
+  "assets": {
+    "directory": "./dist/client",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application"
+  },
+  // D1データベースバインディング
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "cost-navigator-db",
+      "database_id": "placeholder-will-be-set-on-deploy"
+    }
+  ],
+  // 環境変数（デプロイ時にシークレットで上書き）
+  "vars": {
+    "JWT_SECRET": "dev-secret-change-in-production"
+  }
+}
