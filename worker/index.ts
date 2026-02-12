@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import type { Context, Next } from "hono";
 import type { Env } from "./env";
 import { errorHandler } from "./middleware/error-handler";
 import authRoutes from "./routes/auth";
@@ -14,8 +15,59 @@ import dashboardRoutes from "./routes/dashboard";
 
 const app = new Hono<{ Bindings: Env }>();
 
-// CORS設定
-app.use("/api/*", cors());
+// CORS設定: エンドポイントごとに適切なポリシーを適用
+
+// 制限的CORSミドルウェア（管理API・認証API用）
+const restrictiveCors = (allowCredentials = true) => {
+  return async (c: Context<{ Bindings: Env }>, next: Next) => {
+    const origin = c.req.header("Origin") || "";
+    const allowedOrigins = (c.env.ALLOWED_ORIGINS || "").split(",").filter(Boolean);
+    const isDevelopment = allowedOrigins.length === 0;
+
+    let allowOrigin: string | undefined;
+    if (isDevelopment && origin.startsWith("http://localhost:")) {
+      // 開発環境: localhost からのアクセスを許可
+      allowOrigin = origin;
+    } else if (allowedOrigins.includes(origin)) {
+      // 本番環境: 環境変数で指定されたオリジンのみ許可
+      allowOrigin = origin;
+    }
+
+    if (allowOrigin) {
+      c.header("Access-Control-Allow-Origin", allowOrigin);
+      if (allowCredentials) {
+        c.header("Access-Control-Allow-Credentials", "true");
+      }
+      c.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+      c.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+      c.header("Access-Control-Max-Age", "86400");
+    }
+
+    // OPTIONSリクエスト（プリフライト）に対応
+    if (c.req.method === "OPTIONS") {
+      return c.text("", 204);
+    }
+
+    await next();
+  };
+};
+
+// 公開API: すべてのオリジンを許可（パートナー向け埋め込み対応）
+app.use("/api/public/*", cors({
+  origin: "*",
+  credentials: false,
+}));
+
+// ヘルスチェック: すべてのオリジンを許可
+app.use("/api/health", cors({
+  origin: "*",
+}));
+
+// 認証API: 制限的（credentials付き）
+app.use("/api/auth/*", restrictiveCors(true));
+
+// 管理API: 制限的（特定のオリジンのみ）
+app.use("/api/admin/*", restrictiveCors(true));
 
 // グローバルエラーハンドラー
 app.onError(errorHandler);

@@ -76,7 +76,8 @@ npm run db:migrate:remote -- migrations/XXXX.sql # 本番DB マイグレーシ�
 
 | 変数名 | 説明 | 設定方法 |
 |--------|------|----------|
-| JWT_SECRET | JWT 署名キー | wrangler secret put JWT_SECRET |
+| JWT_SECRET | JWT 署名キー（必須） | wrangler secret put JWT_SECRET |
+| ALLOWED_ORIGINS | CORS許可オリジン（カンマ区切り、本番推奨） | wrangler secret put ALLOWED_ORIGINS |
 | DB | D1 データベースバインディング | wrangler.jsonc で設定 |
 | ASSETS | 静的アセットバインディング | 自動設定 |
 

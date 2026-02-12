@@ -188,6 +188,21 @@ wrangler secret put JWT_SECRET
 
 **重要**: JWT_SECRETは絶対にコードにコミットしないでください。
 
+**ALLOWED_ORIGINS の設定**（本番環境推奨）:
+```bash
+# 管理画面・認証APIへのアクセスを許可するオリジンをカンマ区切りで設定
+wrangler secret put ALLOWED_ORIGINS
+# 例: https://admin.example.com,https://costnavigator.example.com
+
+# 未設定の場合: 開発モード（localhostからのアクセスを許可）
+# 公開API (/api/public/*) は常にすべてのオリジンを許可（パートナー埋め込み対応）
+```
+
+**注意**:
+- 管理API (`/api/admin/*`) と認証API (`/api/auth/*`) は ALLOWED_ORIGINS で指定されたオリジンからのみアクセス可能
+- 公開API (`/api/public/*`) はすべてのオリジンからアクセス可能（パートナー向け埋め込み対応）
+- 開発環境では ALLOWED_ORIGINS 未設定時に `http://localhost:*` からのアクセスを自動許可
+
 ### 2. データベースのセットアップ
 
 ```bash
@@ -228,8 +243,8 @@ curl -X POST https://your-worker.workers.dev/api/auth/setup
 本番デプロイ前に以下を確認してください:
 
 - [ ] JWT_SECRETを安全に生成・設定（wrangler secretで設定）
+- [ ] ALLOWED_ORIGINSを設定（本番ドメインをカンマ区切りで指定）
 - [ ] デフォルト管理者パスワードを変更
-- [ ] CORS設定を確認（必要に応じて`worker/index.ts`で制限）
 - [ ] 本番ドメインでHTTPS接続を確認
 - [ ] データベースバックアップ戦略を策定
 

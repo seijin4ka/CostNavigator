@@ -91,7 +91,6 @@ export class EstimateService {
     partner: Partner,
     request: CreateEstimateRequest
   ): Promise<EstimateWithItems> {
-    const referenceNumber = this.generateReferenceNumber();
     let totalMonthly = 0;
 
     // 各アイテムの価格を計算
@@ -156,10 +155,9 @@ export class EstimateService {
       totalMonthly += finalPrice;
     }
 
-    // 見積もり保存
-    const estimateId = await this.estimateRepo.create({
+    // 見積もり保存（参照番号の衝突をリトライで対応）
+    const estimateId = await this.createEstimateWithRetry({
       partner_id: partner.id,
-      reference_number: referenceNumber,
       customer_name: request.customer_name,
       customer_email: request.customer_email,
       customer_phone: request.customer_phone ?? null,
@@ -205,5 +203,33 @@ export class EstimateService {
       .substring(0, 8)
       .toUpperCase();
     return `${ESTIMATE_REF_PREFIX}-${timestamp}-${random}`;
+  }
+
+  // 参照番号の衝突を避けるため、リトライ機能付きでestimateを作成
+  private async createEstimateWithRetry(
+    data: Omit<Parameters<typeof this.estimateRepo.create>[0], 'reference_number'>,
+    maxAttempts = 3
+  ): Promise<string> {
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      const referenceNumber = this.generateReferenceNumber();
+      try {
+        const estimateId = await this.estimateRepo.create({
+          ...data,
+          reference_number: referenceNumber,
+        });
+        return estimateId;
+      } catch (err) {
+        // UNIQUE制約違反の場合のみリトライ
+        const error = err as Error;
+        if (error.message?.includes('UNIQUE') && attempt < maxAttempts) {
+          // 次のリトライまで少し待つ（ミリ秒単位の衝突を避ける）
+          await new Promise(resolve => setTimeout(resolve, 10));
+          continue;
+        }
+        // UNIQUE制約以外のエラーまたは最終試行の場合は再スロー
+        throw err;
+      }
+    }
+    throw new Error(`参照番号の生成に${maxAttempts}回失敗しました`);
   }
 }
