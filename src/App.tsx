@@ -8,6 +8,7 @@ import { ProductsPage } from "./pages/admin/ProductsPage";
 import { CategoriesPage } from "./pages/admin/CategoriesPage";
 import { PartnersPage } from "./pages/admin/PartnersPage";
 import { MarkupPage } from "./pages/admin/MarkupPage";
+import { EstimatesPage } from "./pages/admin/EstimatesPage";
 import { EstimatePage } from "./pages/public/EstimatePage";
 import { EstimateResultPage } from "./pages/public/EstimateResultPage";
 
@@ -39,6 +40,7 @@ function App() {
           <Route path="categories" element={<CategoriesPage />} />
           <Route path="partners" element={<PartnersPage />} />
           <Route path="partners/:id/markup" element={<MarkupPage />} />
+          <Route path="estimates" element={<EstimatesPage />} />
         </Route>
       </Routes>
     </AuthProvider>
