@@ -6,6 +6,8 @@ import { LoginPage } from "./pages/admin/LoginPage";
 import { DashboardPage } from "./pages/admin/DashboardPage";
 import { ProductsPage } from "./pages/admin/ProductsPage";
 import { CategoriesPage } from "./pages/admin/CategoriesPage";
+import { PartnersPage } from "./pages/admin/PartnersPage";
+import { MarkupPage } from "./pages/admin/MarkupPage";
 
 function App() {
   return (
@@ -29,6 +31,8 @@ function App() {
           <Route index element={<DashboardPage />} />
           <Route path="products" element={<ProductsPage />} />
           <Route path="categories" element={<CategoriesPage />} />
+          <Route path="partners" element={<PartnersPage />} />
+          <Route path="partners/:id/markup" element={<MarkupPage />} />
         </Route>
       </Routes>
     </AuthProvider>

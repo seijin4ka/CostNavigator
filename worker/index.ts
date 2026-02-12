@@ -6,6 +6,8 @@ import authRoutes from "./routes/auth";
 import categoryRoutes from "./routes/categories";
 import productRoutes from "./routes/products";
 import tierRoutes from "./routes/tiers";
+import partnerRoutes from "./routes/partners";
+import markupRoutes from "./routes/markup";
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -27,5 +29,7 @@ app.route("/api/auth", authRoutes);
 app.route("/api/admin/categories", categoryRoutes);
 app.route("/api/admin/products", productRoutes);
 app.route("/api/admin/product-tiers", tierRoutes);
+app.route("/api/admin/partners", partnerRoutes);
+app.route("/api/admin/partners", markupRoutes);
 
 export default app;
