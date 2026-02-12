@@ -7,6 +7,7 @@ import { Select } from "../../components/ui/Select";
 import { Modal } from "../../components/ui/Modal";
 import { Table } from "../../components/ui/Table";
 import { formatCurrency, formatDate } from "../../lib/formatters";
+import { DEFAULT_PAGE_LIMIT } from "@shared/constants";
 
 const STATUS_LABELS: Record<string, string> = {
   draft: "下書き",
@@ -28,11 +29,24 @@ export function EstimatesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [error, setError] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
 
-  const fetchEstimates = async () => {
+  const fetchEstimates = async (page = 1) => {
     try {
-      const res = await apiClient.get<(Estimate & { partner_name: string })[]>("/admin/estimates");
-      setEstimates(res.data);
+      setIsLoading(true);
+      const res = await apiClient.get<{
+        data: (Estimate & { partner_name: string })[];
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+      }>(`/admin/estimates?page=${page}&limit=${DEFAULT_PAGE_LIMIT}`);
+      setEstimates(res.data.data);
+      setCurrentPage(res.data.page);
+      setTotalPages(res.data.totalPages);
+      setTotal(res.data.total);
     } catch {
       setError("見積もりの取得に失敗しました");
     } finally {
@@ -41,7 +55,7 @@ export function EstimatesPage() {
   };
 
   useEffect(() => {
-    fetchEstimates();
+    fetchEstimates(1);
   }, []);
 
   // 見積もり詳細を表示
@@ -59,7 +73,7 @@ export function EstimatesPage() {
   const updateStatus = async (id: string, status: string) => {
     try {
       await apiClient.put(`/admin/estimates/${id}/status`, { status });
-      fetchEstimates();
+      fetchEstimates(currentPage);
       if (selectedEstimate?.id === id) {
         setSelectedEstimate((prev) => (prev ? { ...prev, status: status as Estimate["status"] } : null));
       }
@@ -73,7 +87,11 @@ export function EstimatesPage() {
     if (!confirm("この見積もりを削除しますか？")) return;
     try {
       await apiClient.delete(`/admin/estimates/${id}`);
-      fetchEstimates();
+      // 削除後、現在のページが空になった場合は前のページへ
+      const newTotal = total - 1;
+      const newTotalPages = Math.ceil(newTotal / DEFAULT_PAGE_LIMIT);
+      const targetPage = currentPage > newTotalPages ? Math.max(1, newTotalPages) : currentPage;
+      fetchEstimates(targetPage);
     } catch {
       setError("削除に失敗しました");
     }
@@ -162,6 +180,36 @@ export function EstimatesPage() {
           keyField="id"
           emptyMessage="見積もりはまだありません"
         />
+
+        {/* ページネーション */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between border-t border-gray-200 px-6 py-4 mt-4">
+            <div className="text-sm text-gray-500">
+              {total} 件中 {(currentPage - 1) * DEFAULT_PAGE_LIMIT + 1} - {Math.min(currentPage * DEFAULT_PAGE_LIMIT, total)} 件を表示
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => fetchEstimates(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                前へ
+              </Button>
+              <span className="text-sm text-gray-600">
+                ページ {currentPage} / {totalPages}
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => fetchEstimates(currentPage + 1)}
+                disabled={currentPage === totalPages}
+              >
+                次へ
+              </Button>
+            </div>
+          </div>
+        )}
       </Card>
 
       {/* 見積もり詳細モーダル */}

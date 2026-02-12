@@ -5,17 +5,26 @@ import { authMiddleware } from "../middleware/auth";
 import { validateBody } from "../utils/validation";
 import { success, error } from "../utils/response";
 import { UpdateEstimateStatusSchema } from "../../shared/types";
+import { DEFAULT_PAGE_LIMIT } from "../../shared/constants";
 
 const estimates = new Hono<{ Bindings: Env }>();
 
 // 認証ミドルウェア適用
 estimates.use("*", authMiddleware);
 
-// 見積もり一覧（管理者用 - 全情報表示）
+// 見積もり一覧（管理者用 - 全情報表示、ページネーション対応）
 estimates.get("/", async (c) => {
   const repo = new EstimateRepository(c.env.DB);
-  const data = await repo.findAll();
-  return success(c, data);
+
+  // クエリパラメータからページ情報を取得
+  const pageParam = c.req.query("page");
+  const limitParam = c.req.query("limit");
+
+  const page = pageParam ? Math.max(1, parseInt(pageParam, 10)) : 1;
+  const limit = limitParam ? Math.max(1, Math.min(100, parseInt(limitParam, 10))) : DEFAULT_PAGE_LIMIT;
+
+  const result = await repo.findAllPaginated(page, limit);
+  return success(c, result);
 });
 
 // 見積もり詳細（管理者用 - base_price, markup_amount含む）

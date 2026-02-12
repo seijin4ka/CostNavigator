@@ -16,6 +16,44 @@ export class EstimateRepository {
     return result.results;
   }
 
+  // ページネーション付き見積もり一覧取得
+  async findAllPaginated(
+    page: number,
+    limit: number
+  ): Promise<{
+    data: (Estimate & { partner_name: string })[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }> {
+    // 総数を取得
+    const total = await this.count();
+
+    // ページネーション適用
+    const offset = (page - 1) * limit;
+    const result = await this.db
+      .prepare(`
+        SELECT e.*, p.name as partner_name
+        FROM estimates e
+        JOIN partners p ON e.partner_id = p.id
+        ORDER BY e.created_at DESC
+        LIMIT ? OFFSET ?
+      `)
+      .bind(limit, offset)
+      .all<Estimate & { partner_name: string }>();
+
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data: result.results,
+      total,
+      page,
+      limit,
+      totalPages,
+    };
+  }
+
   async findById(id: string): Promise<Estimate | null> {
     return await this.db
       .prepare("SELECT * FROM estimates WHERE id = ?")
