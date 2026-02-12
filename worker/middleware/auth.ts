@@ -25,7 +25,7 @@ export const authMiddleware = createMiddleware<{
 
   const token = authHeader.slice(7);
   try {
-    const payload = (await verify(token, c.env.JWT_SECRET)) as unknown as JWTPayload;
+    const payload = (await verify(token, c.env.JWT_SECRET, "HS256")) as unknown as JWTPayload;
     c.set("jwtPayload", payload);
     await next();
   } catch {

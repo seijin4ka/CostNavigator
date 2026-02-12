@@ -40,4 +40,9 @@ app.route("/api/admin/dashboard", dashboardRoutes);
 // 公開API（認証不要）
 app.route("/api/public", publicRoutes);
 
+// 非APIリクエストは静的アセット（SPA）にフォールバック
+app.get("*", async (c) => {
+  return c.env.ASSETS.fetch(c.req.raw);
+});
+
 export default app;
