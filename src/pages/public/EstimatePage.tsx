@@ -67,6 +67,67 @@ function CheckIcon({ className = "w-4 h-4" }: { className?: string }) {
   );
 }
 
+function ClockIcon({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  );
+}
+
+function DocumentIcon({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+    </svg>
+  );
+}
+
+function LockIcon({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+    </svg>
+  );
+}
+
+// ステップインジケーター
+function StepIndicator({ currentStep, primaryColor }: { currentStep: number; primaryColor: string }) {
+  const steps = [
+    { num: 1, label: "サービス選択" },
+    { num: 2, label: "お客様情報入力" },
+    { num: 3, label: "見積もり完了" },
+  ];
+  return (
+    <div className="flex items-center justify-center gap-0">
+      {steps.map((step, i) => (
+        <div key={step.num} className="flex items-center">
+          <div className="flex items-center gap-2">
+            <div
+              className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold font-display transition-all duration-300 ${
+                currentStep >= step.num ? "text-white" : "bg-slate-100 text-slate-400"
+              }`}
+              style={currentStep >= step.num ? { backgroundColor: primaryColor } : undefined}
+            >
+              {currentStep > step.num ? <CheckIcon className="w-3.5 h-3.5" /> : step.num}
+            </div>
+            <span
+              className={`text-xs font-medium hidden sm:inline transition-colors duration-300 ${
+                currentStep >= step.num ? "text-slate-700" : "text-slate-400"
+              }`}
+            >
+              {step.label}
+            </span>
+          </div>
+          {i < steps.length - 1 && (
+            <div className="w-8 sm:w-12 h-px mx-2 sm:mx-3 transition-colors duration-300" style={{ backgroundColor: currentStep > step.num ? primaryColor : "#e2e8f0" }} />
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function EstimatePage() {
   const { partnerSlug } = useParams<{ partnerSlug: string }>();
   const slug = partnerSlug || "direct";
@@ -150,6 +211,9 @@ export function EstimatePage() {
   const primaryColor = partner?.primary_color ?? "#F6821F";
   const secondaryColor = partner?.secondary_color ?? "#1B1B1B";
 
+  // 現在のステップ判定
+  const currentStep = isSubmitModalOpen ? 2 : 1;
+
   // --- ローディング ---
   if (isLoading) {
     return (
@@ -226,21 +290,55 @@ export function EstimatePage() {
         />
       </header>
 
-      {/* === メインコンテンツ === */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
-        {/* ページタイトル */}
-        <div className="mb-8 lg:mb-10 animate-cn-fade-up opacity-0">
-          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight font-display">
-            サービス見積もり
-          </h2>
-          <p className="mt-2 text-sm sm:text-base text-slate-500">
-            必要なCloudflareサービスを選択して、お見積もりを作成できます
-          </p>
-        </div>
+      {/* === ヒーローセクション === */}
+      <div
+        className="relative overflow-hidden"
+        style={{ background: `linear-gradient(135deg, ${secondaryColor}08, ${primaryColor}06, ${secondaryColor}04)` }}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+          <div className="text-center max-w-3xl mx-auto animate-cn-fade-up opacity-0">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 tracking-tight font-display leading-tight">
+              最適なCloudflareプランを
+              <br className="sm:hidden" />
+              <span style={{ color: primaryColor }}>簡単お見積もり</span>
+            </h2>
+            <p className="mt-3 text-sm sm:text-base text-slate-500 leading-relaxed max-w-xl mx-auto">
+              必要なサービスを選択するだけで、即座にお見積もりを作成。
+              <br className="hidden sm:block" />
+              PDFでのダウンロードも無料でご利用いただけます。
+            </p>
 
+            {/* バリュープロポジション */}
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
+              <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                <ClockIcon className="w-3.5 h-3.5" style={{ color: primaryColor }} />
+                <span>最短1分で完了</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                <DocumentIcon className="w-3.5 h-3.5" style={{ color: primaryColor }} />
+                <span>PDF出力対応</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                <LockIcon className="w-3.5 h-3.5" style={{ color: primaryColor }} />
+                <span>登録不要・無料</span>
+              </div>
+            </div>
+          </div>
+
+          {/* ステップインジケーター */}
+          <div className="mt-8 animate-cn-fade-up opacity-0" style={{ animationDelay: "100ms" }}>
+            <StepIndicator currentStep={currentStep} primaryColor={primaryColor} />
+          </div>
+        </div>
+        {/* セクション区切り */}
+        <div className="absolute bottom-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+      </div>
+
+      {/* === メインコンテンツ === */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-10">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-10">
           {/* === 左側: 製品セレクター === */}
-          <div className="lg:col-span-2 animate-cn-fade-up opacity-0" style={{ animationDelay: "100ms" }}>
+          <div className="lg:col-span-2 animate-cn-fade-up opacity-0" style={{ animationDelay: "150ms" }}>
             {/* カテゴリタブ */}
             <div className="flex gap-2 mb-6 overflow-x-auto pb-2 cn-scrollbar">
               {categories.map((cat) => {
@@ -276,7 +374,7 @@ export function EstimatePage() {
                 <div
                   key={product.id}
                   className="cn-product-card bg-white rounded-xl border border-slate-200 overflow-hidden animate-cn-fade-up opacity-0"
-                  style={{ animationDelay: `${150 + pi * 80}ms` }}
+                  style={{ animationDelay: `${200 + pi * 80}ms` }}
                 >
                   {/* 製品ヘッダー */}
                   <div className="px-5 sm:px-6 py-4 sm:py-5 border-b border-slate-100">
@@ -298,10 +396,12 @@ export function EstimatePage() {
                   {/* ティア選択 */}
                   <div className="p-4 sm:p-5">
                     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
-                      {product.tiers.map((tier) => {
+                      {product.tiers.map((tier, ti) => {
                         const isInEstimate = builder.items.some(
                           (i) => i.product_id === product.id && i.tier_id === tier.id
                         );
+                        // 最も高価なティアに「おすすめ」表示
+                        const isRecommended = product.tiers.length > 1 && ti === product.tiers.length - 1;
                         return (
                           <div
                             key={tier.id}
@@ -322,6 +422,16 @@ export function EstimatePage() {
                                 style={{ backgroundColor: primaryColor }}
                               >
                                 <CheckIcon className="w-3 h-3 text-white" />
+                              </div>
+                            )}
+
+                            {/* おすすめバッジ */}
+                            {isRecommended && !isInEstimate && (
+                              <div
+                                className="absolute -top-2.5 left-3 px-2 py-0.5 rounded text-[10px] font-bold text-white tracking-wide"
+                                style={{ backgroundColor: primaryColor }}
+                              >
+                                おすすめ
                               </div>
                             )}
 
@@ -375,7 +485,7 @@ export function EstimatePage() {
           </div>
 
           {/* === 右側: 見積もりサマリー === */}
-          <div className="lg:col-span-1 animate-cn-slide-up opacity-0" style={{ animationDelay: "200ms" }}>
+          <div className="lg:col-span-1 animate-cn-slide-up opacity-0" style={{ animationDelay: "250ms" }}>
             <div className="sticky top-6">
               <div className="bg-white rounded-xl border border-slate-200 shadow-lg shadow-slate-200/50 overflow-hidden">
                 {/* サマリーヘッダー */}
@@ -395,10 +505,11 @@ export function EstimatePage() {
                       <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3">
                         <PlusIcon className="w-5 h-5 text-slate-400" />
                       </div>
-                      <p className="text-sm text-slate-400 font-body leading-relaxed">
-                        カタログからサービスを
-                        <br />
-                        選択してください
+                      <p className="text-sm font-medium text-slate-500 font-body">
+                        サービスを選択してください
+                      </p>
+                      <p className="text-xs text-slate-400 font-body mt-1">
+                        左のカタログから追加できます
                       </p>
                     </div>
                   ) : (
@@ -501,6 +612,19 @@ export function EstimatePage() {
                         見積もりを依頼する
                         <ArrowRightIcon className="w-4 h-4" />
                       </button>
+
+                      {/* 信頼シグナル */}
+                      <div className="mt-3 flex items-center justify-center gap-3 text-[11px] text-slate-400">
+                        <span className="flex items-center gap-1">
+                          <LockIcon className="w-3 h-3" />
+                          SSL暗号化通信
+                        </span>
+                        <span className="w-px h-3 bg-slate-200" />
+                        <span className="flex items-center gap-1">
+                          <ClockIcon className="w-3 h-3" />
+                          即時発行
+                        </span>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -543,8 +667,13 @@ export function EstimatePage() {
             className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto cn-scrollbar animate-cn-slide-up opacity-0"
             style={{ animationDelay: "50ms" }}
           >
+            {/* ステップインジケーター（モーダル内） */}
+            <div className="px-6 pt-5 pb-3">
+              <StepIndicator currentStep={2} primaryColor={primaryColor} />
+            </div>
+
             {/* モーダルヘッダー */}
-            <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
+            <div className="flex items-center justify-between px-6 py-3 border-b border-slate-100">
               <div>
                 <h2 className="text-lg font-bold text-slate-900 font-display">お客様情報の入力</h2>
                 <p className="text-xs text-slate-400 mt-0.5">見積もりの送付先情報をご入力ください</p>
@@ -586,62 +715,66 @@ export function EstimatePage() {
                 </div>
               )}
 
-              <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-slate-600 tracking-wide uppercase font-display">
-                  お名前 <span className="text-red-400">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={customerForm.customer_name}
-                  onChange={(e) => setCustomerForm((prev) => ({ ...prev, customer_name: e.target.value }))}
-                  required
-                  className="w-full px-4 py-2.5 rounded-lg border border-slate-200 text-sm text-slate-800 placeholder-slate-300 focus:outline-none focus:ring-2 focus:border-transparent transition-shadow font-body"
-                  style={{ "--tw-ring-color": `${primaryColor}33` } as CSSProperties}
-                  placeholder="例: 山田 太郎"
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-semibold text-slate-600 tracking-wide uppercase font-display">
+                    お名前 <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={customerForm.customer_name}
+                    onChange={(e) => setCustomerForm((prev) => ({ ...prev, customer_name: e.target.value }))}
+                    required
+                    className="w-full px-4 py-2.5 rounded-lg border border-slate-200 text-sm text-slate-800 placeholder-slate-300 focus:outline-none focus:ring-2 focus:border-transparent transition-shadow font-body"
+                    style={{ "--tw-ring-color": `${primaryColor}33` } as CSSProperties}
+                    placeholder="例: 山田 太郎"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-semibold text-slate-600 tracking-wide uppercase font-display">
+                    会社名 <span className="text-slate-300">(任意)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={customerForm.customer_company}
+                    onChange={(e) => setCustomerForm((prev) => ({ ...prev, customer_company: e.target.value }))}
+                    className="w-full px-4 py-2.5 rounded-lg border border-slate-200 text-sm text-slate-800 placeholder-slate-300 focus:outline-none focus:ring-2 focus:border-transparent transition-shadow font-body"
+                    style={{ "--tw-ring-color": `${primaryColor}33` } as CSSProperties}
+                    placeholder="例: 株式会社サンプル"
+                  />
+                </div>
               </div>
 
-              <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-slate-600 tracking-wide uppercase font-display">
-                  メールアドレス <span className="text-red-400">*</span>
-                </label>
-                <input
-                  type="email"
-                  value={customerForm.customer_email}
-                  onChange={(e) => setCustomerForm((prev) => ({ ...prev, customer_email: e.target.value }))}
-                  required
-                  className="w-full px-4 py-2.5 rounded-lg border border-slate-200 text-sm text-slate-800 placeholder-slate-300 focus:outline-none focus:ring-2 focus:border-transparent transition-shadow font-body"
-                  style={{ "--tw-ring-color": `${primaryColor}33` } as CSSProperties}
-                  placeholder="例: yamada@example.com"
-                />
-              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-semibold text-slate-600 tracking-wide uppercase font-display">
+                    メールアドレス <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    value={customerForm.customer_email}
+                    onChange={(e) => setCustomerForm((prev) => ({ ...prev, customer_email: e.target.value }))}
+                    required
+                    className="w-full px-4 py-2.5 rounded-lg border border-slate-200 text-sm text-slate-800 placeholder-slate-300 focus:outline-none focus:ring-2 focus:border-transparent transition-shadow font-body"
+                    style={{ "--tw-ring-color": `${primaryColor}33` } as CSSProperties}
+                    placeholder="例: yamada@example.com"
+                  />
+                </div>
 
-              <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-slate-600 tracking-wide uppercase font-display">
-                  電話番号 <span className="text-slate-300">(任意)</span>
-                </label>
-                <input
-                  type="tel"
-                  value={customerForm.customer_phone}
-                  onChange={(e) => setCustomerForm((prev) => ({ ...prev, customer_phone: e.target.value }))}
-                  className="w-full px-4 py-2.5 rounded-lg border border-slate-200 text-sm text-slate-800 placeholder-slate-300 focus:outline-none focus:ring-2 focus:border-transparent transition-shadow font-body"
-                  style={{ "--tw-ring-color": `${primaryColor}33` } as CSSProperties}
-                  placeholder="例: 03-1234-5678"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-slate-600 tracking-wide uppercase font-display">
-                  会社名 <span className="text-slate-300">(任意)</span>
-                </label>
-                <input
-                  type="text"
-                  value={customerForm.customer_company}
-                  onChange={(e) => setCustomerForm((prev) => ({ ...prev, customer_company: e.target.value }))}
-                  className="w-full px-4 py-2.5 rounded-lg border border-slate-200 text-sm text-slate-800 placeholder-slate-300 focus:outline-none focus:ring-2 focus:border-transparent transition-shadow font-body"
-                  style={{ "--tw-ring-color": `${primaryColor}33` } as CSSProperties}
-                  placeholder="例: 株式会社サンプル"
-                />
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-semibold text-slate-600 tracking-wide uppercase font-display">
+                    電話番号 <span className="text-slate-300">(任意)</span>
+                  </label>
+                  <input
+                    type="tel"
+                    value={customerForm.customer_phone}
+                    onChange={(e) => setCustomerForm((prev) => ({ ...prev, customer_phone: e.target.value }))}
+                    className="w-full px-4 py-2.5 rounded-lg border border-slate-200 text-sm text-slate-800 placeholder-slate-300 focus:outline-none focus:ring-2 focus:border-transparent transition-shadow font-body"
+                    style={{ "--tw-ring-color": `${primaryColor}33` } as CSSProperties}
+                    placeholder="例: 03-1234-5678"
+                  />
+                </div>
               </div>
 
               <div className="space-y-1.5">
@@ -651,25 +784,25 @@ export function EstimatePage() {
                 <textarea
                   className="w-full px-4 py-2.5 rounded-lg border border-slate-200 text-sm text-slate-800 placeholder-slate-300 focus:outline-none focus:ring-2 focus:border-transparent transition-shadow resize-none font-body"
                   style={{ "--tw-ring-color": `${primaryColor}33` } as CSSProperties}
-                  rows={3}
+                  rows={2}
                   value={customerForm.notes}
                   onChange={(e) => setCustomerForm((prev) => ({ ...prev, notes: e.target.value }))}
                   placeholder="ご質問やご要望がございましたらご記入ください"
                 />
               </div>
 
-              <div className="flex gap-3 pt-3">
+              <div className="flex gap-3 pt-2">
                 <button
                   type="button"
                   onClick={() => setIsSubmitModalOpen(false)}
                   className="flex-1 py-3 rounded-lg border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors font-display"
                 >
-                  キャンセル
+                  戻る
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="flex-1 py-3 rounded-lg text-sm font-bold text-white transition-all duration-200 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-display"
+                  className="flex-[2] py-3 rounded-lg text-sm font-bold text-white transition-all duration-200 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-display"
                   style={{
                     backgroundColor: primaryColor,
                     boxShadow: `0 4px 14px -3px ${primaryColor}66`,
@@ -688,6 +821,11 @@ export function EstimatePage() {
                   )}
                 </button>
               </div>
+
+              {/* フォーム下部の信頼シグナル */}
+              <p className="text-center text-[11px] text-slate-400 pt-1">
+                送信いただいた情報はSSL暗号化通信で保護されます
+              </p>
             </form>
           </div>
         </div>
@@ -698,12 +836,11 @@ export function EstimatePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
             <p className="text-xs text-slate-400 font-display">
-              Powered by <span className="font-semibold text-slate-500">CostNavigator</span>
+              Powered by <span className="font-semibold text-slate-500">Accelia, Inc.</span>
             </p>
-            <div className="flex items-center gap-1.5 text-xs text-slate-400">
-              <ShieldIcon className="w-3.5 h-3.5" />
-              <span>安全な見積もりシステム</span>
-            </div>
+            <p className="text-xs text-slate-400 font-display">
+              Cloudflare 製品のお見積もりツール
+            </p>
           </div>
         </div>
       </footer>

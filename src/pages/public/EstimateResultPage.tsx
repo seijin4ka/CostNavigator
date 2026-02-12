@@ -62,6 +62,53 @@ function PlusIcon({ className = "w-5 h-5" }: { className?: string }) {
   );
 }
 
+function CheckCircleIcon({ className = "w-5 h-5" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  );
+}
+
+function CheckIcon({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+    </svg>
+  );
+}
+
+// ステップインジケーター（結果ページ用 - ステップ3完了状態）
+function StepIndicator({ primaryColor }: { primaryColor: string }) {
+  const steps = [
+    { num: 1, label: "サービス選択" },
+    { num: 2, label: "お客様情報入力" },
+    { num: 3, label: "見積もり完了" },
+  ];
+  return (
+    <div className="flex items-center justify-center gap-0">
+      {steps.map((step, i) => (
+        <div key={step.num} className="flex items-center">
+          <div className="flex items-center gap-2">
+            <div
+              className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold font-display text-white"
+              style={{ backgroundColor: primaryColor }}
+            >
+              <CheckIcon className="w-3.5 h-3.5" />
+            </div>
+            <span className="text-xs font-medium hidden sm:inline text-slate-700">
+              {step.label}
+            </span>
+          </div>
+          {i < steps.length - 1 && (
+            <div className="w-8 sm:w-12 h-px mx-2 sm:mx-3" style={{ backgroundColor: primaryColor }} />
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // 見積もり結果型（公開API）
 interface EstimateResult {
   reference_number: string;
@@ -215,10 +262,39 @@ export function EstimateResultPage() {
         />
       </header>
 
+      {/* === 完了バナー === */}
+      <div
+        className="relative overflow-hidden"
+        style={{ background: `linear-gradient(135deg, ${secondaryColor}08, ${primaryColor}06, ${secondaryColor}04)` }}
+      >
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* ステップインジケーター（全完了） */}
+          <div className="mb-6 animate-cn-fade-up opacity-0">
+            <StepIndicator primaryColor={primaryColor} />
+          </div>
+
+          <div className="text-center animate-cn-fade-up opacity-0" style={{ animationDelay: "100ms" }}>
+            <div
+              className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4"
+              style={{ backgroundColor: `${primaryColor}15` }}
+            >
+              <CheckCircleIcon className="w-8 h-8" style={{ color: primaryColor }} />
+            </div>
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 font-display">
+              お見積もりが完了しました
+            </h2>
+            <p className="mt-2 text-sm text-slate-500 max-w-md mx-auto">
+              以下の内容でお見積もりを作成しました。PDFでダウンロードして社内検討にご活用ください。
+            </p>
+          </div>
+        </div>
+        <div className="absolute bottom-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+      </div>
+
       {/* === メインコンテンツ === */}
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-10">
         {/* 見積もりヘッダー */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8 animate-cn-fade-up opacity-0">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8 animate-cn-fade-up opacity-0" style={{ animationDelay: "150ms" }}>
           <div>
             <div className="flex items-center gap-3 mb-2">
               <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight font-display">
@@ -262,7 +338,7 @@ export function EstimateResultPage() {
           {/* 顧客情報 */}
           <div
             className="bg-white rounded-xl border border-slate-200 p-5 animate-cn-fade-up opacity-0"
-            style={{ animationDelay: "100ms" }}
+            style={{ animationDelay: "200ms" }}
           >
             <div className="flex items-center gap-2 mb-3">
               <div
@@ -287,7 +363,7 @@ export function EstimateResultPage() {
           {/* 見積もり日 */}
           <div
             className="bg-white rounded-xl border border-slate-200 p-5 animate-cn-fade-up opacity-0"
-            style={{ animationDelay: "150ms" }}
+            style={{ animationDelay: "250ms" }}
           >
             <div className="flex items-center gap-2 mb-3">
               <div
@@ -307,7 +383,7 @@ export function EstimateResultPage() {
           {/* 月額合計 */}
           <div
             className="bg-white rounded-xl border-2 p-5 animate-cn-fade-up opacity-0"
-            style={{ borderColor: `${primaryColor}30`, animationDelay: "200ms" }}
+            style={{ borderColor: `${primaryColor}30`, animationDelay: "300ms" }}
           >
             <div className="flex items-center gap-2 mb-3">
               <div
@@ -332,7 +408,7 @@ export function EstimateResultPage() {
         {/* 見積もり明細テーブル */}
         <div
           className="bg-white rounded-xl border border-slate-200 overflow-hidden animate-cn-fade-up opacity-0"
-          style={{ animationDelay: "250ms" }}
+          style={{ animationDelay: "350ms" }}
         >
           <div className="px-6 py-4 border-b border-slate-100">
             <h3 className="text-base font-bold text-slate-900 font-display">見積もり明細</h3>
@@ -401,19 +477,46 @@ export function EstimateResultPage() {
           </div>
         </div>
 
-        {/* 新規見積もりリンク */}
+        {/* ネクストアクション */}
         <div
-          className="mt-8 text-center animate-cn-fade-up opacity-0"
-          style={{ animationDelay: "300ms" }}
+          className="mt-8 bg-white rounded-xl border border-slate-200 p-6 sm:p-8 animate-cn-fade-up opacity-0"
+          style={{ animationDelay: "400ms" }}
         >
-          <Link
-            to={newEstimatePath}
-            className="inline-flex items-center gap-2 text-sm font-semibold transition-colors hover:opacity-80 font-display"
-            style={{ color: primaryColor }}
-          >
-            <PlusIcon className="w-4 h-4" />
-            新しい見積もりを作成
-          </Link>
+          <h3 className="text-base font-bold text-slate-900 font-display mb-4">次のステップ</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <button
+              onClick={handleDownloadPdf}
+              disabled={isDownloading}
+              className="flex items-center gap-4 p-4 rounded-lg border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all text-left group disabled:opacity-50"
+            >
+              <div
+                className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+                style={{ backgroundColor: `${primaryColor}10` }}
+              >
+                <DownloadIcon className="w-5 h-5" style={{ color: primaryColor }} />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-slate-800 font-display group-hover:text-slate-900">PDFをダウンロード</p>
+                <p className="text-xs text-slate-400 mt-0.5">社内検討用にPDFを保存</p>
+              </div>
+            </button>
+
+            <Link
+              to={newEstimatePath}
+              className="flex items-center gap-4 p-4 rounded-lg border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all text-left group"
+            >
+              <div
+                className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+                style={{ backgroundColor: `${primaryColor}10` }}
+              >
+                <PlusIcon className="w-5 h-5" style={{ color: primaryColor }} />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-slate-800 font-display group-hover:text-slate-900">別の見積もりを作成</p>
+                <p className="text-xs text-slate-400 mt-0.5">異なる構成で再見積もり</p>
+              </div>
+            </Link>
+          </div>
         </div>
       </main>
 
@@ -422,12 +525,11 @@ export function EstimateResultPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
             <p className="text-xs text-slate-400 font-display">
-              Powered by <span className="font-semibold text-slate-500">CostNavigator</span>
+              Powered by <span className="font-semibold text-slate-500">Accelia, Inc.</span>
             </p>
-            <div className="flex items-center gap-1.5 text-xs text-slate-400">
-              <ShieldIcon className="w-3.5 h-3.5" />
-              <span>安全な見積もりシステム</span>
-            </div>
+            <p className="text-xs text-slate-400 font-display">
+              Cloudflare 製品のお見積もりツール
+            </p>
           </div>
         </div>
       </footer>
