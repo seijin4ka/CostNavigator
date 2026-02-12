@@ -91,6 +91,15 @@ export class EstimateService {
     partner: Partner,
     request: CreateEstimateRequest
   ): Promise<EstimateWithItems> {
+    // N+1クエリを避けるため、必要な製品とティアを一括取得
+    const productIds = [...new Set(request.items.map(item => item.product_id))];
+    const tierIds = [...new Set(request.items.map(item => item.tier_id).filter((id): id is string => id != null))];
+
+    const [productMap, tierMap] = await Promise.all([
+      this.productRepo.findByIds(productIds),
+      this.tierRepo.findByIds(tierIds),
+    ]);
+
     let totalMonthly = 0;
 
     // 各アイテムの価格を計算
@@ -107,12 +116,12 @@ export class EstimateService {
     }[] = [];
 
     for (const item of request.items) {
-      const product = await this.productRepo.findById(item.product_id);
+      const product = productMap.get(item.product_id);
       if (!product) {
         throw new Error(`製品ID ${item.product_id} が見つかりません`);
       }
 
-      const tier = item.tier_id ? await this.tierRepo.findById(item.tier_id) : null;
+      const tier = item.tier_id ? tierMap.get(item.tier_id) ?? null : null;
       // ティアIDが指定されているのにティアが見つからない場合はエラー
       if (item.tier_id && !tier) {
         throw new Error(`ティアID ${item.tier_id} が見つかりません`);

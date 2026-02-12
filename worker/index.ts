@@ -15,6 +15,37 @@ import dashboardRoutes from "./routes/dashboard";
 
 const app = new Hono<{ Bindings: Env }>();
 
+// セキュリティヘッダーミドルウェア
+app.use("*", async (c, next) => {
+  await next();
+
+  // Content Security Policy (XSS対策)
+  c.header(
+    "Content-Security-Policy",
+    "default-src 'self'; " +
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " + // React開発モードとViteに必要
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " + // TailwindとGoogle Fontsに必要
+    "font-src 'self' https://fonts.gstatic.com; " +
+    "img-src 'self' data: https:; " +
+    "connect-src 'self'; " +
+    "frame-ancestors 'none'; " +
+    "base-uri 'self'; " +
+    "form-action 'self'"
+  );
+
+  // X-Content-Type-Options (MIMEタイプスニッフィング防止)
+  c.header("X-Content-Type-Options", "nosniff");
+
+  // X-Frame-Options (クリックジャッキング防止)
+  c.header("X-Frame-Options", "DENY");
+
+  // Referrer-Policy (リファラー情報の制御)
+  c.header("Referrer-Policy", "strict-origin-when-cross-origin");
+
+  // Permissions-Policy (不要な機能の無効化)
+  c.header("Permissions-Policy", "geolocation=(), microphone=(), camera=()");
+});
+
 // CORS設定: エンドポイントごとに適切なポリシーを適用
 
 // 制限的CORSミドルウェア（管理API・認証API用）

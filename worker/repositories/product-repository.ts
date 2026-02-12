@@ -18,6 +18,25 @@ export class ProductRepository {
       .first<Product>();
   }
 
+  // 複数の製品を一括取得（IDのリスト）
+  async findByIds(ids: string[]): Promise<Map<string, Product>> {
+    if (ids.length === 0) return new Map();
+
+    // SQLiteの制限を考慮して、IN句のプレースホルダーを生成
+    const placeholders = ids.map(() => "?").join(",");
+    const result = await this.db
+      .prepare(`SELECT * FROM products WHERE id IN (${placeholders})`)
+      .bind(...ids)
+      .all<Product>();
+
+    // IDをキーとしたMapに変換（高速な検索のため）
+    const productMap = new Map<string, Product>();
+    for (const product of result.results) {
+      productMap.set(product.id, product);
+    }
+    return productMap;
+  }
+
   // 製品一覧（カテゴリ名・ティア付き）
   async findAllWithTiers(): Promise<ProductWithTiers[]> {
     const products = await this.db

@@ -19,6 +19,25 @@ export class TierRepository {
       .first<ProductTier>();
   }
 
+  // 複数のティアを一括取得（IDのリスト）
+  async findByIds(ids: string[]): Promise<Map<string, ProductTier>> {
+    if (ids.length === 0) return new Map();
+
+    // SQLiteの制限を考慮して、IN句のプレースホルダーを生成
+    const placeholders = ids.map(() => "?").join(",");
+    const result = await this.db
+      .prepare(`SELECT * FROM product_tiers WHERE id IN (${placeholders})`)
+      .bind(...ids)
+      .all<ProductTier>();
+
+    // IDをキーとしたMapに変換（高速な検索のため）
+    const tierMap = new Map<string, ProductTier>();
+    for (const tier of result.results) {
+      tierMap.set(tier.id, tier);
+    }
+    return tierMap;
+  }
+
   async create(data: {
     product_id: string;
     name: string;
