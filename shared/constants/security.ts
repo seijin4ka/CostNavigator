@@ -11,5 +11,6 @@ export const PASSWORD_HASH = {
 
 // JWT設定
 export const JWT = {
-  TTL_SECONDS: 24 * 60 * 60, // 24時間
+  ACCESS_TOKEN_TTL_SECONDS: 15 * 60, // 15分（短命、定期的にリフレッシュ）
+  REFRESH_TOKEN_TTL_SECONDS: 7 * 24 * 60 * 60, // 7日間
 } as const;

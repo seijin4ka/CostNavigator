@@ -55,6 +55,7 @@ npm run db:migrate:local -- migrations/0008_create_estimate_items.sql
 npm run db:migrate:local -- migrations/0009_seed_data.sql
 npm run db:migrate:local -- migrations/0010_system_direct_partner.sql
 npm run db:migrate:local -- migrations/0011_add_customer_phone.sql
+npm run db:migrate:local -- migrations/0012_create_refresh_tokens.sql
 
 # 開発サーバー起動
 npm run dev
@@ -132,9 +133,10 @@ CostNavigator/
 
 | メソッド | パス | 説明 |
 |----------|------|------|
-| POST | `/api/auth/login` | ログイン（JWT発行） |
-| GET | `/api/auth/me` | ユーザー情報取得 |
-| POST | `/api/auth/setup` | 初期管理者作成 |
+| POST | `/api/auth/login` | ログイン（アクセストークン + リフレッシュトークン発行） |
+| POST | `/api/auth/refresh` | トークンリフレッシュ（リフレッシュトークンを使って新しいアクセストークンを取得） |
+| GET | `/api/auth/me` | ユーザー情報取得（認証必須） |
+| POST | `/api/auth/setup` | 初期管理者作成（初回のみ） |
 
 ### 管理API（JWT認証必須）
 
@@ -169,8 +171,12 @@ APIは以下のエラーコードを返却します。
 ### 認証
 
 - 管理APIは`Authorization: Bearer <JWT>`ヘッダーが必須
-- JWT有効期限: 24時間
-- トークンリフレッシュ機能: 未実装（再ログインが必要）
+- アクセストークン有効期限: 15分（短命、定期的にリフレッシュ）
+- リフレッシュトークン有効期限: 7日間
+- トークンリフレッシュ機能: 実装済み
+  - アクセストークンの有効期限が切れると、自動的にリフレッシュトークンを使って新しいアクセストークンを取得
+  - リフレッシュトークンも同時にローテーション（セキュリティ向上）
+  - リフレッシュ失敗時は自動的にログアウト
 
 ## 本番デプロイ
 

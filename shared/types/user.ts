@@ -24,5 +24,12 @@ export type LoginRequest = z.infer<typeof LoginSchema>;
 // ログインレスポンス
 export interface LoginResponse {
   token: string;
+  refreshToken: string;
   user: User;
+}
+
+// リフレッシュトークンレスポンス
+export interface RefreshTokenResponse {
+  token: string;
+  refreshToken: string;
 }

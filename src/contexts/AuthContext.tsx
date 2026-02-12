@@ -13,40 +13,52 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 const TOKEN_KEY = "cn_auth_token";
+const REFRESH_TOKEN_KEY = "cn_refresh_token";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // ログアウト処理（トークンリフレッシュ失敗時にも呼ばれる）
+  const logout = useCallback(() => {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(REFRESH_TOKEN_KEY);
+    apiClient.setToken(null);
+    apiClient.setRefreshToken(null);
+    setUser(null);
+  }, []);
+
   // 初期化時にトークンからユーザー情報を復元
   useEffect(() => {
+    // トークンリフレッシュ失敗時のコールバックを設定
+    apiClient.setOnTokenRefreshFailed(logout);
+
     const token = localStorage.getItem(TOKEN_KEY);
-    if (token) {
+    const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
+
+    if (token && refreshToken) {
       apiClient.setToken(token);
+      apiClient.setRefreshToken(refreshToken);
       apiClient
         .get<User>("/auth/me")
         .then((res) => setUser(res.data))
         .catch(() => {
-          localStorage.removeItem(TOKEN_KEY);
-          apiClient.setToken(null);
+          // トークンが無効な場合はクリア
+          logout();
         })
         .finally(() => setIsLoading(false));
     } else {
       setIsLoading(false);
     }
-  }, []);
+  }, [logout]);
 
   const login = useCallback(async (email: string, password: string) => {
     const res = await apiClient.post<LoginResponse>("/auth/login", { email, password });
     localStorage.setItem(TOKEN_KEY, res.data.token);
+    localStorage.setItem(REFRESH_TOKEN_KEY, res.data.refreshToken);
     apiClient.setToken(res.data.token);
+    apiClient.setRefreshToken(res.data.refreshToken);
     setUser(res.data.user);
-  }, []);
-
-  const logout = useCallback(() => {
-    localStorage.removeItem(TOKEN_KEY);
-    apiClient.setToken(null);
-    setUser(null);
   }, []);
 
   return (
