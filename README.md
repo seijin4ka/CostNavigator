@@ -2,10 +2,15 @@
 
 Cloudflare MSSP パートナー向け予算見積もりサービス
 
+[![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/seijin4ka/CostNavigator)
+
 ## 概要
 
 CostNavigator は、Cloudflare 公式パートナー（MSSP）が再販先に提供する予算見積もりツールです。
 AWS Pricing Calculator のように、エンドユーザーが Cloudflare 製品を選択し、パートナーごとのマークアップが適用された見積もりを作成できます。
+
+**簡単デプロイ**: GitHubリポジトリを指定するだけで、数分でCloudflare Workersにデプロイできます。
+詳細は [デプロイメントガイド](DEPLOYMENT.md) をご覧ください。
 
 ### 主な機能
 
