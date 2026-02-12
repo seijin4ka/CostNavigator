@@ -307,6 +307,121 @@ curl -X POST https://your-worker.workers.dev/api/auth/setup
 - ユーザーごとに1つのリフレッシュトークンのみ有効（複数デバイス対応が必要な場合は設計変更が必要）
 - 期限切れトークンは自動削除
 
+## 既知の制限事項
+
+### パフォーマンス
+- **見積もり作成時のN+1クエリ**: 見積もり作成時、各アイテムに対して個別にデータベースクエリを実行します（製品、ティア、マークアップルール）。アイテム数が多い場合、パフォーマンスに影響する可能性がありますが、D1はローカルデータベースのためネットワークレイテンシはありません。
+
+### 認証・セッション管理
+- **複数デバイス対応**: ユーザーごとに1つのリフレッシュトークンのみ有効です。複数デバイスから同時にログインすると、古いセッションは無効化されます。複数デバイス対応が必要な場合は、refresh_tokens テーブルの設計変更が必要です。
+- **トークンリフレッシュのタイミング**: 現在は401エラー後にリフレッシュを試行します。理想的には有効期限の数分前にプロアクティブにリフレッシュすべきですが、15分の有効期限で実用上は問題ありません。
+
+### データ管理
+- **削除時の制約**: 製品、パートナー、カテゴリが見積もりで使用されている場合、削除できません。削除が必要な場合は `is_active = false` に設定して非表示化してください。
+- **カスケード削除**: パートナーを削除すると、関連する見積もりもすべて削除されます（ON DELETE CASCADE）。削除前に必ずバックアップを取得してください。
+
+## トラブルシューティング
+
+### マイグレーションエラー
+
+**問題**: `npm run db:migrate:local` でエラーが発生する
+
+**解決策**:
+```bash
+# .wrangler/state/ ディレクトリを削除して再試行
+rm -rf .wrangler/state/
+npm run db:migrate:local -- migrations/0001_create_users.sql
+# 以降のマイグレーションを順番に実行
+```
+
+### ログインできない
+
+**問題**: 正しい認証情報でログインできない
+
+**解決策**:
+1. ブラウザの開発者ツールで localStorage をクリア
+2. ブラウザのキャッシュをクリア
+3. `/api/auth/me` に直接アクセスして、エラーメッセージを確認
+4. JWT_SECRET が正しく設定されているか確認（`.dev.vars` または `wrangler secret`）
+
+### トークンが自動更新されない
+
+**問題**: 15分後にセッションが切れる
+
+**解決策**:
+1. ブラウザの開発者ツールのネットワークタブで `/api/auth/refresh` のリクエストを確認
+2. リフレッシュトークンが localStorage に保存されているか確認（`cn_refresh_token`）
+3. エラーログを確認して、リフレッシュトークンの検証エラーがないか確認
+
+### CORS エラー
+
+**問題**: 管理画面で CORS エラーが発生する
+
+**解決策**:
+1. 開発環境: `http://localhost:5173` からアクセスしていることを確認
+2. 本番環境: `ALLOWED_ORIGINS` 環境変数に正しいオリジンが設定されているか確認
+   ```bash
+   wrangler secret put ALLOWED_ORIGINS
+   # 例: https://admin.example.com,https://costnavigator.example.com
+   ```
+
+### ページネーションが動作しない
+
+**問題**: 見積もり一覧で2ページ目以降が表示されない
+
+**解決策**:
+1. ブラウザの開発者ツールのネットワークタブで API レスポンスを確認
+2. `totalPages` が正しく返されているか確認
+3. データベースに十分なレコードがあるか確認（20件以上）
+
+### PDF生成が失敗する
+
+**問題**: 見積もり結果ページで PDF ダウンロードボタンをクリックしてもエラーになる
+
+**解決策**:
+1. ブラウザの開発者ツールのコンソールでエラーメッセージを確認
+2. `@react-pdf/renderer` が正しくインストールされているか確認
+   ```bash
+   npm install @react-pdf/renderer
+   ```
+3. ブラウザのポップアップブロッカーが有効になっていないか確認
+
+## FAQ
+
+### Q: 見積もり参照番号の形式を変更できますか？
+
+A: はい。`shared/constants/index.ts` の `ESTIMATE_REF_PREFIX` と、`worker/services/estimate-service.ts` の `generateReferenceNumber()` メソッドを変更してください。ただし、既存の見積もりには影響しません。
+
+### Q: 通貨を USD から JPY に変更できますか？
+
+A: はい。`shared/constants/index.ts` の `CURRENCY` オブジェクトを変更してください。ただし、データベースの価格データは変更されないため、すべての価格を再入力する必要があります。
+
+### Q: カスタムドメインを設定するには？
+
+A: Cloudflare Workers のカスタムドメイン機能を使用してください。詳細は [Cloudflare のドキュメント](https://developers.cloudflare.com/workers/configuration/routing/custom-domains/) を参照してください。
+
+### Q: バックアップを取得するには？
+
+A: D1 データベースのバックアップは以下のコマンドで取得できます：
+```bash
+wrangler d1 export cost-navigator-db --output backup.sql
+```
+
+### Q: 複数の管理者ユーザーを作成するには？
+
+A: 現在、UI からの管理者ユーザー作成機能は実装されていません。以下のSQL を直接実行してください：
+```sql
+INSERT INTO users (id, email, password_hash, name, role)
+VALUES (
+  lower(hex(randomblob(16))),
+  'admin2@example.com',
+  '生成されたパスワードハッシュ',
+  '管理者2',
+  'admin'
+);
+```
+パスワードハッシュは、既存のユーザーの `password_hash` を参考にするか、`worker/utils/password.ts` の `hashPassword()` を使用して生成してください。
+
 ## ライセンス
 
 Private - All rights reserved.

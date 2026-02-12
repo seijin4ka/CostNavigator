@@ -164,7 +164,8 @@ export function EstimateResultPage() {
         ]);
         setPartner(partnerRes.data);
         setEstimate(estimateRes.data);
-      } catch {
+      } catch (err) {
+        console.error("見積もり結果の読み込みエラー:", err);
         setError("見積もりの読み込みに失敗しました");
       } finally {
         setIsLoading(false);

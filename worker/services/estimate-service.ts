@@ -10,7 +10,7 @@ import type {
   CreateEstimateRequest,
   EstimateWithItems,
 } from "../../shared/types";
-import { ESTIMATE_REF_PREFIX } from "../../shared/constants";
+import { ESTIMATE_REF_PREFIX, RETRY } from "../../shared/constants";
 
 // マークアップ適用済みティア
 export interface TierWithMarkupPrice extends ProductTier {
@@ -208,7 +208,7 @@ export class EstimateService {
   // 参照番号の衝突を避けるため、リトライ機能付きでestimateを作成
   private async createEstimateWithRetry(
     data: Omit<Parameters<typeof this.estimateRepo.create>[0], 'reference_number'>,
-    maxAttempts = 3
+    maxAttempts = RETRY.MAX_ATTEMPTS
   ): Promise<string> {
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       const referenceNumber = this.generateReferenceNumber();
@@ -223,7 +223,7 @@ export class EstimateService {
         const error = err as Error;
         if (error.message?.includes('UNIQUE') && attempt < maxAttempts) {
           // 次のリトライまで少し待つ（ミリ秒単位の衝突を避ける）
-          await new Promise(resolve => setTimeout(resolve, 10));
+          await new Promise(resolve => setTimeout(resolve, RETRY.DELAY_MS));
           continue;
         }
         // UNIQUE制約以外のエラーまたは最終試行の場合は再スロー

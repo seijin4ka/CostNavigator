@@ -32,5 +32,11 @@ export const USAGE_UNIT_LABELS: Record<string, string> = {
   million_requests: "百万リクエスト",
 } as const;
 
+// リトライ設定
+export const RETRY = {
+  MAX_ATTEMPTS: 3, // 最大リトライ回数
+  DELAY_MS: 10, // リトライ間隔（ミリ秒）
+} as const;
+
 // セキュリティ定数のre-export
 export { PASSWORD_HASH, JWT } from "./security";

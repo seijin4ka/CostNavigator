@@ -166,7 +166,8 @@ export function EstimatePage() {
 
         const categories = [...new Set(productsRes.data.map((p) => p.category_name))];
         if (categories.length > 0) setSelectedCategory(categories[0]);
-      } catch {
+      } catch (err) {
+        console.error("見積もりページの読み込みエラー:", err);
         setError("ページの読み込みに失敗しました。URLが正しいか確認してください。");
       } finally {
         setIsLoading(false);

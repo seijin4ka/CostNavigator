@@ -9,7 +9,9 @@
     "preview": "vite preview",
     "deploy": "wrangler deploy",
     "db:migrate:local": "wrangler d1 execute cost-navigator-db --local --file",
-    "db:migrate:remote": "wrangler d1 execute cost-navigator-db --remote --file"
+    "db:migrate:remote": "wrangler d1 execute cost-navigator-db --remote --file",
+    "db:reset:local": "rm -rf .wrangler/state/v3/d1 && echo 'ローカルデータベースをリセットしました。マイグレーションを再実行してください。'",
+    "db:backup": "wrangler d1 export cost-navigator-db --output backup-$(date +%Y%m%d-%H%M%S).sql"
   },
   "dependencies": {
     "hono": "^4.7.0",
