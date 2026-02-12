@@ -35,7 +35,22 @@ function decodeJwt(token: string): { exp: number } | null {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const refreshTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const refreshTimerRef = useRef<number | null>(null);
+
+  // ログアウト処理（トークンリフレッシュ失敗時にも呼ばれる）
+  const logout = useCallback(() => {
+    // リフレッシュタイマーをクリア
+    if (refreshTimerRef.current) {
+      clearTimeout(refreshTimerRef.current);
+      refreshTimerRef.current = null;
+    }
+
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(REFRESH_TOKEN_KEY);
+    apiClient.setToken(null);
+    apiClient.setRefreshToken(null);
+    setUser(null);
+  }, []);
 
   // プロアクティブなトークンリフレッシュ（有効期限の2分前）
   const scheduleTokenRefresh = useCallback((token: string) => {
@@ -51,7 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const expiresIn = payload.exp * 1000 - Date.now();
     const refreshIn = Math.max(0, expiresIn - 2 * 60 * 1000);
 
-    refreshTimerRef.current = setTimeout(async () => {
+    refreshTimerRef.current = window.setTimeout(async () => {
       const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
       if (!refreshToken) return;
 
@@ -73,22 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         logout();
       }
     }, refreshIn);
-  }, []);
-
-  // ログアウト処理（トークンリフレッシュ失敗時にも呼ばれる）
-  const logout = useCallback(() => {
-    // リフレッシュタイマーをクリア
-    if (refreshTimerRef.current) {
-      clearTimeout(refreshTimerRef.current);
-      refreshTimerRef.current = null;
-    }
-
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(REFRESH_TOKEN_KEY);
-    apiClient.setToken(null);
-    apiClient.setRefreshToken(null);
-    setUser(null);
-  }, []);
+  }, [logout]);
 
   // 初期化時にトークンからユーザー情報を復元
   useEffect(() => {
