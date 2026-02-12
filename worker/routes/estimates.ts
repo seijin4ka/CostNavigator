@@ -26,9 +26,14 @@ estimates.get("/:id", async (c) => {
 
 // 見積もりステータス更新
 estimates.put("/:id/status", async (c) => {
-  const body = await c.req.json<{ status: string }>();
+  let body: { status: string };
+  try {
+    body = await c.req.json<{ status: string }>();
+  } catch {
+    return error(c, "INVALID_JSON", "リクエストボディのJSON形式が不正です", 400);
+  }
   const validStatuses = ["draft", "sent", "accepted", "expired"];
-  if (!validStatuses.includes(body.status)) {
+  if (!body.status || !validStatuses.includes(body.status)) {
     return error(c, "INVALID_STATUS", "無効なステータスです", 400);
   }
 

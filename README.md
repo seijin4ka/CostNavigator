@@ -53,6 +53,8 @@ npm run db:migrate:local -- migrations/0006_create_markup_rules.sql
 npm run db:migrate:local -- migrations/0007_create_estimates.sql
 npm run db:migrate:local -- migrations/0008_create_estimate_items.sql
 npm run db:migrate:local -- migrations/0009_seed_data.sql
+npm run db:migrate:local -- migrations/0010_system_direct_partner.sql
+npm run db:migrate:local -- migrations/0011_add_customer_phone.sql
 
 # 開発サーバー起動
 npm run dev
@@ -74,7 +76,8 @@ curl -X POST http://localhost:5173/api/auth/setup
 
 ### 見積もりページ
 
-- URL: `http://localhost:5173/estimate/demo`（デモパートナー）
+- URL: `http://localhost:5173/`（ダイレクト見積もり / マークアップなし）
+- URL: `http://localhost:5173/estimate/demo`（デモパートナー経由）
 
 ## プロジェクト構成
 
@@ -85,7 +88,7 @@ CostNavigator/
 ├── vite.config.ts                # Vite + Cloudflare + TailwindCSS 設定
 ├── wrangler.jsonc                # Cloudflare Workers 設定（D1バインディング）
 ├── tsconfig.json                 # TypeScript 設定（app/worker 分割）
-├── migrations/                   # D1 SQL マイグレーション（0001〜0009）
+├── migrations/                   # D1 SQL マイグレーション（0001〜0011）
 ├── shared/                       # フロント・バックエンド共有
 │   ├── types/                    # 型定義 + Zod スキーマ
 │   └── constants/                # 定数（通貨、ページネーション等）

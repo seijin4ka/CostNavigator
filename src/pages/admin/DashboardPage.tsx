@@ -38,12 +38,13 @@ const statusColors: Record<string, string> = {
 export function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     apiClient
       .get<DashboardStats>("/admin/dashboard/stats")
       .then((res) => setStats(res.data))
-      .catch(() => {})
+      .catch(() => setError("統計情報の取得に失敗しました"))
       .finally(() => setIsLoading(false));
   }, []);
 
@@ -58,6 +59,12 @@ export function DashboardPage() {
   return (
     <div>
       <h1 className="text-2xl font-bold text-gray-900 mb-6">ダッシュボード</h1>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-600 mb-4">
+          {error}
+        </div>
+      )}
 
       {/* 統計カード */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">

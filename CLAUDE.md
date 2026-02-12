@@ -85,5 +85,6 @@ npm run db:migrate:remote -- migrations/XXXX.sql # 本番DB マイグレーシ�
 1. `/api/health` でヘルスチェック確認
 2. `/admin/login` で管理画面ログイン
 3. 製品・パートナー・マークアップの CRUD 操作
-4. `/estimate/demo` でエンドユーザー向け見積もりページ表示
-5. 見積もり作成 → 結果表示 → PDF ダウンロード
+4. `/` でダイレクト見積もりページ表示（マークアップなし）
+5. `/estimate/demo` でパートナー経由の見積もりページ表示
+6. 見積もり作成 → 結果表示 → PDF ダウンロード

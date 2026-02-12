@@ -1,9 +1,10 @@
 import type { Context } from "hono";
-import type { ZodSchema, ZodError } from "zod";
+import type { ZodType, ZodError } from "zod";
 import { error } from "./response";
 
 // Zodスキーマによるリクエストボディバリデーション
-export async function validateBody<T>(c: Context, schema: ZodSchema<T>): Promise<T | null> {
+// ZodType<T, any, any> により .default() 使用時も出力型（デフォルト適用後）が正しく推論される
+export async function validateBody<T>(c: Context, schema: ZodType<T, any, any>): Promise<T | null> {
   try {
     const body = await c.req.json();
     const result = schema.safeParse(body);
