@@ -12,6 +12,9 @@ export const PAGINATION = {
   MAX_PER_PAGE: 100,
 } as const;
 
+// 後方互換性のためのエイリアス
+export const DEFAULT_PAGE_LIMIT = PAGINATION.DEFAULT_PER_PAGE;
+
 // 見積もり参照番号プレフィックス
 export const ESTIMATE_REF_PREFIX = "CN";
 

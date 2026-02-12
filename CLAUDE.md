@@ -81,6 +81,31 @@ npm run db:migrate:remote -- migrations/XXXX.sql # 本番DB マイグレーシ�
 | DB | D1 データベースバインディング | wrangler.jsonc で設定 |
 | ASSETS | 静的アセットバインディング | 自動設定 |
 
+## セキュリティ機能
+
+### トークンリフレッシュ
+- アクセストークン: 15分（短命、定期的にリフレッシュ）
+- リフレッシュトークン: 7日間（長命、ローテーション方式）
+- リフレッシュトークンは SHA-256 でハッシュ化してDB保存
+- 401 エラー時に自動リフレッシュを試行（フロントエンド）
+- ユーザーごとに1つのリフレッシュトークンのみ有効
+
+### CORS 設定
+- 公開API (`/api/public/*`): すべてのオリジンを許可
+- 管理API (`/api/admin/*`): ALLOWED_ORIGINS で指定されたオリジンのみ
+- 認証API (`/api/auth/*`): ALLOWED_ORIGINS で指定されたオリジンのみ
+- 開発環境: localhost からのアクセスを自動許可
+
+### localStorage のリスク
+- トークンは localStorage に保存（XSS攻撃のリスクあり）
+- 対策: CSP設定、短命なアクセストークン、トークンローテーション
+
+## ページネーション
+- 見積もり一覧 (`/api/admin/estimates`) はページネーション対応
+- デフォルト: 20件/ページ（`PAGINATION.DEFAULT_PER_PAGE`）
+- 最大: 100件/ページ（`PAGINATION.MAX_PER_PAGE`）
+- クエリパラメータ: `?page=1&limit=20`
+
 ## テスト確認手順
 
 1. `/api/health` でヘルスチェック確認
@@ -89,3 +114,4 @@ npm run db:migrate:remote -- migrations/XXXX.sql # 本番DB マイグレーシ�
 4. `/` でダイレクト見積もりページ表示（マークアップなし）
 5. `/estimate/demo` でパートナー経由の見積もりページ表示
 6. 見積もり作成 → 結果表示 → PDF ダウンロード
+7. トークンリフレッシュの自動動作確認（15分後）

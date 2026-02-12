@@ -1,14 +1,8 @@
 import { sign } from "hono/jwt";
 import { UserRepository } from "../repositories/user-repository";
 import { hashPassword, verifyPassword } from "../utils/password";
-import type { User, LoginResponse } from "../../shared/types";
+import type { User, LoginResponse, RefreshTokenResponse } from "../../shared/types";
 import { JWT } from "../../shared/constants";
-
-// リフレッシュトークンのレスポンス型
-export interface RefreshTokenResponse {
-  accessToken: string;
-  refreshToken: string;
-}
 
 // 認証サービス
 export class AuthService {
@@ -117,7 +111,7 @@ export class AuthService {
     const newRefreshToken = await this.generateRefreshToken(user.id);
 
     return {
-      accessToken: newAccessToken,
+      token: newAccessToken,
       refreshToken: newRefreshToken,
     };
   }

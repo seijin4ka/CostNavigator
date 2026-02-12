@@ -55,7 +55,7 @@ auth.post("/refresh", async (c) => {
   }
 
   return success(c, {
-    token: result.accessToken,
+    token: result.token,
     refreshToken: result.refreshToken,
   });
 });
