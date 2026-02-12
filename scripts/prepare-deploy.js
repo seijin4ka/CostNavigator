@@ -8,9 +8,13 @@
  * 3. マイグレーションの実行
  */
 
-const { execSync } = require('child_process');
-const fs = require('fs');
-const path = require('path');
+import { execSync } from 'child_process';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const DB_NAME = 'cost-navigator-db';
 const DIST_DIR = path.join(__dirname, '../dist/cost_navigator');
@@ -31,16 +35,23 @@ try {
   let dbId = null;
 
   try {
-    const listOutput = execSync('npx wrangler d1 list --json', {
+    const listOutput = execSync('npx wrangler d1 list', {
       encoding: 'utf-8',
       stdio: ['pipe', 'pipe', 'pipe']
     });
-    const databases = JSON.parse(listOutput);
-    const existingDb = databases.find(db => db.name === DB_NAME);
 
-    if (existingDb) {
-      dbId = existingDb.uuid;
-      console.log(`✅ 既存のD1データベースを使用: ${dbId}\n`);
+    // 出力からデータベース名とIDを抽出
+    // 例: "│ cost-navigator-db │ xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx │"
+    const lines = listOutput.split('\n');
+    for (const line of lines) {
+      if (line.includes(DB_NAME)) {
+        const idMatch = line.match(/│\s*[^│]+\s*│\s*([a-f0-9-]{36})\s*│/i);
+        if (idMatch) {
+          dbId = idMatch[1];
+          console.log(`✅ 既存のD1データベースを使用: ${dbId}\n`);
+          break;
+        }
+      }
     }
   } catch (error) {
     console.log('   データベース一覧取得エラー（新規作成します）');
@@ -49,13 +60,21 @@ try {
   if (!dbId) {
     console.log('📊 D1データベースを新規作成中...');
     try {
-      const createOutput = execSync(`npx wrangler d1 create ${DB_NAME} --json`, {
+      const createOutput = execSync(`npx wrangler d1 create ${DB_NAME}`, {
         encoding: 'utf-8',
         stdio: ['pipe', 'pipe', 'pipe']
       });
-      const result = JSON.parse(createOutput);
-      dbId = result.uuid;
-      console.log(`✅ D1データベースを作成しました: ${dbId}\n`);
+
+      // 出力からUUIDを抽出（例: "database_id = \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\""）
+      const uuidMatch = createOutput.match(/database_id\s*=\s*"([a-f0-9-]{36})"/i);
+      if (uuidMatch) {
+        dbId = uuidMatch[1];
+        console.log(`✅ D1データベースを作成しました: ${dbId}\n`);
+      } else {
+        console.error('❌ D1データベースIDの抽出に失敗しました');
+        console.error('   出力:', createOutput);
+        throw new Error('Database ID not found in output');
+      }
     } catch (error) {
       console.error('❌ D1データベースの作成に失敗しました');
       console.error('   手動でCloudflareダッシュボードから作成してください');
