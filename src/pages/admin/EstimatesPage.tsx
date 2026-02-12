@@ -194,6 +194,12 @@ export function EstimatesPage() {
                 <p className="text-gray-500">メール</p>
                 <p>{selectedEstimate.customer_email}</p>
               </div>
+              {selectedEstimate.customer_phone && (
+                <div>
+                  <p className="text-gray-500">電話番号</p>
+                  <p>{selectedEstimate.customer_phone}</p>
+                </div>
+              )}
               <div>
                 <p className="text-gray-500">パートナー</p>
                 <p>{selectedEstimate.partner_name}</p>

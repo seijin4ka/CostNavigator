@@ -66,6 +66,7 @@ function PlusIcon({ className = "w-5 h-5" }: { className?: string }) {
 interface EstimateResult {
   reference_number: string;
   customer_name: string;
+  customer_phone: string | null;
   customer_company: string | null;
   partner_name: string;
   status: string;
@@ -91,6 +92,8 @@ const statusConfig: Record<string, { label: string; className: string }> = {
 
 export function EstimateResultPage() {
   const { partnerSlug } = useParams<{ partnerSlug: string }>();
+  const slug = partnerSlug || "direct";
+  const newEstimatePath = partnerSlug ? `/estimate/${partnerSlug}` : "/";
   const [searchParams] = useSearchParams();
   const ref = searchParams.get("ref");
   const [partner, setPartner] = useState<PartnerBranding | null>(null);
@@ -100,11 +103,11 @@ export function EstimateResultPage() {
   const [isDownloading, setIsDownloading] = useState(false);
 
   useEffect(() => {
-    if (!partnerSlug || !ref) return;
+    if (!ref) return;
     const fetchData = async () => {
       try {
         const [partnerRes, estimateRes] = await Promise.all([
-          apiClient.get<PartnerBranding>(`/public/${partnerSlug}`),
+          apiClient.get<PartnerBranding>(`/public/${slug}`),
           apiClient.get<EstimateResult>(`/public/estimates/${ref}`),
         ]);
         setPartner(partnerRes.data);
@@ -116,7 +119,7 @@ export function EstimateResultPage() {
       }
     };
     fetchData();
-  }, [partnerSlug, ref]);
+  }, [slug, ref]);
 
   // PDF生成（遅延読み込み）
   const handleDownloadPdf = async () => {
@@ -276,6 +279,9 @@ export function EstimateResultPage() {
             {estimate.customer_company && (
               <p className="text-sm text-slate-500 mt-0.5">{estimate.customer_company}</p>
             )}
+            {estimate.customer_phone && (
+              <p className="text-sm text-slate-500 mt-0.5">{estimate.customer_phone}</p>
+            )}
           </div>
 
           {/* 見積もり日 */}
@@ -401,7 +407,7 @@ export function EstimateResultPage() {
           style={{ animationDelay: "300ms" }}
         >
           <Link
-            to={`/estimate/${partnerSlug}`}
+            to={newEstimatePath}
             className="inline-flex items-center gap-2 text-sm font-semibold transition-colors hover:opacity-80 font-display"
             style={{ color: primaryColor }}
           >

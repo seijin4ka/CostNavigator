@@ -68,6 +68,7 @@ export class EstimateRepository {
     reference_number: string;
     customer_name: string;
     customer_email: string;
+    customer_phone: string | null;
     customer_company: string | null;
     notes: string | null;
     total_monthly: number;
@@ -76,8 +77,8 @@ export class EstimateRepository {
     const id = crypto.randomUUID();
     await this.db
       .prepare(
-        `INSERT INTO estimates (id, partner_id, reference_number, customer_name, customer_email, customer_company, notes, total_monthly, total_yearly)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        `INSERT INTO estimates (id, partner_id, reference_number, customer_name, customer_email, customer_phone, customer_company, notes, total_monthly, total_yearly)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
       )
       .bind(
         id,
@@ -85,6 +86,7 @@ export class EstimateRepository {
         data.reference_number,
         data.customer_name,
         data.customer_email,
+        data.customer_phone,
         data.customer_company,
         data.notes,
         data.total_monthly,

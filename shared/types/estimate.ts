@@ -11,6 +11,7 @@ export interface Estimate {
   reference_number: string;
   customer_name: string;
   customer_email: string;
+  customer_phone: string | null;
   customer_company: string | null;
   status: EstimateStatus;
   notes: string | null;
@@ -39,6 +40,7 @@ export interface EstimateItem {
 export const CreateEstimateSchema = z.object({
   customer_name: z.string().min(1, "お名前は必須です"),
   customer_email: z.string().email("有効なメールアドレスを入力してください"),
+  customer_phone: z.string().nullable().optional(),
   customer_company: z.string().nullable().optional(),
   notes: z.string().nullable().optional(),
   items: z

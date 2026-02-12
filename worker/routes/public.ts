@@ -99,6 +99,7 @@ publicApi.get("/estimates/:ref", async (c) => {
   return success(c, {
     reference_number: estimate.reference_number,
     customer_name: estimate.customer_name,
+    customer_phone: estimate.customer_phone,
     customer_company: estimate.customer_company,
     partner_name: estimate.partner_name,
     status: estimate.status,

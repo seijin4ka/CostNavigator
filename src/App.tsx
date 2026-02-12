@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/common/ProtectedRoute";
 import { AdminLayout } from "./components/layout/AdminLayout";
@@ -16,10 +16,11 @@ function App() {
   return (
     <AuthProvider>
       <Routes>
-        {/* ルートは管理画面にリダイレクト */}
-        <Route path="/" element={<Navigate to="/admin" replace />} />
+        {/* トップページ: ダイレクト見積もり（マークアップなし） */}
+        <Route path="/" element={<EstimatePage />} />
+        <Route path="/result" element={<EstimateResultPage />} />
 
-        {/* 公開ページ（エンドユーザー向け見積もりビルダー） */}
+        {/* パートナー経由の見積もり */}
         <Route path="/estimate/:partnerSlug" element={<EstimatePage />} />
         <Route path="/estimate/:partnerSlug/result" element={<EstimateResultPage />} />
 

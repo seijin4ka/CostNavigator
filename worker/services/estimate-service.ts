@@ -156,6 +156,7 @@ export class EstimateService {
       reference_number: referenceNumber,
       customer_name: request.customer_name,
       customer_email: request.customer_email,
+      customer_phone: request.customer_phone ?? null,
       customer_company: request.customer_company ?? null,
       notes: request.notes ?? null,
       total_monthly: totalMonthly,

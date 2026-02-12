@@ -69,6 +69,8 @@ function CheckIcon({ className = "w-4 h-4" }: { className?: string }) {
 
 export function EstimatePage() {
   const { partnerSlug } = useParams<{ partnerSlug: string }>();
+  const slug = partnerSlug || "direct";
+  const basePath = partnerSlug ? `/estimate/${partnerSlug}` : "";
   const navigate = useNavigate();
   const [partner, setPartner] = useState<PartnerBranding | null>(null);
   const [products, setProducts] = useState<PublicProduct[]>([]);
@@ -82,6 +84,7 @@ export function EstimatePage() {
   const [customerForm, setCustomerForm] = useState({
     customer_name: "",
     customer_email: "",
+    customer_phone: "",
     customer_company: "",
     notes: "",
   });
@@ -90,12 +93,11 @@ export function EstimatePage() {
 
   // パートナー情報と製品カタログを取得
   useEffect(() => {
-    if (!partnerSlug) return;
     const fetchData = async () => {
       try {
         const [partnerRes, productsRes] = await Promise.all([
-          apiClient.get<PartnerBranding>(`/public/${partnerSlug}`),
-          apiClient.get<PublicProduct[]>(`/public/${partnerSlug}/products`),
+          apiClient.get<PartnerBranding>(`/public/${slug}`),
+          apiClient.get<PublicProduct[]>(`/public/${slug}/products`),
         ]);
         setPartner(partnerRes.data);
         setProducts(productsRes.data);
@@ -109,7 +111,7 @@ export function EstimatePage() {
       }
     };
     fetchData();
-  }, [partnerSlug]);
+  }, [slug]);
 
   const categories = [...new Set(products.map((p) => p.category_name))];
   const filteredProducts = products.filter((p) => p.category_name === selectedCategory);
@@ -123,9 +125,10 @@ export function EstimatePage() {
     setError("");
     try {
       const res = await apiClient.post<{ reference_number: string }>(
-        `/public/${partnerSlug}/estimates`,
+        `/public/${slug}/estimates`,
         {
           ...customerForm,
+          customer_phone: customerForm.customer_phone || null,
           customer_company: customerForm.customer_company || null,
           notes: customerForm.notes || null,
           items: builder.items.map((item) => ({
@@ -136,7 +139,7 @@ export function EstimatePage() {
           })),
         }
       );
-      navigate(`/estimate/${partnerSlug}/result?ref=${res.data.reference_number}`);
+      navigate(`${basePath}/result?ref=${res.data.reference_number}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "見積もりの保存に失敗しました");
     } finally {
@@ -426,7 +429,7 @@ export function EstimatePage() {
                             <div className="flex items-center justify-between">
                               <div className="flex items-center">
                                 <button
-                                  onClick={() => builder.updateQuantity(index, Math.max(1, item.quantity - 1))}
+                                  onClick={() => item.quantity <= 1 ? builder.removeItem(index) : builder.updateQuantity(index, item.quantity - 1)}
                                   className="w-7 h-7 rounded-l-md border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50 transition-colors"
                                 >
                                   <MinusIcon className="w-3 h-3" />
@@ -495,7 +498,7 @@ export function EstimatePage() {
                           boxShadow: `0 4px 14px -3px ${primaryColor}66`,
                         }}
                       >
-                        見積もりを確定する
+                        見積もりを依頼する
                         <ArrowRightIcon className="w-4 h-4" />
                       </button>
                     </div>
@@ -523,7 +526,7 @@ export function EstimatePage() {
               className="px-5 py-2.5 rounded-lg text-sm font-bold text-white font-display transition-all hover:opacity-90"
               style={{ backgroundColor: primaryColor }}
             >
-              見積もりを確定
+              見積もりを依頼
             </button>
           </div>
         </div>
@@ -615,6 +618,20 @@ export function EstimatePage() {
 
               <div className="space-y-1.5">
                 <label className="block text-xs font-semibold text-slate-600 tracking-wide uppercase font-display">
+                  電話番号 <span className="text-slate-300">(任意)</span>
+                </label>
+                <input
+                  type="tel"
+                  value={customerForm.customer_phone}
+                  onChange={(e) => setCustomerForm((prev) => ({ ...prev, customer_phone: e.target.value }))}
+                  className="w-full px-4 py-2.5 rounded-lg border border-slate-200 text-sm text-slate-800 placeholder-slate-300 focus:outline-none focus:ring-2 focus:border-transparent transition-shadow font-body"
+                  style={{ "--tw-ring-color": `${primaryColor}33` } as CSSProperties}
+                  placeholder="例: 03-1234-5678"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold text-slate-600 tracking-wide uppercase font-display">
                   会社名 <span className="text-slate-300">(任意)</span>
                 </label>
                 <input
@@ -665,7 +682,7 @@ export function EstimatePage() {
                     </>
                   ) : (
                     <>
-                      見積もりを確定する
+                      見積もりを依頼する
                       <ArrowRightIcon className="w-4 h-4" />
                     </>
                   )}

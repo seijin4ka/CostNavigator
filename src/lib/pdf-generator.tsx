@@ -5,6 +5,7 @@ import { formatCurrency, formatDate } from "./formatters";
 interface EstimateResult {
   reference_number: string;
   customer_name: string;
+  customer_phone: string | null;
   customer_company: string | null;
   partner_name: string;
   total_monthly: number;
@@ -18,16 +19,31 @@ interface EstimateResult {
   }[];
 }
 
+// 日本語フォント登録済みフラグ
+let fontRegistered = false;
+
 // PDF生成（@react-pdf/rendererを遅延読み込み）
 export async function generateEstimatePdf(
   estimate: EstimateResult,
   partner: PartnerBranding
 ): Promise<void> {
   const ReactPDF = await import("@react-pdf/renderer");
-  const { Document, Page, Text, View, StyleSheet, pdf } = ReactPDF;
+  const { Document, Page, Text, View, StyleSheet, Font, pdf } = ReactPDF;
+
+  // 日本語フォント登録（初回のみ）
+  if (!fontRegistered) {
+    Font.register({
+      family: "NotoSansJP",
+      fonts: [
+        { src: "/fonts/NotoSansJP-Regular.ttf", fontWeight: 400 },
+        { src: "/fonts/NotoSansJP-Bold.ttf", fontWeight: 700 },
+      ],
+    });
+    fontRegistered = true;
+  }
 
   const styles = StyleSheet.create({
-    page: { padding: 40, fontFamily: "Helvetica", fontSize: 10 },
+    page: { padding: 40, fontFamily: "NotoSansJP", fontSize: 10 },
     header: { marginBottom: 30 },
     title: { fontSize: 20, fontWeight: "bold", marginBottom: 4 },
     subtitle: { fontSize: 10, color: "#666" },
@@ -86,6 +102,9 @@ export async function generateEstimatePdf(
             <Text style={styles.infoValue}>{estimate.customer_name}</Text>
             {estimate.customer_company && (
               <Text style={styles.infoValue}>{estimate.customer_company}</Text>
+            )}
+            {estimate.customer_phone && (
+              <Text style={styles.infoValue}>TEL: {estimate.customer_phone}</Text>
             )}
           </View>
           <View style={styles.infoBlock}>
