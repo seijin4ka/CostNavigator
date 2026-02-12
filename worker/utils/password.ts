@@ -40,10 +40,18 @@ export async function hashPassword(password: string): Promise<string> {
 
 // パスワードを検証
 export async function verifyPassword(password: string, storedHash: string): Promise<boolean> {
-  const [saltHex, hashHex] = storedHash.split(":");
+  // ハッシュ形式の検証（salt:hash の形式）
+  const parts = storedHash.split(":");
+  if (parts.length !== 2) return false;
+
+  const [saltHex, hashHex] = parts;
   if (!saltHex || !hashHex) return false;
 
-  const salt = new Uint8Array(saltHex.match(/.{2}/g)!.map((byte) => parseInt(byte, 16)));
+  // saltHexが正しい16進数文字列か検証
+  const saltBytes = saltHex.match(/.{2}/g);
+  if (!saltBytes || saltBytes.length !== SALT_LENGTH) return false;
+
+  const salt = new Uint8Array(saltBytes.map((byte) => parseInt(byte, 16)));
   const encoder = new TextEncoder();
   const keyMaterial = await crypto.subtle.importKey(
     "raw",

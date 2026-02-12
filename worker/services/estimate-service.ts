@@ -109,9 +109,15 @@ export class EstimateService {
 
     for (const item of request.items) {
       const product = await this.productRepo.findById(item.product_id);
-      if (!product) continue;
+      if (!product) {
+        throw new Error(`製品ID ${item.product_id} が見つかりません`);
+      }
 
       const tier = item.tier_id ? await this.tierRepo.findById(item.tier_id) : null;
+      // ティアIDが指定されているのにティアが見つからない場合はエラー
+      if (item.tier_id && !tier) {
+        throw new Error(`ティアID ${item.tier_id} が見つかりません`);
+      }
       const basePrice = tier?.base_price ?? 0;
 
       // 従量料金の計算
@@ -187,10 +193,17 @@ export class EstimateService {
     return Math.round((basePrice + markupValue) * 100) / 100;
   }
 
-  // 参照番号生成
+  // 参照番号生成（暗号学的に安全なランダム値を使用）
   private generateReferenceNumber(): string {
     const timestamp = Date.now().toString(36).toUpperCase();
-    const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+    // crypto.getRandomValues()で暗号学的に安全な8バイトランダム値を生成
+    const randomBytes = new Uint8Array(8);
+    crypto.getRandomValues(randomBytes);
+    const random = Array.from(randomBytes)
+      .map(b => b.toString(36).padStart(2, '0'))
+      .join('')
+      .substring(0, 8)
+      .toUpperCase();
     return `${ESTIMATE_REF_PREFIX}-${timestamp}-${random}`;
   }
 }

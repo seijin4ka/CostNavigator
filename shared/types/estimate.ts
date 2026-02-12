@@ -48,8 +48,8 @@ export const CreateEstimateSchema = z.object({
       z.object({
         product_id: z.string().min(1),
         tier_id: z.string().nullable().optional(),
-        quantity: z.number().int().min(1).default(1),
-        usage_quantity: z.number().min(0).nullable().optional(),
+        quantity: z.number().int().min(1).max(10000, "数量は10000以下で入力してください").default(1),
+        usage_quantity: z.number().min(0).max(1000000000, "従量は10億以下で入力してください").nullable().optional(),
       })
     )
     .min(1, "1つ以上の製品を選択してください"),

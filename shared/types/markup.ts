@@ -21,7 +21,10 @@ export const MarkupRuleSchema = z.object({
   product_id: z.string().nullable().optional(),
   tier_id: z.string().nullable().optional(),
   markup_type: MarkupType,
-  markup_value: z.number().min(0, "マークアップは0以上で入力してください"),
+  markup_value: z
+    .number()
+    .min(0, "マークアップは0以上で入力してください")
+    .max(1000, "マークアップは1000%以下で入力してください"),
 });
 export type MarkupRuleInput = z.infer<typeof MarkupRuleSchema>;
 

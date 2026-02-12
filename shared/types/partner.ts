@@ -32,7 +32,11 @@ export const PartnerSchema = z.object({
     .regex(/^#[0-9a-fA-F]{6}$/, "有効なカラーコードを入力してください")
     .default("#1B1B1B"),
   default_markup_type: z.enum(["percentage", "fixed"]).default("percentage"),
-  default_markup_value: z.number().min(0, "マークアップは0以上で入力してください").default(10),
+  default_markup_value: z
+    .number()
+    .min(0, "マークアップは0以上で入力してください")
+    .max(1000, "マークアップは1000%以下で入力してください")
+    .default(10),
   is_active: z.boolean().default(true),
 });
 export type PartnerInput = z.infer<typeof PartnerSchema>;

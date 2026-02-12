@@ -37,8 +37,17 @@ auth.get("/me", authMiddleware, async (c) => {
 });
 
 // 初期管理者作成（開発用・初回セットアップ用）
+// 注意: 本番環境ではこのエンドポイントを無効化すること
 auth.post("/setup", async (c) => {
   const service = new AuthService(c.env.DB, c.env.JWT_SECRET);
+
+  // 既にユーザーが存在する場合はエラー
+  const userRepo = new (await import("../repositories/user-repository")).UserRepository(c.env.DB);
+  const userCount = await userRepo.count();
+  if (userCount > 0) {
+    return error(c, "SETUP_ALREADY_COMPLETED", "セットアップは既に完了しています", 403);
+  }
+
   await service.ensureAdminExists();
   return success(c, { message: "初期管理者ユーザーをセットアップしました" });
 });
