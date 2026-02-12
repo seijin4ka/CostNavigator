@@ -20,7 +20,7 @@ AWS Pricing Calculator のように、エンドユーザーが Cloudflare 製品
 
 | レイヤー | 技術 |
 |----------|------|
-| フロントエンド | React 19 + React Router v7 + TailwindCSS v4 |
+| フロントエンド | React 19 + React Router v7 + TailwindCSS v4 + Plus Jakarta Sans / Noto Sans JP |
 | バックエンド | Cloudflare Workers + Hono (TypeScript) |
 | データベース | Cloudflare D1 (SQLite) |
 | PDF生成 | @react-pdf/renderer（クライアントサイド、遅延読み込み） |

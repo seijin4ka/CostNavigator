@@ -56,6 +56,16 @@ npm run db:migrate:remote -- migrations/XXXX.sql # 本番DB マイグレーシ�
 - API レスポンスは `{ success: true, data: T }` または `{ success: false, error: { code, message } }` の統一フォーマット
 - フロントエンドの UI コンポーネントは `src/components/ui/` に配置（Button, Input, Select, Card, Modal, Table）
 
+## デザインシステム（公開ページ）
+
+- フォント: Plus Jakarta Sans（見出し・数字） + Noto Sans JP（本文）
+- フォントユーティリティ: `font-display`（見出し用）/ `font-body`（本文用）は `src/index.css` の `@theme` で定義
+- パートナーカラーは CSS 変数 `--cn-accent` で管理し、ホバーエフェクト等で参照
+- 価格表示には `.cn-price` クラス（等幅数字 + Plus Jakarta Sans）を使用
+- アニメーション: `animate-cn-fade-up` / `animate-cn-fade-in` / `animate-cn-slide-up`
+- カスタムCSS: `.cn-tier-card`（ホバーエフェクト）/ `.cn-product-card`（シャドウ）/ `.cn-scrollbar`
+- 管理画面（admin/）は既存の共通UIコンポーネント（Button, Card 等）を使用
+
 ## Git ルール
 
 - 機能追加・修正毎に頻繁にコミットする
