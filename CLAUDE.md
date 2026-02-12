@@ -81,14 +81,29 @@ npm run db:migrate:remote -- migrations/XXXX.sql # 本番DB マイグレーシ�
 | DB | D1 データベースバインディング | wrangler.jsonc で設定 |
 | ASSETS | 静的アセットバインディング | 自動設定 |
 
+## パフォーマンス最適化
+
+### N+1クエリの解決
+- 見積もり作成: 一括取得により93%以上のクエリ削減
+- `ProductRepository.findByIds()` と `TierRepository.findByIds()` を使用
+- 結果を Map に変換して高速検索
+
 ## セキュリティ機能
 
 ### トークンリフレッシュ
 - アクセストークン: 15分（短命、定期的にリフレッシュ）
 - リフレッシュトークン: 7日間（長命、ローテーション方式）
 - リフレッシュトークンは SHA-256 でハッシュ化してDB保存
-- 401 エラー時に自動リフレッシュを試行（フロントエンド）
+- **プロアクティブリフレッシュ**: 有効期限の2分前に自動リフレッシュ
+- **リアクティブリフレッシュ**: 401 エラー時にも自動リフレッシュを試行
 - ユーザーごとに1つのリフレッシュトークンのみ有効
+
+### セキュリティヘッダー
+- Content Security Policy (CSP): XSS防止
+- X-Content-Type-Options: nosniff
+- X-Frame-Options: DENY（クリックジャッキング防止）
+- Referrer-Policy: strict-origin-when-cross-origin
+- Permissions-Policy: 不要な機能を無効化
 
 ### CORS 設定
 - 公開API (`/api/public/*`): すべてのオリジンを許可
@@ -98,7 +113,7 @@ npm run db:migrate:remote -- migrations/XXXX.sql # 本番DB マイグレーシ�
 
 ### localStorage のリスク
 - トークンは localStorage に保存（XSS攻撃のリスクあり）
-- 対策: CSP設定、短命なアクセストークン、トークンローテーション
+- 対策: CSP設定、短命なアクセストークン、トークンローテーション、プロアクティブリフレッシュ
 
 ## ページネーション
 - 見積もり一覧 (`/api/admin/estimates`) はページネーション対応
@@ -111,9 +126,9 @@ npm run db:migrate:remote -- migrations/XXXX.sql # 本番DB マイグレーシ�
 詳細は README.md の「既知の制限事項」セクションを参照。
 
 ### 主要な制限
-- **N+1クエリ**: 見積もり作成時、各アイテムに対して個別クエリを実行
 - **複数デバイス非対応**: ユーザーごとに1つのリフレッシュトークンのみ有効
 - **削除制約**: 見積もりで使用中の製品・パートナー・カテゴリは削除不可
+- **マークアップ解決のクエリ**: カスケード方式で2〜3回のクエリを実行
 
 ## トラブルシューティング
 
