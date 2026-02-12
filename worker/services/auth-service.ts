@@ -2,6 +2,7 @@ import { sign } from "hono/jwt";
 import { UserRepository } from "../repositories/user-repository";
 import { hashPassword, verifyPassword } from "../utils/password";
 import type { User, LoginResponse } from "../../shared/types";
+import { JWT } from "../../shared/constants";
 
 // 認証サービス
 export class AuthService {
@@ -44,7 +45,7 @@ export class AuthService {
       sub: user.id,
       email: user.email,
       role: user.role,
-      exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24, // 24時間有効
+      exp: Math.floor(Date.now() / 1000) + JWT.TTL_SECONDS,
     };
     return await sign(payload, this.jwtSecret);
   }

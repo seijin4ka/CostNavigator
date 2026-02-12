@@ -143,6 +143,27 @@ CostNavigator/
 | GET/DELETE | `/api/admin/estimates` | 見積もり管理 |
 | GET | `/api/admin/dashboard/stats` | ダッシュボード統計 |
 
+### エラーコード一覧
+
+APIは以下のエラーコードを返却します。
+
+| コード | 説明 | HTTPステータス |
+|--------|------|---------------|
+| `VALIDATION_ERROR` | リクエストボディのバリデーションエラー | 400 |
+| `INVALID_JSON` | JSONパースエラー | 400 |
+| `INVALID_STATUS` | 無効な見積もりステータス | 400 |
+| `PRODUCT_IN_USE` | 製品が見積もりで使用中のため削除不可 | 400 |
+| `UNAUTHORIZED` | 認証エラー（トークン未提供または無効） | 401 |
+| `INVALID_TOKEN` | JWT検証失敗 | 401 |
+| `SETUP_ALREADY_COMPLETED` | セットアップ済み（複数回実行不可） | 403 |
+| `NOT_FOUND` | リソースが見つからない | 404 |
+
+### 認証
+
+- 管理APIは`Authorization: Bearer <JWT>`ヘッダーが必須
+- JWT有効期限: 24時間
+- トークンリフレッシュ機能: 未実装（再ログインが必要）
+
 ## 本番デプロイ
 
 ```bash

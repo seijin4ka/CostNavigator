@@ -1,12 +1,11 @@
 // Web Crypto API を使用した PBKDF2 パスワードハッシュ
+import { PASSWORD_HASH } from "../../shared/constants";
 
-const ITERATIONS = 100000;
-const KEY_LENGTH = 256;
-const SALT_LENGTH = 16;
+const { ITERATIONS, KEY_LENGTH_BITS, SALT_LENGTH_BYTES, HASH } = PASSWORD_HASH;
 
 // パスワードをハッシュ化
 export async function hashPassword(password: string): Promise<string> {
-  const salt = crypto.getRandomValues(new Uint8Array(SALT_LENGTH));
+  const salt = crypto.getRandomValues(new Uint8Array(SALT_LENGTH_BYTES));
   const encoder = new TextEncoder();
   const keyMaterial = await crypto.subtle.importKey(
     "raw",
@@ -21,10 +20,10 @@ export async function hashPassword(password: string): Promise<string> {
       name: "PBKDF2",
       salt,
       iterations: ITERATIONS,
-      hash: "SHA-256",
+      hash: HASH,
     },
     keyMaterial,
-    KEY_LENGTH
+    KEY_LENGTH_BITS
   );
 
   const hashArray = new Uint8Array(derivedBits);
@@ -49,7 +48,7 @@ export async function verifyPassword(password: string, storedHash: string): Prom
 
   // saltHexが正しい16進数文字列か検証
   const saltBytes = saltHex.match(/.{2}/g);
-  if (!saltBytes || saltBytes.length !== SALT_LENGTH) return false;
+  if (!saltBytes || saltBytes.length !== SALT_LENGTH_BYTES) return false;
 
   const salt = new Uint8Array(saltBytes.map((byte) => parseInt(byte, 16)));
   const encoder = new TextEncoder();
@@ -66,10 +65,10 @@ export async function verifyPassword(password: string, storedHash: string): Prom
       name: "PBKDF2",
       salt,
       iterations: ITERATIONS,
-      hash: "SHA-256",
+      hash: HASH,
     },
     keyMaterial,
-    KEY_LENGTH
+    KEY_LENGTH_BITS
   );
 
   const computedHashHex = Array.from(new Uint8Array(derivedBits))

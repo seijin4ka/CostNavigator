@@ -57,6 +57,21 @@ products.delete("/:id", async (c) => {
   const existing = await repo.findById(c.req.param("id"));
   if (!existing) return error(c, "NOT_FOUND", "製品が見つかりません", 404);
 
+  // 見積もりで使用されていないか確認
+  const usageCheck = await c.env.DB
+    .prepare("SELECT COUNT(*) as count FROM estimate_items WHERE product_id = ?")
+    .bind(c.req.param("id"))
+    .first<{ count: number }>();
+
+  if (usageCheck && usageCheck.count > 0) {
+    return error(
+      c,
+      "PRODUCT_IN_USE",
+      "この製品は見積もりで使用されているため削除できません。is_activeをfalseに設定してください。",
+      400
+    );
+  }
+
   await repo.delete(c.req.param("id"));
   return success(c, { message: "製品を削除しました" });
 });

@@ -2,7 +2,9 @@ import { Hono } from "hono";
 import type { Env } from "../env";
 import { EstimateRepository } from "../repositories/estimate-repository";
 import { authMiddleware } from "../middleware/auth";
+import { validateBody } from "../utils/validation";
 import { success, error } from "../utils/response";
+import { UpdateEstimateStatusSchema } from "../../shared/types";
 
 const estimates = new Hono<{ Bindings: Env }>();
 
@@ -26,22 +28,14 @@ estimates.get("/:id", async (c) => {
 
 // 見積もりステータス更新
 estimates.put("/:id/status", async (c) => {
-  let body: { status: string };
-  try {
-    body = await c.req.json<{ status: string }>();
-  } catch {
-    return error(c, "INVALID_JSON", "リクエストボディのJSON形式が不正です", 400);
-  }
-  const validStatuses = ["draft", "sent", "accepted", "expired"];
-  if (!body.status || !validStatuses.includes(body.status)) {
-    return error(c, "INVALID_STATUS", "無効なステータスです", 400);
-  }
+  const data = await validateBody(c, UpdateEstimateStatusSchema);
+  if (!data) return c.res;
 
   const repo = new EstimateRepository(c.env.DB);
   const existing = await repo.findById(c.req.param("id"));
   if (!existing) return error(c, "NOT_FOUND", "見積もりが見つかりません", 404);
 
-  await repo.updateStatus(c.req.param("id"), body.status);
+  await repo.updateStatus(c.req.param("id"), data.status);
   return success(c, { message: "ステータスを更新しました" });
 });
 

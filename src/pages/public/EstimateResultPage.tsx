@@ -180,7 +180,8 @@ export function EstimateResultPage() {
     try {
       const { generateEstimatePdf } = await import("../../lib/pdf-generator");
       await generateEstimatePdf(estimate, partner);
-    } catch {
+    } catch (err) {
+      console.error("PDF生成エラー:", err);
       alert("PDF生成に失敗しました。ブラウザを更新して再試行してください。");
     } finally {
       setIsDownloading(false);

@@ -56,6 +56,12 @@ export const CreateEstimateSchema = z.object({
 });
 export type CreateEstimateRequest = z.infer<typeof CreateEstimateSchema>;
 
+// 見積もりステータス更新リクエスト
+export const UpdateEstimateStatusSchema = z.object({
+  status: EstimateStatus,
+});
+export type UpdateEstimateStatusRequest = z.infer<typeof UpdateEstimateStatusSchema>;
+
 // 見積もり詳細（明細付き）
 export interface EstimateWithItems extends Estimate {
   partner_name: string;

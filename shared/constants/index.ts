@@ -28,3 +28,6 @@ export const USAGE_UNIT_LABELS: Record<string, string> = {
   gb_storage: "ストレージ (GB)",
   million_requests: "百万リクエスト",
 } as const;
+
+// セキュリティ定数のre-export
+export { PASSWORD_HASH, JWT } from "./security";

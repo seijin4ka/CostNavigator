@@ -7,6 +7,39 @@ import { CreateEstimateSchema } from "../../shared/types";
 
 const publicApi = new Hono<{ Bindings: Env }>();
 
+// 注意: ルート定義順序が重要。具体的なパス（/estimates/:ref）を
+// 汎用パターン（/:partnerSlug）より前に配置すること。
+
+// 見積もり参照番号で取得（/:partnerSlugより前に配置必須）
+publicApi.get("/estimates/:ref", async (c) => {
+  const service = new EstimateService(c.env.DB);
+  const estimate = await service.getEstimateByReference(c.req.param("ref"));
+
+  if (!estimate) {
+    return error(c, "NOT_FOUND", "見積もりが見つかりません", 404);
+  }
+
+  // 公開情報のみ返却
+  return success(c, {
+    reference_number: estimate.reference_number,
+    customer_name: estimate.customer_name,
+    customer_phone: estimate.customer_phone,
+    customer_company: estimate.customer_company,
+    partner_name: estimate.partner_name,
+    status: estimate.status,
+    total_monthly: estimate.total_monthly,
+    total_yearly: estimate.total_yearly,
+    created_at: estimate.created_at,
+    items: estimate.items.map((item) => ({
+      product_name: item.product_name,
+      tier_name: item.tier_name,
+      quantity: item.quantity,
+      usage_quantity: item.usage_quantity,
+      final_price: item.final_price,
+    })),
+  });
+});
+
 // パートナー情報取得（ブランディング用）
 publicApi.get("/:partnerSlug", async (c) => {
   const service = new EstimateService(c.env.DB);
@@ -84,36 +117,6 @@ publicApi.post("/:partnerSlug/estimates", async (c) => {
       final_price: item.final_price,
     })),
   }, 201);
-});
-
-// 見積もり参照番号で取得
-publicApi.get("/estimates/:ref", async (c) => {
-  const service = new EstimateService(c.env.DB);
-  const estimate = await service.getEstimateByReference(c.req.param("ref"));
-
-  if (!estimate) {
-    return error(c, "NOT_FOUND", "見積もりが見つかりません", 404);
-  }
-
-  // 公開情報のみ返却
-  return success(c, {
-    reference_number: estimate.reference_number,
-    customer_name: estimate.customer_name,
-    customer_phone: estimate.customer_phone,
-    customer_company: estimate.customer_company,
-    partner_name: estimate.partner_name,
-    status: estimate.status,
-    total_monthly: estimate.total_monthly,
-    total_yearly: estimate.total_yearly,
-    created_at: estimate.created_at,
-    items: estimate.items.map((item) => ({
-      product_name: item.product_name,
-      tier_name: item.tier_name,
-      quantity: item.quantity,
-      usage_quantity: item.usage_quantity,
-      final_price: item.final_price,
-    })),
-  });
 });
 
 export default publicApi;
