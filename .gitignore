@@ -4,3 +4,9 @@ dist/
 .dev.vars
 *.local
 .DS_Store
+
+# TypeScript ビルドキャッシュ
+*.tsbuildinfo
+
+# テストアーティファクト
+.playwright-cli/
