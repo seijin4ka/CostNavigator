@@ -8,6 +8,8 @@ import productRoutes from "./routes/products";
 import tierRoutes from "./routes/tiers";
 import partnerRoutes from "./routes/partners";
 import markupRoutes from "./routes/markup";
+import publicRoutes from "./routes/public";
+import estimateRoutes from "./routes/estimates";
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -31,5 +33,9 @@ app.route("/api/admin/products", productRoutes);
 app.route("/api/admin/product-tiers", tierRoutes);
 app.route("/api/admin/partners", partnerRoutes);
 app.route("/api/admin/partners", markupRoutes);
+app.route("/api/admin/estimates", estimateRoutes);
+
+// 公開API（認証不要）
+app.route("/api/public", publicRoutes);
 
 export default app;

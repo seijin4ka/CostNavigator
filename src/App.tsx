@@ -8,6 +8,8 @@ import { ProductsPage } from "./pages/admin/ProductsPage";
 import { CategoriesPage } from "./pages/admin/CategoriesPage";
 import { PartnersPage } from "./pages/admin/PartnersPage";
 import { MarkupPage } from "./pages/admin/MarkupPage";
+import { EstimatePage } from "./pages/public/EstimatePage";
+import { EstimateResultPage } from "./pages/public/EstimateResultPage";
 
 function App() {
   return (
@@ -15,6 +17,10 @@ function App() {
       <Routes>
         {/* ルートは管理画面にリダイレクト */}
         <Route path="/" element={<Navigate to="/admin" replace />} />
+
+        {/* 公開ページ（エンドユーザー向け見積もりビルダー） */}
+        <Route path="/estimate/:partnerSlug" element={<EstimatePage />} />
+        <Route path="/estimate/:partnerSlug/result" element={<EstimateResultPage />} />
 
         {/* 管理画面ログイン */}
         <Route path="/admin/login" element={<LoginPage />} />
