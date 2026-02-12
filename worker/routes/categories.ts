@@ -57,6 +57,21 @@ categories.delete("/:id", async (c) => {
   const existing = await repo.findById(c.req.param("id"));
   if (!existing) return error(c, "NOT_FOUND", "カテゴリが見つかりません", 404);
 
+  // 製品で使用されていないか確認
+  const usageCheck = await c.env.DB
+    .prepare("SELECT COUNT(*) as count FROM products WHERE category_id = ?")
+    .bind(c.req.param("id"))
+    .first<{ count: number }>();
+
+  if (usageCheck && usageCheck.count > 0) {
+    return error(
+      c,
+      "CATEGORY_IN_USE",
+      "このカテゴリは製品で使用されているため削除できません",
+      400
+    );
+  }
+
   await repo.delete(c.req.param("id"));
   return success(c, { message: "カテゴリを削除しました" });
 });

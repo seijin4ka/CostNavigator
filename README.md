@@ -68,11 +68,16 @@ npm run dev
 curl -X POST http://localhost:5173/api/auth/setup
 ```
 
-### ログイン
+### ログイン（開発環境のみ）
 
 - URL: `http://localhost:5173/admin/login`
 - メール: `admin@costnavigator.dev`
 - パスワード: `admin1234`
+
+**警告**: デフォルト認証情報は開発環境専用です。本番環境では必ず以下を実施してください:
+- 初回ログイン後、すぐにパスワードを変更（ユーザー管理機能で変更）
+- `/api/auth/setup`エンドポイントへのアクセスを制限
+- 強力なパスワードポリシーを適用
 
 ### 見積もりページ
 
@@ -153,6 +158,9 @@ APIは以下のエラーコードを返却します。
 | `INVALID_JSON` | JSONパースエラー | 400 |
 | `INVALID_STATUS` | 無効な見積もりステータス | 400 |
 | `PRODUCT_IN_USE` | 製品が見積もりで使用中のため削除不可 | 400 |
+| `PARTNER_IN_USE` | パートナーが見積もりで使用中のため削除不可 | 400 |
+| `CATEGORY_IN_USE` | カテゴリが製品で使用中のため削除不可 | 400 |
+| `SYSTEM_PARTNER_DELETION` | システムパートナー（direct）は削除不可 | 400 |
 | `UNAUTHORIZED` | 認証エラー（トークン未提供または無効） | 401 |
 | `INVALID_TOKEN` | JWT検証失敗 | 401 |
 | `SETUP_ALREADY_COMPLETED` | セットアップ済み（複数回実行不可） | 403 |
@@ -166,21 +174,64 @@ APIは以下のエラーコードを返却します。
 
 ## 本番デプロイ
 
+### 1. 環境変数の準備
+
+**JWT_SECRET の生成**（必須）:
+```bash
+# 暗号学的に安全なランダム文字列を生成（最低32バイト推奨）
+openssl rand -hex 32
+
+# 生成された文字列をシークレットとして設定
+wrangler secret put JWT_SECRET
+# プロンプトが表示されたら、生成した文字列を貼り付け
+```
+
+**重要**: JWT_SECRETは絶対にコードにコミットしないでください。
+
+### 2. データベースのセットアップ
+
 ```bash
 # D1 データベース作成
 wrangler d1 create cost-navigator-db
 
-# wrangler.jsonc の database_id を更新
+# 出力されたdatabase_idをwrangler.jsonc に設定
+# wrangler.jsonc の "database_id": "placeholder-..." を実際のIDに置き換え
 
 # マイグレーション適用（本番）
 for f in migrations/*.sql; do npm run db:migrate:remote -- "$f"; done
+```
 
-# JWT シークレット設定
-wrangler secret put JWT_SECRET
+### 3. デプロイ
 
-# デプロイ
+```bash
+# プロジェクトをビルドしてデプロイ
 npm run deploy
 ```
+
+### 4. 初期管理者の作成と設定
+
+```bash
+# デプロイ後、初回のみセットアップエンドポイントを実行
+curl -X POST https://your-worker.workers.dev/api/auth/setup
+
+# すぐに管理画面にログイン
+# デフォルト認証情報: admin@costnavigator.dev / admin1234
+
+# ログイン後、必ず以下を実施:
+# 1. パスワードを強力なものに変更
+# 2. 必要に応じて追加の管理者ユーザーを作成
+# 3. /api/auth/setup エンドポイントへのアクセスを制限
+```
+
+### セキュリティチェックリスト
+
+本番デプロイ前に以下を確認してください:
+
+- [ ] JWT_SECRETを安全に生成・設定（wrangler secretで設定）
+- [ ] デフォルト管理者パスワードを変更
+- [ ] CORS設定を確認（必要に応じて`worker/index.ts`で制限）
+- [ ] 本番ドメインでHTTPS接続を確認
+- [ ] データベースバックアップ戦略を策定
 
 ## アーキテクチャ設計の重要な判断
 
@@ -194,9 +245,15 @@ npm run deploy
 
 詳細は `worker/repositories/markup-repository.ts` の `resolveMarkup()` を参照。
 
-### 見積もり明細のデータ非正規化
+### 見積もり明細のデータ非正規化と外部キー制約
 
 見積もり明細 (estimate_items) は製品名・ティア名を文字列として保存します（product_id/tier_idの外部キー参照のみではない）。これは履歴データの保全のための設計判断です。製品名が変更されても、過去の見積もりは作成時点の名称で表示されます。
+
+**外部キー制約について**:
+- `estimate_items`テーブルの`product_id`と`tier_id`には外部キー制約がありません
+- これは意図的な設計で、製品やティアが削除されても過去の見積もりデータを保持します
+- ただし、製品・ティア・パートナー・カテゴリの削除時には、見積もりでの使用状況をチェックし、使用中の場合は削除をブロックします
+- 削除が必要な場合は`is_active = false`に設定して非表示化してください
 
 ### 参照番号の生成
 

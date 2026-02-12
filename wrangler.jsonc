@@ -15,9 +15,7 @@
       "database_name": "cost-navigator-db",
       "database_id": "placeholder-will-be-set-on-deploy"
     }
-  ],
-  // 環境変数（デプロイ時にシークレットで上書き）
-  "vars": {
-    "JWT_SECRET": "dev-secret-change-in-production"
-  }
+  ]
+  // 注意: JWT_SECRETは本番環境でwrangler secretコマンドで設定すること
+  // 開発環境ではwrangler.dev.vars ファイルに設定（.gitignore済み）
 }

@@ -73,10 +73,23 @@ export const TierSchema = z.object({
     .string()
     .min(1, "スラッグは必須です")
     .regex(/^[a-z0-9-]+$/, "スラッグは英小文字、数字、ハイフンのみ使用可能です"),
-  base_price: z.number().min(0, "基本価格は0以上で入力してください"),
+  base_price: z
+    .number()
+    .min(0, "基本価格は0以上で入力してください")
+    .max(9999999.99, "基本価格は999万9999.99以下で入力してください"),
   usage_unit: z.string().nullable().optional(),
-  usage_unit_price: z.number().min(0).nullable().optional(),
-  usage_included: z.number().min(0).nullable().optional(),
+  usage_unit_price: z
+    .number()
+    .min(0)
+    .max(9999999.99, "従量単価は999万9999.99以下で入力してください")
+    .nullable()
+    .optional(),
+  usage_included: z
+    .number()
+    .min(0)
+    .max(1000000000, "従量含有量は10億以下で入力してください")
+    .nullable()
+    .optional(),
   display_order: z.number().int().min(0).default(0),
   is_active: z.boolean().default(true),
 });
