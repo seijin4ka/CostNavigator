@@ -7,7 +7,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && node scripts/prepare-deploy.js",
     "build:local": "vite build",
     "preview": "vite preview",
     "deploy": "npm run build && wrangler deploy",
