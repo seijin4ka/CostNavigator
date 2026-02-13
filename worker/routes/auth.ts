@@ -7,6 +7,7 @@ import { validateBody } from "../utils/validation";
 import { success, error } from "../utils/response";
 import { LoginSchema } from "../../shared/types";
 import { getJwtSecret } from "../utils/jwt-secret";
+import { autoMigrate } from "../utils/auto-migrate";
 
 // リフレッシュトークンリクエストスキーマ
 const RefreshTokenSchema = z.object({
@@ -65,21 +66,41 @@ auth.post("/refresh", async (c) => {
   });
 });
 
-// 初期管理者作成（開発用・初回セットアップ用）
-// 注意: 本番環境ではこのエンドポイントを無効化すること
+// 初期セットアップ（マイグレーション + 初期管理者作成）
 auth.post("/setup", async (c) => {
-  const jwtSecret = await getJwtSecret(c.env.DB, c.env.JWT_SECRET);
-  const service = new AuthService(c.env.DB, jwtSecret);
+  try {
+    // 1. データベースマイグレーションを自動実行
+    console.log("🔄 データベースマイグレーション開始");
+    await autoMigrate(c.env.DB);
+    console.log("✅ マイグレーション完了");
 
-  // 既にユーザーが存在する場合はエラー
-  const userRepo = new (await import("../repositories/user-repository")).UserRepository(c.env.DB);
-  const userCount = await userRepo.count();
-  if (userCount > 0) {
-    return error(c, "SETUP_ALREADY_COMPLETED", "セットアップは既に完了しています", 403);
+    // 2. 初期管理者ユーザーを作成
+    const jwtSecret = await getJwtSecret(c.env.DB, c.env.JWT_SECRET);
+    const service = new AuthService(c.env.DB, jwtSecret);
+
+    // 既にユーザーが存在する場合はメッセージを変更
+    const userRepo = new (await import("../repositories/user-repository")).UserRepository(c.env.DB);
+    const userCount = await userRepo.count();
+
+    if (userCount > 0) {
+      return success(c, {
+        message: "セットアップは既に完了しています（マイグレーションは実行されました）",
+        alreadySetup: true
+      });
+    }
+
+    await service.ensureAdminExists();
+    return success(c, {
+      message: "セットアップが完了しました。管理画面にログインしてください。",
+      credentials: {
+        email: "admin@costnavigator.dev",
+        password: "admin1234"
+      }
+    });
+  } catch (setupError) {
+    console.error("セットアップエラー:", setupError);
+    return error(c, "SETUP_FAILED", `セットアップに失敗しました: ${setupError}`, 500);
   }
-
-  await service.ensureAdminExists();
-  return success(c, { message: "初期管理者ユーザーをセットアップしました" });
 });
 
 export default auth;

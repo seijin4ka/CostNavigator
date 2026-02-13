@@ -54,45 +54,32 @@
 - 数分で完了します
 - D1データベースも自動的に作成されます
 
-#### ステップ6: データベースマイグレーション実行
+#### ステップ6: 自動セットアップ（ワンクリック）
 
-初回デプロイ後、データベーステーブルを作成する必要があります。
-
-**ローカル環境から実行:**
-
-```bash
-# Cloudflareにログイン
-npx wrangler login
-
-# マイグレーションを順番に実行（0001から0012まで）
-npm run db:migrate:remote -- migrations/0001_create_users.sql
-npm run db:migrate:remote -- migrations/0002_create_partners.sql
-# ... 以降すべてのマイグレーションファイルを0012まで順番に実行
-```
-
-または、一括実行:
-
-```bash
-npm run db:migrate:all
-```
-
-#### ステップ7: 初期管理者アカウント作成
-
-ブラウザで以下のURLにアクセス:
+デプロイ完了後、ブラウザで以下のURLにアクセス:
 
 ```
 https://your-worker-name.workers.dev/api/auth/setup
 ```
 
-初期管理者アカウントが作成されます:
-- Email: `admin@costnavigator.dev`
-- Password: `admin1234`
+このエンドポイントにアクセスすると、**自動的に**以下が実行されます:
+
+1. **データベースマイグレーション** - すべてのテーブルを自動作成
+2. **JWT_SECRET自動生成** - 暗号学的に安全なランダム値を生成・保存
+3. **初期管理者アカウント作成**
+   - Email: `admin@costnavigator.dev`
+   - Password: `admin1234`
+
+成功メッセージが表示されれば、セットアップ完了です。
+
+**重要**:
+- **Node.jsのインストールは不要**です
+- **手動でのマイグレーション実行は不要**です
+- **JWT_SECRET環境変数の設定は不要**です（自動生成されます）
 
 **⚠️ 必ずログイン後にパスワードを変更してください**
 
-**重要**: JWT_SECRETは初回アクセス時に自動生成され、データベースに安全に保存されます。環境変数での設定は不要です。
-
-#### ステップ8: アプリケーションにアクセス
+#### ステップ7: アプリケーションにアクセス
 
 ```
 https://your-worker-name.workers.dev/admin/login
