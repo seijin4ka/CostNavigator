@@ -440,18 +440,12 @@ export function EstimatePage() {
                 <h3 className="text-base font-semibold text-slate-900 font-display">セットアップ完了</h3>
               </div>
               <p className="text-sm text-slate-600 mb-4">
-                管理者アカウントが作成されました。以下の認証情報で管理画面にログインしてください。
+                管理者アカウントが作成されました。設定したメールアドレスとパスワードで管理画面にログインしてください。
               </p>
               {setupCredentials && (
-                <div className="bg-slate-50 rounded-lg p-4 mb-4 space-y-2 text-sm font-mono">
-                  <div>
-                    <span className="text-slate-500">メールアドレス:</span>
-                    <div className="text-slate-900 font-semibold">{setupCredentials.email}</div>
-                  </div>
-                  <div>
-                    <span className="text-slate-500">パスワード:</span>
-                    <div className="text-slate-900 font-semibold">{setupCredentials.password}</div>
-                  </div>
+                <div className="bg-slate-50 rounded-lg p-4 mb-4 text-sm">
+                  <span className="text-slate-500">登録メールアドレス:</span>
+                  <div className="text-slate-900 font-semibold font-mono mt-1">{setupCredentials.email}</div>
                 </div>
               )}
               <Link
