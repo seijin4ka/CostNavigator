@@ -65,12 +65,31 @@ try {
         stdio: ['pipe', 'pipe', 'pipe']
       });
 
-      // 出力からUUIDを抽出（例: "database_id = \"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\""）
-      const uuidMatch = createOutput.match(/database_id\s*=\s*"([a-f0-9-]{36})"/i);
-      if (uuidMatch) {
-        dbId = uuidMatch[1];
-        console.log(`✅ D1データベースを作成しました: ${dbId}\n`);
-      } else {
+      // wrangler v3の新しいJSON形式から抽出
+      // 形式: { "d1_databases": [{ "database_id": "..." }] }
+      const jsonMatch = createOutput.match(/\{[\s\S]*"d1_databases"[\s\S]*\}/);
+      if (jsonMatch) {
+        try {
+          const parsed = JSON.parse(jsonMatch[0]);
+          if (parsed.d1_databases && parsed.d1_databases[0]) {
+            dbId = parsed.d1_databases[0].database_id;
+            console.log(`✅ D1データベースを作成しました: ${dbId}\n`);
+          }
+        } catch (parseError) {
+          console.log('   JSON解析失敗、別の形式を試行中...');
+        }
+      }
+
+      // 旧形式も試行（後方互換性）
+      if (!dbId) {
+        const uuidMatch = createOutput.match(/database_id["\s:=]+([a-f0-9-]{36})/i);
+        if (uuidMatch) {
+          dbId = uuidMatch[1];
+          console.log(`✅ D1データベースを作成しました: ${dbId}\n`);
+        }
+      }
+
+      if (!dbId) {
         console.error('❌ D1データベースIDの抽出に失敗しました');
         console.error('   出力:', createOutput);
         throw new Error('Database ID not found in output');
