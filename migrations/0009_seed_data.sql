@@ -74,6 +74,6 @@ INSERT INTO product_tiers (id, product_id, name, slug, base_price, usage_unit, u
   ('tier-spectrum-pro', 'prod-spectrum', 'Pro', 'pro', 1, NULL, NULL, NULL, 1),
   ('tier-spectrum-ent', 'prod-spectrum', 'Enterprise', 'enterprise', 5000, NULL, NULL, NULL, 2);
 
--- デモ用パートナー
+-- デモ用パートナー（デフォルトマークアップ20% - 日本のMSSP市場標準）
 INSERT INTO partners (id, name, slug, primary_color, secondary_color, default_markup_type, default_markup_value) VALUES
-  ('partner-demo', 'デモパートナー', 'demo', '#F6821F', '#1B1B1B', 'percentage', 15);
+  ('partner-demo', 'デモパートナー', 'demo', '#F6821F', '#1B1B1B', 'percentage', 20);

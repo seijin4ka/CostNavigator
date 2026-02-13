@@ -2,6 +2,8 @@
   "name": "cost-navigator",
   "private": true,
   "version": "1.0.0",
+  "description": "Cloudflare MSSP パートナー向け予算見積もりサービス - パートナー企業が自社ブランドでCloudflareソリューションの見積もりを提供",
+  "keywords": ["cloudflare", "mssp", "partner", "estimate", "pricing", "workers", "d1", "react"],
   "type": "module",
   "scripts": {
     "dev": "vite",
