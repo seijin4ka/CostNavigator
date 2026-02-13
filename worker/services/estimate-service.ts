@@ -44,6 +44,34 @@ export class EstimateService {
     return this.partnerRepo.findBySlug(slug);
   }
 
+  // マークアップなし製品カタログ取得（パートナー未設定時用）
+  async getProductsWithoutMarkup(): Promise<ProductWithMarkupPrices[]> {
+    const products = await this.productRepo.findAllWithTiers();
+
+    // 有効な製品のみ、基本価格をそのまま使用
+    const result: ProductWithMarkupPrices[] = [];
+    for (const product of products) {
+      if (!product.is_active) continue;
+
+      const tiersWithPrice: TierWithMarkupPrice[] = [];
+      for (const tier of product.tiers) {
+        if (!tier.is_active) continue;
+
+        tiersWithPrice.push({
+          ...tier,
+          final_price: tier.base_price,
+          final_usage_unit_price: tier.usage_unit_price,
+        });
+      }
+
+      if (tiersWithPrice.length > 0) {
+        result.push({ ...product, tiers: tiersWithPrice });
+      }
+    }
+
+    return result;
+  }
+
   // マークアップ適用済み製品カタログ取得
   async getProductsWithMarkup(partner: Partner): Promise<ProductWithMarkupPrices[]> {
     const products = await this.productRepo.findAllWithTiers();

@@ -177,22 +177,30 @@ export function EstimatePage() {
 
   // パートナー情報と製品カタログを取得
   useEffect(() => {
-    if (!slug) return;
-
     const fetchData = async () => {
       try {
-        const [partnerRes, productsRes] = await Promise.all([
-          apiClient.get<PartnerBranding>(`/public/${slug}`),
-          apiClient.get<PublicProduct[]>(`/public/${slug}/products`),
-        ]);
-        setPartner(partnerRes.data);
-        setProducts(productsRes.data);
+        if (slug) {
+          // slug がある場合: パートナー情報とマークアップ適用済み製品を取得
+          const [partnerRes, productsRes] = await Promise.all([
+            apiClient.get<PartnerBranding>(`/public/${slug}`),
+            apiClient.get<PublicProduct[]>(`/public/${slug}/products`),
+          ]);
+          setPartner(partnerRes.data);
+          setProducts(productsRes.data);
+        } else {
+          // slug がない場合: マークアップなし製品のみを取得（プレビューモード）
+          const productsRes = await apiClient.get<PublicProduct[]>(`/public/products`);
+          setProducts(productsRes.data);
+          setPartner(null);
+        }
 
-        const categories = [...new Set(productsRes.data.map((p) => p.category_name))];
-        if (categories.length > 0) setSelectedCategory(categories[0]);
+        const categories = [...new Set(products.map((p) => p.category_name))];
+        if (categories.length > 0 && products.length > 0) {
+          setSelectedCategory(categories[0]);
+        }
       } catch (err) {
         console.error("見積もりページの読み込みエラー:", err);
-        setError("ページの読み込みに失敗しました。URLが正しいか確認してください。");
+        setError("ページの読み込みに失敗しました。");
       } finally {
         setIsLoading(false);
       }
@@ -234,57 +242,11 @@ export function EstimatePage() {
     }
   };
 
-  const primaryColor = partner?.primary_color ?? "#F6821F";
-  const secondaryColor = partner?.secondary_color ?? "#1B1B1B";
+  const primaryColor = partner?.primary_color ?? systemSettings?.primary_color ?? "#F6821F";
+  const secondaryColor = partner?.secondary_color ?? systemSettings?.secondary_color ?? "#1B1B1B";
 
   // 現在のステップ判定
   const currentStep = isSubmitModalOpen ? 2 : 1;
-
-  // --- primary_partner_slug が未設定の場合のセットアップ促進画面 ---
-  if (!partnerSlug && !slug && !isLoading) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center py-12">
-        <div className="max-w-md w-full mx-auto px-6">
-          <div className="text-center mb-8">
-            <div className="w-16 h-16 rounded-full bg-blue-50 flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
-              </svg>
-            </div>
-            <h2 className="text-xl font-semibold text-slate-900 font-display mb-2">パートナー情報の設定が必要です</h2>
-            <p className="text-sm text-slate-600 font-body leading-relaxed">
-              Cloudflare見積もりサービスをご利用いただくには、管理画面でパートナー情報を設定してください。
-            </p>
-          </div>
-
-          <div className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm">
-            <h3 className="text-base font-semibold text-slate-900 font-display mb-4">初期セットアップ手順</h3>
-            <ol className="space-y-3 text-sm text-slate-600 mb-6">
-              <li className="flex gap-3">
-                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs font-semibold">1</span>
-                <span>管理画面にログイン</span>
-              </li>
-              <li className="flex gap-3">
-                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs font-semibold">2</span>
-                <span>パートナー管理にて貴社の情報を登録</span>
-              </li>
-              <li className="flex gap-3">
-                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs font-semibold">3</span>
-                <span>システム設定でプライマリパートナーとして指定</span>
-              </li>
-            </ol>
-            <Link
-              to="/admin/login"
-              className="inline-flex items-center gap-2 w-full justify-center px-6 py-3 rounded-lg bg-blue-500 text-white font-semibold text-sm hover:bg-blue-600 transition-colors"
-            >
-              管理画面へ
-              <ArrowRightIcon className="w-4 h-4" />
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   // --- ローディング ---
   if (isLoading) {
@@ -673,17 +635,34 @@ export function EstimatePage() {
                       </div>
 
                       {/* CTAボタン */}
-                      <button
-                        onClick={() => setIsSubmitModalOpen(true)}
-                        className="mt-5 w-full flex items-center justify-center gap-2 py-3.5 rounded-lg text-sm font-bold text-white transition-all duration-200 hover:opacity-90 hover:shadow-lg font-display"
-                        style={{
-                          backgroundColor: primaryColor,
-                          boxShadow: `0 4px 14px -3px ${primaryColor}66`,
-                        }}
-                      >
-                        見積もりを依頼する
-                        <ArrowRightIcon className="w-4 h-4" />
-                      </button>
+                      {!slug ? (
+                        <div className="mt-5 space-y-3">
+                          <div className="text-center py-3 px-4 bg-amber-50 border border-amber-200 rounded-lg">
+                            <p className="text-xs text-amber-800 font-medium">
+                              見積もり作成には管理画面でパートナー情報の設定が必要です
+                            </p>
+                          </div>
+                          <Link
+                            to="/admin/login"
+                            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-lg text-sm font-bold text-white transition-all duration-200 hover:opacity-90 hover:shadow-lg font-display bg-blue-500"
+                          >
+                            管理画面へ
+                            <ArrowRightIcon className="w-4 h-4" />
+                          </Link>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setIsSubmitModalOpen(true)}
+                          className="mt-5 w-full flex items-center justify-center gap-2 py-3.5 rounded-lg text-sm font-bold text-white transition-all duration-200 hover:opacity-90 hover:shadow-lg font-display"
+                          style={{
+                            backgroundColor: primaryColor,
+                            boxShadow: `0 4px 14px -3px ${primaryColor}66`,
+                          }}
+                        >
+                          見積もりを依頼する
+                          <ArrowRightIcon className="w-4 h-4" />
+                        </button>
+                      )}
 
                       {/* 信頼シグナル */}
                       <div className="mt-3 flex items-center justify-center gap-3 text-[11px] text-slate-400">
@@ -717,13 +696,22 @@ export function EstimatePage() {
                 <span className="text-xs font-normal text-slate-400 ml-1">/月</span>
               </p>
             </div>
-            <button
-              onClick={() => setIsSubmitModalOpen(true)}
-              className="px-5 py-2.5 rounded-lg text-sm font-bold text-white font-display transition-all hover:opacity-90"
-              style={{ backgroundColor: primaryColor }}
-            >
-              見積もりを依頼
-            </button>
+            {!slug ? (
+              <Link
+                to="/admin/login"
+                className="px-5 py-2.5 rounded-lg text-sm font-bold text-white font-display transition-all hover:opacity-90 bg-blue-500"
+              >
+                管理画面へ
+              </Link>
+            ) : (
+              <button
+                onClick={() => setIsSubmitModalOpen(true)}
+                className="px-5 py-2.5 rounded-lg text-sm font-bold text-white font-display transition-all hover:opacity-90"
+                style={{ backgroundColor: primaryColor }}
+              >
+                見積もりを依頼
+              </button>
+            )}
           </div>
         </div>
       )}

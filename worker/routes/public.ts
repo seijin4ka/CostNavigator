@@ -26,6 +26,33 @@ publicApi.get("/system-settings", async (c) => {
   });
 });
 
+// 製品カタログ取得（マークアップなし、パートナー未設定時用）
+publicApi.get("/products", async (c) => {
+  const service = new EstimateService(c.env.DB);
+  // マークアップなしの基本価格で製品を取得
+  const products = await service.getProductsWithoutMarkup();
+
+  const publicProducts = products.map((p) => ({
+    id: p.id,
+    name: p.name,
+    slug: p.slug,
+    description: p.description,
+    category_name: p.category_name,
+    pricing_model: p.pricing_model,
+    tiers: p.tiers.map((t) => ({
+      id: t.id,
+      name: t.name,
+      slug: t.slug,
+      price: t.unit_price,
+      usage_unit: t.usage_unit,
+      usage_unit_price: t.usage_unit_price,
+      usage_included: t.usage_included,
+    })),
+  }));
+
+  return success(c, publicProducts);
+});
+
 // 見積もり参照番号で取得（/:partnerSlugより前に配置必須）
 publicApi.get("/estimates/:ref", async (c) => {
   const service = new EstimateService(c.env.DB);
