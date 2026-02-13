@@ -40,11 +40,13 @@
 
 | 項目 | 値 |
 |------|-----|
-| Project name | `costnavigator` または任意の名前 |
+| Project name | `cost-navigator-app` （レポジトリ名と異なる名前を推奨） |
 | Production branch | `main` |
 | Framework preset | None（デフォルト） |
 | Build command | `npm run build` |
 | Build output directory | `dist/cost_navigator` |
+
+**重要**: プロジェクト名は、forkしたレポジトリ名（`CostNavigator`）と異なる名前にしてください。同じ名前を使用すると、Cloudflare CI/CDでコンフリクトが発生します。
 
 **Deploy site** をクリック
 
