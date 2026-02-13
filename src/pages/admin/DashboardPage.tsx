@@ -8,13 +8,12 @@ interface DashboardStats {
   products_count: number;
   partners_count: number;
   estimates_count: number;
-  total_monthly_revenue: number;
-  total_yearly_revenue: number;
+  total_revenue: number;
   recent_estimates: {
     reference_number: string;
     customer_name: string;
     customer_company: string | null;
-    total_monthly: number;
+    total_amount: number;
     status: string;
     created_at: string;
     partner_name: string;
@@ -88,12 +87,9 @@ export function DashboardPage() {
         </Card>
         <Card>
           <div>
-            <p className="text-sm text-gray-500">月額合計</p>
+            <p className="text-sm text-gray-500">合計売上</p>
             <p className="text-2xl font-bold text-orange-500 mt-1">
-              {formatCurrency(stats?.total_monthly_revenue ?? 0)}
-            </p>
-            <p className="text-xs text-gray-400 mt-1">
-              年額: {formatCurrency(stats?.total_yearly_revenue ?? 0)}
+              {formatCurrency(stats?.total_revenue ?? 0)}
             </p>
           </div>
         </Card>
@@ -114,7 +110,7 @@ export function DashboardPage() {
                 <th className="text-left py-3 px-2 font-medium text-gray-500 text-xs uppercase">参照番号</th>
                 <th className="text-left py-3 px-2 font-medium text-gray-500 text-xs uppercase">お客様</th>
                 <th className="text-left py-3 px-2 font-medium text-gray-500 text-xs uppercase">パートナー</th>
-                <th className="text-right py-3 px-2 font-medium text-gray-500 text-xs uppercase">月額</th>
+                <th className="text-right py-3 px-2 font-medium text-gray-500 text-xs uppercase">金額</th>
                 <th className="text-left py-3 px-2 font-medium text-gray-500 text-xs uppercase">状態</th>
                 <th className="text-left py-3 px-2 font-medium text-gray-500 text-xs uppercase">日付</th>
               </tr>
@@ -130,7 +126,7 @@ export function DashboardPage() {
                     )}
                   </td>
                   <td className="py-3 px-2 text-gray-600">{est.partner_name}</td>
-                  <td className="py-3 px-2 text-right font-medium">{formatCurrency(est.total_monthly)}</td>
+                  <td className="py-3 px-2 text-right font-medium">{formatCurrency(est.total_amount)}</td>
                   <td className="py-3 px-2">
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[est.status] ?? ""}`}>
                       {statusLabels[est.status] ?? est.status}
