@@ -3,6 +3,7 @@ import { cors } from "hono/cors";
 import type { Context, Next } from "hono";
 import type { Env } from "./env";
 import { errorHandler } from "./middleware/error-handler";
+import { autoSetupMiddleware } from "./middleware/auto-setup";
 import authRoutes from "./routes/auth";
 import categoryRoutes from "./routes/categories";
 import productRoutes from "./routes/products";
@@ -15,6 +16,9 @@ import dashboardRoutes from "./routes/dashboard";
 import systemSettingsRoutes from "./routes/system-settings";
 
 const app = new Hono<{ Bindings: Env }>();
+
+// 初回リクエスト時に自動セットアップを実行
+app.use("*", autoSetupMiddleware);
 
 // セキュリティヘッダーミドルウェア
 app.use("*", async (c, next) => {
