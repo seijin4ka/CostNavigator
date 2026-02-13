@@ -69,6 +69,23 @@ function CheckIcon({ className = "w-4 h-4", style }: IconProps) {
   );
 }
 
+function EyeIcon({ className = "w-5 h-5", style }: IconProps) {
+  return (
+    <svg className={className} style={style} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+    </svg>
+  );
+}
+
+function EyeSlashIcon({ className = "w-5 h-5", style }: IconProps) {
+  return (
+    <svg className={className} style={style} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
+    </svg>
+  );
+}
+
 function ClockIcon({ className = "w-4 h-4", style }: IconProps) {
   return (
     <svg className={className} style={style} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -145,6 +162,9 @@ export function EstimatePage() {
   // 初期セットアップフォーム
   const [setupEmail, setSetupEmail] = useState("");
   const [setupPassword, setSetupPassword] = useState("");
+  const [setupPasswordConfirm, setSetupPasswordConfirm] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
   const [setupLoading, setSetupLoading] = useState(false);
   const [setupError, setSetupError] = useState("");
   const [setupComplete, setSetupComplete] = useState(false);
@@ -219,14 +239,20 @@ export function EstimatePage() {
     setSetupError("");
 
     // バリデーション
-    if (!setupEmail || !setupPassword) {
-      setSetupError("メールアドレスとパスワードを入力してください");
+    if (!setupEmail || !setupPassword || !setupPasswordConfirm) {
+      setSetupError("すべての項目を入力してください");
       setSetupLoading(false);
       return;
     }
 
     if (setupPassword.length < 8) {
       setSetupError("パスワードは8文字以上である必要があります");
+      setSetupLoading(false);
+      return;
+    }
+
+    if (setupPassword !== setupPasswordConfirm) {
+      setSetupError("パスワードが一致しません");
       setSetupLoading(false);
       return;
     }
@@ -321,15 +347,56 @@ export function EstimatePage() {
                   required
                   disabled={setupLoading}
                 />
-                <Input
-                  label="パスワード"
-                  type="password"
-                  value={setupPassword}
-                  onChange={(e) => setSetupPassword(e.target.value)}
-                  placeholder="8文字以上"
-                  required
-                  disabled={setupLoading}
-                />
+                <div className="space-y-1">
+                  <label htmlFor="setup-password" className="block text-sm font-medium text-gray-700">
+                    パスワード
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="setup-password"
+                      type={showPassword ? "text" : "password"}
+                      value={setupPassword}
+                      onChange={(e) => setSetupPassword(e.target.value)}
+                      placeholder="8文字以上"
+                      required
+                      disabled={setupLoading}
+                      className="block w-full rounded-lg border border-gray-300 px-3 py-2 pr-10 text-sm shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-orange-400"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                      tabIndex={-1}
+                    >
+                      {showPassword ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
+                    </button>
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <label htmlFor="setup-password-confirm" className="block text-sm font-medium text-gray-700">
+                    パスワード（確認）
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="setup-password-confirm"
+                      type={showPasswordConfirm ? "text" : "password"}
+                      value={setupPasswordConfirm}
+                      onChange={(e) => setSetupPasswordConfirm(e.target.value)}
+                      placeholder="パスワードを再入力"
+                      required
+                      disabled={setupLoading}
+                      className="block w-full rounded-lg border border-gray-300 px-3 py-2 pr-10 text-sm shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-orange-400"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPasswordConfirm(!showPasswordConfirm)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                      tabIndex={-1}
+                    >
+                      {showPasswordConfirm ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
+                    </button>
+                  </div>
+                </div>
                 {setupError && (
                   <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">
                     {setupError}
