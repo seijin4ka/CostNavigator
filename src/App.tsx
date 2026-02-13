@@ -2,6 +2,7 @@ import { Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/common/ProtectedRoute";
 import { AdminLayout } from "./components/layout/AdminLayout";
+import { HomePage } from "./pages/HomePage";
 import { LoginPage } from "./pages/admin/LoginPage";
 import { DashboardPage } from "./pages/admin/DashboardPage";
 import { ProductsPage } from "./pages/admin/ProductsPage";
@@ -17,9 +18,8 @@ function App() {
   return (
     <AuthProvider>
       <Routes>
-        {/* トップページ: ダイレクト見積もり（マークアップなし） */}
-        <Route path="/" element={<EstimatePage />} />
-        <Route path="/result" element={<EstimateResultPage />} />
+        {/* トップページ: システム設定に基づいて動的にルーティング */}
+        <Route path="/" element={<HomePage />} />
 
         {/* パートナー経由の見積もり */}
         <Route path="/estimate/:partnerSlug" element={<EstimatePage />} />
