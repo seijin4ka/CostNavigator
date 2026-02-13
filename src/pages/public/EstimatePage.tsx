@@ -8,7 +8,6 @@ import {
 import type { PartnerBranding, SystemSettings } from "@shared/types";
 import { USAGE_UNIT_LABELS } from "@shared/constants";
 import { formatCurrency, formatNumber } from "../../lib/formatters";
-import { Input } from "../../components/ui/Input";
 
 // --- SVGアイコン ---
 interface IconProps { className?: string; style?: CSSProperties }
@@ -65,23 +64,6 @@ function CheckIcon({ className = "w-4 h-4", style }: IconProps) {
   return (
     <svg className={className} style={style} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
       <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-    </svg>
-  );
-}
-
-function EyeIcon({ className = "w-5 h-5", style }: IconProps) {
-  return (
-    <svg className={className} style={style} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-    </svg>
-  );
-}
-
-function EyeSlashIcon({ className = "w-5 h-5", style }: IconProps) {
-  return (
-    <svg className={className} style={style} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
     </svg>
   );
 }
@@ -159,17 +141,6 @@ export function EstimatePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("");
 
-  // 初期セットアップフォーム
-  const [setupEmail, setSetupEmail] = useState("");
-  const [setupPassword, setSetupPassword] = useState("");
-  const [setupPasswordConfirm, setSetupPasswordConfirm] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
-  const [setupLoading, setSetupLoading] = useState(false);
-  const [setupError, setSetupError] = useState("");
-  const [setupComplete, setSetupComplete] = useState(false);
-  const [setupCredentials, setSetupCredentials] = useState<{ email: string; password: string } | null>(null);
-
   // 顧客情報フォーム
   const [customerForm, setCustomerForm] = useState({
     customer_name: "",
@@ -232,54 +203,6 @@ export function EstimatePage() {
   const categories = [...new Set(products.map((p) => p.category_name))];
   const filteredProducts = products.filter((p) => p.category_name === selectedCategory);
 
-  // 初期セットアップハンドラー
-  const handleSetup = async (e: FormEvent) => {
-    e.preventDefault();
-    setSetupLoading(true);
-    setSetupError("");
-
-    // バリデーション
-    if (!setupEmail || !setupPassword || !setupPasswordConfirm) {
-      setSetupError("すべての項目を入力してください");
-      setSetupLoading(false);
-      return;
-    }
-
-    if (setupPassword.length < 8) {
-      setSetupError("パスワードは8文字以上である必要があります");
-      setSetupLoading(false);
-      return;
-    }
-
-    if (setupPassword !== setupPasswordConfirm) {
-      setSetupError("パスワードが一致しません");
-      setSetupLoading(false);
-      return;
-    }
-
-    try {
-      const res = await apiClient.post<{
-        message: string;
-        credentials: { email: string; password: string };
-        alreadySetup?: boolean;
-      }>("/auth/setup", {
-        email: setupEmail,
-        password: setupPassword,
-      });
-
-      if (res.data.alreadySetup) {
-        setSetupError("セットアップは既に完了しています。管理画面にログインしてください。");
-      } else {
-        setSetupComplete(true);
-        setSetupCredentials(res.data.credentials);
-      }
-    } catch (err) {
-      setSetupError(err instanceof Error ? err.message : "セットアップに失敗しました");
-    } finally {
-      setSetupLoading(false);
-    }
-  };
-
   // 見積もり送信
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -330,133 +253,34 @@ export function EstimatePage() {
             </div>
             <h2 className="text-xl font-semibold text-slate-900 font-display mb-2">パートナー情報の設定が必要です</h2>
             <p className="text-sm text-slate-600 font-body leading-relaxed">
-              Cloudflare見積もりサービスをご利用いただくには、管理者アカウントを作成してください。
+              Cloudflare見積もりサービスをご利用いただくには、管理画面でパートナー情報を設定してください。
             </p>
           </div>
 
-          {!setupComplete ? (
-            <div className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm">
-              <h3 className="text-base font-semibold text-slate-900 font-display mb-4">管理者アカウント作成</h3>
-              <form onSubmit={handleSetup} className="space-y-4">
-                <Input
-                  label="メールアドレス"
-                  type="email"
-                  value={setupEmail}
-                  onChange={(e) => setSetupEmail(e.target.value)}
-                  placeholder="admin@example.com"
-                  required
-                  disabled={setupLoading}
-                />
-                <div className="space-y-1">
-                  <label htmlFor="setup-password" className="block text-sm font-medium text-gray-700">
-                    パスワード
-                  </label>
-                  <div className="relative">
-                    <input
-                      id="setup-password"
-                      type={showPassword ? "text" : "password"}
-                      value={setupPassword}
-                      onChange={(e) => setSetupPassword(e.target.value)}
-                      placeholder="8文字以上"
-                      required
-                      disabled={setupLoading}
-                      className="block w-full rounded-lg border border-gray-300 px-3 py-2 pr-10 text-sm shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-orange-400"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                      tabIndex={-1}
-                    >
-                      {showPassword ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
-                    </button>
-                  </div>
-                </div>
-                <div className="space-y-1">
-                  <label htmlFor="setup-password-confirm" className="block text-sm font-medium text-gray-700">
-                    パスワード（確認）
-                  </label>
-                  <div className="relative">
-                    <input
-                      id="setup-password-confirm"
-                      type={showPasswordConfirm ? "text" : "password"}
-                      value={setupPasswordConfirm}
-                      onChange={(e) => setSetupPasswordConfirm(e.target.value)}
-                      placeholder="パスワードを再入力"
-                      required
-                      disabled={setupLoading}
-                      className="block w-full rounded-lg border border-gray-300 px-3 py-2 pr-10 text-sm shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-orange-400"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPasswordConfirm(!showPasswordConfirm)}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                      tabIndex={-1}
-                    >
-                      {showPasswordConfirm ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
-                    </button>
-                  </div>
-                </div>
-                {setupError && (
-                  <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">
-                    {setupError}
-                  </div>
-                )}
-                <button
-                  type="submit"
-                  disabled={setupLoading}
-                  className="w-full px-6 py-3 rounded-lg bg-blue-500 text-white font-semibold text-sm hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {setupLoading ? "セットアップ中..." : "セットアップを開始"}
-                </button>
-              </form>
-
-              <div className="mt-6 pt-6 border-t border-slate-200">
-                <h4 className="text-sm font-semibold text-slate-700 font-display mb-3">セットアップ後の手順</h4>
-                <ol className="space-y-2 text-xs text-slate-600">
-                  <li className="flex gap-2">
-                    <span className="font-semibold text-blue-500">1.</span>
-                    <span>作成したアカウントで管理画面にログイン</span>
-                  </li>
-                  <li className="flex gap-2">
-                    <span className="font-semibold text-blue-500">2.</span>
-                    <span>パートナー管理にて貴社の情報を登録</span>
-                  </li>
-                  <li className="flex gap-2">
-                    <span className="font-semibold text-blue-500">3.</span>
-                    <span>システム設定でプライマリパートナーとして指定</span>
-                  </li>
-                </ol>
-              </div>
-            </div>
-          ) : (
-            <div className="bg-white rounded-lg border border-green-200 p-6 shadow-sm">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center">
-                  <svg className="w-6 h-6 text-green-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-                <h3 className="text-base font-semibold text-slate-900 font-display">セットアップ完了</h3>
-              </div>
-              <p className="text-sm text-slate-600 mb-4">
-                管理者アカウントが作成されました。設定したメールアドレスとパスワードで管理画面にログインしてください。
-              </p>
-              {setupCredentials && (
-                <div className="bg-slate-50 rounded-lg p-4 mb-4 text-sm">
-                  <span className="text-slate-500">登録メールアドレス:</span>
-                  <div className="text-slate-900 font-semibold font-mono mt-1">{setupCredentials.email}</div>
-                </div>
-              )}
-              <Link
-                to="/admin/login"
-                className="inline-flex items-center gap-2 w-full justify-center px-6 py-3 rounded-lg bg-blue-500 text-white font-semibold text-sm hover:bg-blue-600 transition-colors"
-              >
-                管理画面へログイン
-                <ArrowRightIcon className="w-4 h-4" />
-              </Link>
-            </div>
-          )}
+          <div className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm">
+            <h3 className="text-base font-semibold text-slate-900 font-display mb-4">初期セットアップ手順</h3>
+            <ol className="space-y-3 text-sm text-slate-600 mb-6">
+              <li className="flex gap-3">
+                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs font-semibold">1</span>
+                <span>管理画面にログイン</span>
+              </li>
+              <li className="flex gap-3">
+                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs font-semibold">2</span>
+                <span>パートナー管理にて貴社の情報を登録</span>
+              </li>
+              <li className="flex gap-3">
+                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs font-semibold">3</span>
+                <span>システム設定でプライマリパートナーとして指定</span>
+              </li>
+            </ol>
+            <Link
+              to="/admin/login"
+              className="inline-flex items-center gap-2 w-full justify-center px-6 py-3 rounded-lg bg-blue-500 text-white font-semibold text-sm hover:bg-blue-600 transition-colors"
+            >
+              管理画面へ
+              <ArrowRightIcon className="w-4 h-4" />
+            </Link>
+          </div>
         </div>
       </div>
     );
