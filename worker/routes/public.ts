@@ -1,14 +1,30 @@
 import { Hono } from "hono";
 import type { Env } from "../env";
 import { EstimateService } from "../services/estimate-service";
+import { SystemSettingsService } from "../services/system-settings-service";
 import { validateBody } from "../utils/validation";
 import { success, error } from "../utils/response";
 import { CreateEstimateSchema } from "../../shared/types";
 
 const publicApi = new Hono<{ Bindings: Env }>();
 
-// 注意: ルート定義順序が重要。具体的なパス（/estimates/:ref）を
+// 注意: ルート定義順序が重要。具体的なパス（/estimates/:ref, /system-settings）を
 // 汎用パターン（/:partnerSlug）より前に配置すること。
+
+// システム設定取得（ブランディング用、公開情報のみ）
+publicApi.get("/system-settings", async (c) => {
+  const service = new SystemSettingsService(c.env.DB);
+  const settings = await service.getSettings();
+
+  // 公開情報のみ返却
+  return success(c, {
+    brand_name: settings.brand_name,
+    logo_url: settings.logo_url,
+    primary_color: settings.primary_color,
+    secondary_color: settings.secondary_color,
+    footer_text: settings.footer_text,
+  });
+});
 
 // 見積もり参照番号で取得（/:partnerSlugより前に配置必須）
 publicApi.get("/estimates/:ref", async (c) => {
