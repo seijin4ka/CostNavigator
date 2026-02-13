@@ -9,13 +9,12 @@
     "not_found_handling": "single-page-application"
   },
   // D1データベースバインディング
-  // 注意: database_idはビルド時に自動的に設定されます（scripts/prepare-deploy.js）
+  // database_nameを指定することで、Cloudflare Workers CI/CDが自動的に同名のD1データベースを探してBindingを設定します
   // ローカル開発では自動的に.wrangler/state/v3/d1に作成されます
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "cost-navigator-db",
-      "database_id": "placeholder-will-be-set-on-deploy"
+      "database_name": "cost-navigator-db"
     }
   ]
   // 注意: JWT_SECRETは本番環境でCloudflareダッシュボードまたはwrangler secretコマンドで設定すること
