@@ -2,6 +2,10 @@
 
 Cloudflare MSSPパートナー向けの予算見積もりサービス。パートナー企業が自社ブランドでCloudflareソリューションの見積もりを提供できます。
 
+**提供元**: Cloudflare公認パートナー [アクセリア株式会社（Accelia, Inc.）](https://accelia.net)
+
+CostNavigatorは、MSSPパートナー企業がCloudflareサービスを再販する際に、各社のブランドで顧客向け見積もりを提供できるプラットフォームです。
+
 ## 主な機能
 
 ### パートナー向け機能
