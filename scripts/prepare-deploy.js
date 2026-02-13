@@ -19,7 +19,7 @@ const __dirname = path.dirname(__filename);
 const DB_NAME = 'cost-navigator-db';
 
 // Cloudflare Vite plugin の出力先を自動検出
-// プロジェクト名 "cost-navigator-app" は "costnavigator" に正規化される
+// プロジェクト名のハイフンを除去して正規化（例: "costnavigator" → "costnavigator"）
 const wranglerConfigPath = path.join(__dirname, '../wrangler.jsonc');
 const wranglerConfig = JSON.parse(fs.readFileSync(wranglerConfigPath, 'utf-8').replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, ''));
 const projectName = wranglerConfig.name.replace(/-/g, ''); // ハイフンを除去して正規化
