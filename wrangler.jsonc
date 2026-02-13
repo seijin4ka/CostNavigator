@@ -1,5 +1,5 @@
 {
-  "name": "cost-navigator",
+  "name": "costnavigator",
   "compatibility_date": "2025-01-01",
   "main": "./worker/index.ts",
   // 静的アセット設定（SPAルーティング対応）
