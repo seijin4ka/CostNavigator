@@ -54,31 +54,7 @@
 - 数分で完了します
 - D1データベースも自動的に作成されます
 
-#### ステップ6: JWT_SECRETを設定
-
-デプロイ完了後、環境変数を設定します：
-
-1. デプロイされたWorkerの **Settings** タブを開く
-2. **Variables and Secrets** セクションまでスクロール
-3. **Environment Variables** で **Add variable** をクリック
-   - Type: **Secret** を選択
-   - Variable name: `JWT_SECRET`
-   - Value: 以下のコマンドで生成した値を貼り付け
-
-```bash
-# ローカルで実行してJWT_SECRETを生成
-openssl rand -base64 64
-```
-
-4. **Encrypt** をクリック
-
-#### ステップ7: 再デプロイ（JWT_SECRET反映のため）
-
-1. **Deployments** タブを開く
-2. 最新のデプロイメントの右側にある **...** メニューをクリック
-3. **Retry deployment** を選択
-
-#### ステップ8: データベースマイグレーション実行
+#### ステップ6: データベースマイグレーション実行
 
 初回デプロイ後、データベーステーブルを作成する必要があります。
 
@@ -100,7 +76,7 @@ npm run db:migrate:remote -- migrations/0002_create_partners.sql
 npm run db:migrate:all
 ```
 
-#### ステップ9: 初期管理者アカウント作成
+#### ステップ7: 初期管理者アカウント作成
 
 ブラウザで以下のURLにアクセス:
 
@@ -114,7 +90,9 @@ https://your-worker-name.workers.dev/api/auth/setup
 
 **⚠️ 必ずログイン後にパスワードを変更してください**
 
-#### ステップ10: アプリケーションにアクセス
+**重要**: JWT_SECRETは初回アクセス時に自動生成され、データベースに安全に保存されます。環境変数での設定は不要です。
+
+#### ステップ8: アプリケーションにアクセス
 
 ```
 https://your-worker-name.workers.dev/admin/login
@@ -149,14 +127,10 @@ npx wrangler login
 # 4. ビルドとデプロイ
 npm run deploy
 
-# 5. JWT_SECRETを設定
-npx wrangler secret put JWT_SECRET
-# 生成した値を入力
-
-# 6. データベースマイグレーション
+# 5. データベースマイグレーション
 npm run db:migrate:all
 
-# 7. 初期管理者作成
+# 6. 初期管理者作成
 curl -X POST https://your-worker-name.workers.dev/api/auth/setup
 ```
 
@@ -199,9 +173,10 @@ curl -X POST https://your-worker-name.workers.dev/api/auth/setup
 **原因**: JWT_SECRETが設定されていない、またはデータベースが初期化されていない
 
 **解決方法**:
-1. JWT_SECRETが設定されているか確認（Workers設定 > Environment Variables）
-2. マイグレーションが実行されているか確認
+1. マイグレーション0013（JWT_SECRET追加）が実行されているか確認
+2. すべてのマイグレーションが実行されているか確認
 3. `/api/auth/setup` にアクセスして初期管理者を作成
+4. カスタムJWT_SECRETを使用している場合、環境変数が正しく設定されているか確認
 
 ### データベースが空
 

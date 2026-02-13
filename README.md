@@ -63,7 +63,7 @@ npm run db:migrate:local -- migrations/0009_seed_data.sql
 npm run db:migrate:local -- migrations/0010_add_customer_phone.sql
 npm run db:migrate:local -- migrations/0011_system_settings.sql
 npm run db:migrate:local -- migrations/0012_create_refresh_tokens.sql
-npm run db:migrate:local -- migrations/0012_create_refresh_tokens.sql
+npm run db:migrate:local -- migrations/0013_add_jwt_secret_to_system_settings.sql
 
 # 開発サーバー起動
 npm run dev
@@ -200,7 +200,12 @@ APIは以下のエラーコードを返却します。
 
 ### 1. 環境変数の準備
 
-**JWT_SECRET の生成**（必須）:
+**JWT_SECRET の設定**（オプション）:
+
+JWT_SECRETは初回起動時に自動生成され、データベースに安全に保存されます。環境変数での設定は不要です。
+
+カスタムのJWT_SECRETを使用したい場合のみ、以下の手順で設定してください:
+
 ```bash
 # 暗号学的に安全なランダム文字列を生成（最低32バイト推奨）
 openssl rand -hex 32
@@ -210,7 +215,7 @@ wrangler secret put JWT_SECRET
 # プロンプトが表示されたら、生成した文字列を貼り付け
 ```
 
-**重要**: JWT_SECRETは絶対にコードにコミットしないでください。
+**重要**: 環境変数でJWT_SECRETを設定した場合、それがデータベースの値より優先されます。
 
 **ALLOWED_ORIGINS の設定**（本番環境推奨）:
 ```bash
@@ -298,7 +303,7 @@ CostNavigatorは、各パートナーが独自のサイトとしてデプロイ�
 
 本番デプロイ前に以下を確認してください:
 
-- [ ] JWT_SECRETを安全に生成・設定（wrangler secretで設定）
+- [ ] JWT_SECRETが自動生成されていることを確認（オプション: カスタム値を環境変数で設定）
 - [ ] ALLOWED_ORIGINSを設定（本番ドメインをカンマ区切りで指定）
 - [ ] デフォルト管理者パスワードを変更
 - [ ] 本番ドメインでHTTPS接続を確認
@@ -423,7 +428,8 @@ npm run db:migrate:local -- migrations/0001_create_users.sql
 1. ブラウザの開発者ツールで localStorage をクリア
 2. ブラウザのキャッシュをクリア
 3. `/api/auth/me` に直接アクセスして、エラーメッセージを確認
-4. JWT_SECRET が正しく設定されているか確認（`.dev.vars` または `wrangler secret`）
+4. マイグレーション0013（JWT_SECRET追加）が実行されているか確認
+5. カスタムJWT_SECRETを使用している場合、環境変数が正しく設定されているか確認
 
 ### トークンが自動更新されない
 

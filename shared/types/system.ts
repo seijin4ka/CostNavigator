@@ -11,6 +11,11 @@ export interface SystemSettings {
   updated_at: string;
 }
 
+// システム設定の内部型（JWT_SECRETを含む）
+export interface SystemSettingsInternal extends SystemSettings {
+  jwt_secret: string | null;
+}
+
 // システム設定更新リクエスト
 export interface UpdateSystemSettingsRequest {
   brand_name?: string;
