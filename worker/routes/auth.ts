@@ -14,6 +14,12 @@ const RefreshTokenSchema = z.object({
   refreshToken: z.string().min(1, "リフレッシュトークンが必要です"),
 });
 
+// 初期セットアップリクエストスキーマ（オプショナル）
+const SetupSchema = z.object({
+  email: z.string().email("有効なメールアドレスを入力してください").optional(),
+  password: z.string().min(8, "パスワードは8文字以上である必要があります").optional(),
+});
+
 const auth = new Hono<{ Bindings: Env }>();
 
 // ログイン
@@ -69,6 +75,10 @@ auth.post("/refresh", async (c) => {
 // 初期セットアップ（マイグレーション + 初期管理者作成）
 auth.post("/setup", async (c) => {
   try {
+    // リクエストボディから email と password を取得（オプショナル）
+    const data = await validateBody(c, SetupSchema);
+    if (!data) return c.res;
+
     // 1. データベースマイグレーションを自動実行
     console.log("🔄 データベースマイグレーション開始");
     await autoMigrate(c.env.DB);
@@ -77,9 +87,9 @@ auth.post("/setup", async (c) => {
     // 2. 初期管理者ユーザーを作成
     const jwtSecret = await getJwtSecret(c.env.DB, c.env.JWT_SECRET);
     const service = new AuthService(c.env.DB, jwtSecret);
+    const userRepo = new (await import("../repositories/user-repository")).UserRepository(c.env.DB);
 
     // 既にユーザーが存在する場合はメッセージを変更
-    const userRepo = new (await import("../repositories/user-repository")).UserRepository(c.env.DB);
     const userCount = await userRepo.count();
 
     if (userCount > 0) {
@@ -89,12 +99,18 @@ auth.post("/setup", async (c) => {
       });
     }
 
-    await service.ensureAdminExists();
+    // カスタムの email と password が提供された場合はそれを使用、そうでない場合はデフォルト
+    const email = data.email || "admin@costnavigator.dev";
+    const password = data.password || "admin1234";
+
+    const passwordHash = await (await import("../utils/password")).hashPassword(password);
+    await userRepo.create(email, passwordHash, "管理者", "super_admin");
+
     return success(c, {
       message: "セットアップが完了しました。管理画面にログインしてください。",
       credentials: {
-        email: "admin@costnavigator.dev",
-        password: "admin1234"
+        email,
+        password
       }
     });
   } catch (setupError) {
