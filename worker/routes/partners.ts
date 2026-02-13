@@ -63,11 +63,6 @@ partners.delete("/:id", async (c) => {
   const existing = await repo.findById(c.req.param("id"));
   if (!existing) return error(c, "NOT_FOUND", "パートナーが見つかりません", 404);
 
-  // システムパートナー（direct）は削除不可
-  if (existing.slug === "direct") {
-    return error(c, "SYSTEM_PARTNER_DELETION", "システムパートナーは削除できません", 400);
-  }
-
   // 見積もりで使用されていないか確認
   const usageCheck = await c.env.DB
     .prepare("SELECT COUNT(*) as count FROM estimates WHERE partner_id = ?")

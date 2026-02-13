@@ -88,10 +88,10 @@ openssl rand -base64 64
 # Cloudflareにログイン
 npx wrangler login
 
-# マイグレーションを順番に実行
-npm run db:migrate:remote -- migrations/0001_initial_schema.sql
-npm run db:migrate:remote -- migrations/0002_refresh_tokens.sql
-# ... 以降すべてのマイグレーションファイルを実行
+# マイグレーションを順番に実行（0001から0012まで）
+npm run db:migrate:remote -- migrations/0001_create_users.sql
+npm run db:migrate:remote -- migrations/0002_create_partners.sql
+# ... 以降すべてのマイグレーションファイルを0012まで順番に実行
 ```
 
 または、一括実行:

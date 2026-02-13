@@ -17,9 +17,11 @@ AWS Pricing Calculator のように、エンドユーザーが Cloudflare 製品
 - **製品カタログ管理** - Cloudflare 製品・ティア（Free/Pro/Business/Enterprise）のCRUD管理
 - **パートナー管理** - 再販パートナーごとのブランディング設定（ロゴ、カラー）
 - **マークアップ設定** - パートナー×製品×ティアの3段階カスケード方式マークアップ
+- **システム設定** - サイト全体のブランディング（ブランド名、ロゴ、カラー、フッター）とデフォルトパートナー設定
 - **公開見積もりビルダー** - パートナー専用URLでエンドユーザーが見積もり作成
 - **PDF出力** - パートナーブランド入りの見積もりPDFをクライアントサイドで生成
 - **管理ダッシュボード** - 統計情報、見積もり一覧・詳細（マークアップ額を管理者のみ表示）
+- **パートナー独自サイト対応** - 各パートナーが独自ドメインで運用可能、原価漏洩を防止
 
 ## 技術スタック
 
@@ -58,8 +60,9 @@ npm run db:migrate:local -- migrations/0006_create_markup_rules.sql
 npm run db:migrate:local -- migrations/0007_create_estimates.sql
 npm run db:migrate:local -- migrations/0008_create_estimate_items.sql
 npm run db:migrate:local -- migrations/0009_seed_data.sql
-npm run db:migrate:local -- migrations/0010_system_direct_partner.sql
-npm run db:migrate:local -- migrations/0011_add_customer_phone.sql
+npm run db:migrate:local -- migrations/0010_add_customer_phone.sql
+npm run db:migrate:local -- migrations/0011_system_settings.sql
+npm run db:migrate:local -- migrations/0012_create_refresh_tokens.sql
 npm run db:migrate:local -- migrations/0012_create_refresh_tokens.sql
 
 # 開発サーバー起動
@@ -87,8 +90,13 @@ curl -X POST http://localhost:5173/api/auth/setup
 
 ### 見積もりページ
 
-- URL: `http://localhost:5173/`（ダイレクト見積もり / マークアップなし）
-- URL: `http://localhost:5173/estimate/demo`（デモパートナー経由）
+- URL: `http://localhost:5173/`（システム設定のデフォルトパートナーに基づいて動的にルーティング）
+  - デフォルトパートナーが設定されている場合: そのパートナーの見積もりページを表示
+  - 未設定の場合: 管理画面ログインページにリダイレクト
+- URL: `http://localhost:5173/estimate/demo`（デモパートナー経由で直接アクセス）
+
+**注**: パートナー毎に独自のサイトとしてデプロイすることを推奨します。
+詳細は「パートナー独自サイトのデプロイ」セクションを参照してください。
 
 ## プロジェクト構成
 
@@ -129,6 +137,7 @@ CostNavigator/
 | メソッド | パス | 説明 |
 |----------|------|------|
 | GET | `/api/health` | ヘルスチェック |
+| GET | `/api/public/system-settings` | システム設定取得（ブランディング情報） |
 | GET | `/api/public/:slug` | パートナーブランディング情報 |
 | GET | `/api/public/:slug/products` | マークアップ適用済み製品カタログ |
 | POST | `/api/public/:slug/estimates` | 見積もり作成 |
@@ -154,6 +163,7 @@ CostNavigator/
 | CRUD | `/api/admin/partners/:id/markup-rules` | マークアップルール管理 |
 | GET/DELETE | `/api/admin/estimates` | 見積もり管理 |
 | GET | `/api/admin/dashboard/stats` | ダッシュボード統計 |
+| GET/PUT | `/api/admin/system-settings` | システム設定管理（ブランディング、デフォルトパートナー） |
 
 ### エラーコード一覧
 
@@ -167,7 +177,6 @@ APIは以下のエラーコードを返却します。
 | `PRODUCT_IN_USE` | 製品が見積もりで使用中のため削除不可 | 400 |
 | `PARTNER_IN_USE` | パートナーが見積もりで使用中のため削除不可 | 400 |
 | `CATEGORY_IN_USE` | カテゴリが製品で使用中のため削除不可 | 400 |
-| `SYSTEM_PARTNER_DELETION` | システムパートナー（direct）は削除不可 | 400 |
 | `UNAUTHORIZED` | 認証エラー（トークン未提供または無効） | 401 |
 | `INVALID_TOKEN` | JWT検証失敗 | 401 |
 | `INVALID_CREDENTIALS` | メールアドレスまたはパスワードが正しくない | 401 |
@@ -252,6 +261,38 @@ curl -X POST https://your-worker.workers.dev/api/auth/setup
 # 2. 必要に応じて追加の管理者ユーザーを作成
 # 3. /api/auth/setup エンドポイントへのアクセスを制限
 ```
+
+## パートナー独自サイトのデプロイ
+
+CostNavigatorは、各パートナーが独自のサイトとしてデプロイできるように設計されています。
+これにより、原価漏洩を防ぎながら、パートナーが自社ブランドでサービスを提供できます。
+
+### 設定手順
+
+1. **パートナー情報の作成**
+   - 管理画面にログイン `/admin/login`
+   - パートナー管理 `/admin/partners` でパートナーを作成
+   - ブランドカラー、ロゴURL、マークアップ設定を入力
+
+2. **システム設定の変更**
+   - システム設定 `/admin/settings` を開く
+   - ブランド名を変更（例: "Partner Solutions"）
+   - ロゴURL、カラーを設定
+   - フッターテキストを変更（例: "Powered by Partner Solutions"）
+   - **デフォルトパートナー**を選択（作成したパートナーを指定）
+   - 保存
+
+3. **動作確認**
+   - トップページ `/` にアクセス
+   - 選択したパートナーの見積もりページが表示される
+   - 原価は表示されず、マークアップ適用済み価格のみ表示される
+   - ブランディングが反映されている
+
+### 複数パートナーでの運用
+
+- 同一インスタンスで複数のパートナーを管理することも可能
+- 各パートナーに専用URL `/estimate/:partnerSlug` を提供
+- ただし、パートナー間で価格比較が可能になるため、**独自サイトとしてのデプロイを推奨**
 
 ### セキュリティチェックリスト
 
