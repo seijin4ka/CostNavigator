@@ -76,45 +76,65 @@ auth.post("/refresh", async (c) => {
 auth.post("/setup", async (c) => {
   try {
     // リクエストボディから email と password を取得（オプショナル）
+    console.log("📝 セットアップリクエスト受信");
     const data = await validateBody(c, SetupSchema);
     if (!data) return c.res;
 
     // 1. データベースマイグレーションを自動実行
-    console.log("🔄 データベースマイグレーション開始");
-    await autoMigrate(c.env.DB);
-    console.log("✅ マイグレーション完了");
-
-    // 2. 初期管理者ユーザーを作成
-    const jwtSecret = await getJwtSecret(c.env.DB, c.env.JWT_SECRET);
-    const service = new AuthService(c.env.DB, jwtSecret);
-    const userRepo = new (await import("../repositories/user-repository")).UserRepository(c.env.DB);
-
-    // 既にユーザーが存在する場合はメッセージを変更
-    const userCount = await userRepo.count();
-
-    if (userCount > 0) {
-      return success(c, {
-        message: "セットアップは既に完了しています（マイグレーションは実行されました）",
-        alreadySetup: true
-      });
+    try {
+      console.log("🔄 データベースマイグレーション開始");
+      await autoMigrate(c.env.DB);
+      console.log("✅ マイグレーション完了");
+    } catch (migrateError) {
+      console.error("❌ マイグレーションエラー:", migrateError);
+      throw new Error(`マイグレーション失敗: ${migrateError}`);
     }
 
-    // カスタムの email と password が提供された場合はそれを使用、そうでない場合はデフォルト
-    const email = data.email || "admin@costnavigator.dev";
-    const password = data.password || "admin1234";
+    // 2. 初期管理者ユーザーを作成
+    try {
+      console.log("🔑 JWT Secret取得中");
+      const jwtSecret = await getJwtSecret(c.env.DB, c.env.JWT_SECRET);
+      console.log("✅ JWT Secret取得完了");
 
-    const passwordHash = await (await import("../utils/password")).hashPassword(password);
-    await userRepo.create(email, passwordHash, "管理者", "super_admin");
+      const userRepo = new (await import("../repositories/user-repository")).UserRepository(c.env.DB);
 
-    return success(c, {
-      message: "セットアップが完了しました。管理画面にログインしてください。",
-      credentials: {
-        email,
-        password
+      // 既にユーザーが存在する場合はメッセージを変更
+      console.log("👤 既存ユーザー数チェック中");
+      const userCount = await userRepo.count();
+      console.log(`✅ 既存ユーザー数: ${userCount}`);
+
+      if (userCount > 0) {
+        return success(c, {
+          message: "セットアップは既に完了しています（マイグレーションは実行されました）",
+          alreadySetup: true
+        });
       }
-    });
+
+      // カスタムの email と password が提供された場合はそれを使用、そうでない場合はデフォルト
+      const email = data.email || "admin@costnavigator.dev";
+      const password = data.password || "admin1234";
+
+      console.log("🔐 パスワードハッシュ化中");
+      const passwordHash = await (await import("../utils/password")).hashPassword(password);
+      console.log("✅ パスワードハッシュ化完了");
+
+      console.log("👤 ユーザー作成中");
+      await userRepo.create(email, passwordHash, "管理者", "super_admin");
+      console.log("✅ ユーザー作成完了");
+
+      return success(c, {
+        message: "セットアップが完了しました。管理画面にログインしてください。",
+        credentials: {
+          email,
+          password
+        }
+      });
+    } catch (userCreateError) {
+      console.error("❌ ユーザー作成エラー:", userCreateError);
+      throw new Error(`ユーザー作成失敗: ${userCreateError}`);
+    }
   } catch (setupError) {
-    console.error("セットアップエラー:", setupError);
+    console.error("❌ セットアップエラー:", setupError);
     return error(c, "SETUP_FAILED", `セットアップに失敗しました: ${setupError}`, 500);
   }
 });
