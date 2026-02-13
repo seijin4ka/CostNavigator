@@ -311,8 +311,16 @@ async function runMigration(
   console.log(`マイグレーション実行中: ${migration.name}`);
 
   try {
-    // マイグレーションSQLを実行
-    await db.exec(migration.sql);
+    // マイグレーションSQLを複数のステートメントに分割して実行
+    const statements = migration.sql
+      .split(';')
+      .map(s => s.trim())
+      .filter(s => s.length > 0);
+
+    // 各ステートメントを個別に実行
+    for (const statement of statements) {
+      await db.prepare(statement).run();
+    }
 
     // マイグレーション履歴を記録
     await db
@@ -335,13 +343,13 @@ export async function autoMigrate(db: D1Database): Promise<void> {
 
   try {
     // schema_migrationsテーブルを作成（存在しない場合）
-    await db.exec(`
+    await db.prepare(`
       CREATE TABLE IF NOT EXISTS schema_migrations (
         version INTEGER PRIMARY KEY,
         name TEXT NOT NULL,
         executed_at TEXT NOT NULL
-      );
-    `);
+      )
+    `).run();
 
     const currentVersion = await getCurrentSchemaVersion(db);
     console.log(`現在のスキーマバージョン: ${currentVersion}`);
