@@ -159,8 +159,13 @@ export function EstimatePage() {
         try {
           const res = await apiClient.get<SystemSettings>("/public/system-settings");
           setSystemSettings(res.data);
+          // primary_partner_slug が未設定の場合は isLoading を false に
+          if (!res.data.primary_partner_slug) {
+            setIsLoading(false);
+          }
         } catch (err) {
           console.error("システム設定の読み込みエラー:", err);
+          setIsLoading(false);
         }
       };
       fetchSettings();
