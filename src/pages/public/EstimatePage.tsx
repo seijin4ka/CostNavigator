@@ -250,26 +250,24 @@ export function EstimatePage() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
             </svg>
           </div>
-          <h2 className="text-xl font-semibold text-slate-900 font-display mb-3">初期設定が必要です</h2>
+          <h2 className="text-xl font-semibold text-slate-900 font-display mb-3">パートナー情報の設定が必要です</h2>
           <p className="text-sm text-slate-600 font-body mb-6 leading-relaxed">
-            見積もりページを表示するには、管理画面でパートナー情報を設定してください。
-            <br />
-            パートナー情報を登録し、システム設定でデフォルトパートナーを指定する必要があります。
+            Cloudflare見積もりサービスをご利用いただくには、貴社のパートナー情報を管理画面で設定してください。
           </p>
           <div className="bg-white rounded-lg border border-slate-200 p-5 text-left mb-6">
-            <h3 className="text-sm font-semibold text-slate-700 font-display mb-3">セットアップ手順</h3>
+            <h3 className="text-sm font-semibold text-slate-700 font-display mb-3">初期セットアップ手順</h3>
             <ol className="space-y-2 text-sm text-slate-600">
               <li className="flex gap-2">
                 <span className="font-semibold text-blue-500">1.</span>
-                <span>管理画面にログイン</span>
+                <span>下記ボタンから管理画面にログイン</span>
               </li>
               <li className="flex gap-2">
                 <span className="font-semibold text-blue-500">2.</span>
-                <span>パートナー管理で自社パートナー情報を登録</span>
+                <span>パートナー管理にて貴社の情報を登録</span>
               </li>
               <li className="flex gap-2">
                 <span className="font-semibold text-blue-500">3.</span>
-                <span>システム設定でデフォルトパートナーを指定</span>
+                <span>システム設定でプライマリパートナーとして指定</span>
               </li>
             </ol>
           </div>
