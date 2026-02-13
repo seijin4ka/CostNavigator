@@ -76,9 +76,9 @@ npm run db:migrate:remote -- migrations/XXXX.sql # 本番DB マイグレーシ�
 
 | 変数名 | 説明 | 設定方法 |
 |--------|------|----------|
-| JWT_SECRET | JWT 署名キー（必須） | wrangler secret put JWT_SECRET |
+| JWT_SECRET | JWT 署名キー（オプション、自動生成される） | wrangler secret put JWT_SECRET |
 | ALLOWED_ORIGINS | CORS許可オリジン（カンマ区切り、本番推奨） | wrangler secret put ALLOWED_ORIGINS |
-| DB | D1 データベースバインディング | wrangler.jsonc で設定 |
+| DB | D1 データベースバインディング（初回デプロイ時は手動設定が必要） | Cloudflareダッシュボードで設定 |
 | ASSETS | 静的アセットバインディング | 自動設定 |
 
 ## パフォーマンス最適化
@@ -135,17 +135,18 @@ npm run db:migrate:remote -- migrations/XXXX.sql # 本番DB マイグレーシ�
 問題が発生した場合は、README.md の「トラブルシューティング」セクションを参照。
 
 ### よくある問題
-- マイグレーションエラー → `.wrangler/state/` を削除して再試行
-- ログイン失敗 → localStorage をクリア、JWT_SECRET を確認
-- CORS エラー → ALLOWED_ORIGINS の設定を確認
+- **初回アクセス時のエラー** → D1 Bindingが正しく設定されているか確認
+- **ログイン失敗** → localStorage をクリア、ブラウザキャッシュをクリア
+- **CORS エラー** → ALLOWED_ORIGINS の設定を確認
 
 ## テスト確認手順
 
 1. `/api/health` でヘルスチェック確認
-2. `/admin/login` で管理画面ログイン
-3. 製品・パートナー・マークアップの CRUD 操作
-4. `/admin/settings` でシステム設定を編集（ブランディング、デフォルトパートナー）
-5. `/` でトップページ表示（デフォルトパートナーの見積もりページまたは管理画面へリダイレクト）
-6. `/estimate/demo` でパートナー経由の見積もりページ表示
-7. 見積もり作成 → 結果表示 → PDF ダウンロード
-8. トークンリフレッシュの自動動作確認（15分後）
+2. `/admin/login` で管理画面にアクセス（初回アクセス時に自動セットアップ実行）
+3. 初期管理者アカウントでログイン（`admin@costnavigator.dev` / `admin1234`）
+4. 製品・パートナー・マークアップの CRUD 操作
+5. `/admin/settings` でシステム設定を編集（ブランディング、デフォルトパートナー）
+6. `/` でトップページ表示（デフォルトパートナーの見積もりページまたは管理画面へリダイレクト）
+7. `/estimate/demo` でパートナー経由の見積もりページ表示
+8. 見積もり作成 → 結果表示 → PDF ダウンロード
+9. トークンリフレッシュの自動動作確認（15分後）

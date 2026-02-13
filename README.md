@@ -50,43 +50,30 @@ AWS Pricing Calculator のように、エンドユーザーが Cloudflare 製品
 # 依存関係インストール
 npm install
 
-# D1 データベースをローカルに作成・マイグレーション
-npm run db:migrate:local -- migrations/0001_create_users.sql
-npm run db:migrate:local -- migrations/0002_create_partners.sql
-npm run db:migrate:local -- migrations/0003_create_product_categories.sql
-npm run db:migrate:local -- migrations/0004_create_products.sql
-npm run db:migrate:local -- migrations/0005_create_product_tiers.sql
-npm run db:migrate:local -- migrations/0006_create_markup_rules.sql
-npm run db:migrate:local -- migrations/0007_create_estimates.sql
-npm run db:migrate:local -- migrations/0008_create_estimate_items.sql
-npm run db:migrate:local -- migrations/0009_seed_data.sql
-npm run db:migrate:local -- migrations/0010_add_customer_phone.sql
-npm run db:migrate:local -- migrations/0011_system_settings.sql
-npm run db:migrate:local -- migrations/0012_create_refresh_tokens.sql
-npm run db:migrate:local -- migrations/0013_add_jwt_secret_to_system_settings.sql
-
 # 開発サーバー起動
 npm run dev
 ```
 
-### 初期セットアップ
+開発サーバー起動後、ブラウザで以下にアクセス:
 
-開発サーバー起動後、管理者ユーザーを作成します。
-
-```bash
-curl -X POST http://localhost:5173/api/auth/setup
+```
+http://localhost:5173/admin/login
 ```
 
-### ログイン（開発環境のみ）
+**初回アクセス時に自動的に**以下が実行されます:
+- データベースマイグレーション（全13個）
+- JWT_SECRET自動生成
+- 初期管理者アカウント作成
+
+ログイン画面が表示されたら、セットアップ完了です。
+
+### ログイン（開発環境）
 
 - URL: `http://localhost:5173/admin/login`
-- メール: `admin@costnavigator.dev`
-- パスワード: `admin1234`
+- Email: `admin@costnavigator.dev`
+- Password: `admin1234`
 
-**警告**: デフォルト認証情報は開発環境専用です。本番環境では必ず以下を実施してください:
-- 初回ログイン後、すぐにパスワードを変更（ユーザー管理機能で変更）
-- `/api/auth/setup`エンドポイントへのアクセスを制限
-- 強力なパスワードポリシーを適用
+**重要**: 初回ログイン後、必ずパスワードを変更してください。
 
 ### 見積もりページ
 
@@ -107,7 +94,7 @@ CostNavigator/
 ├── vite.config.ts                # Vite + Cloudflare + TailwindCSS 設定
 ├── wrangler.jsonc                # Cloudflare Workers 設定（D1バインディング）
 ├── tsconfig.json                 # TypeScript 設定（app/worker 分割）
-├── migrations/                   # D1 SQL マイグレーション（0001〜0011）
+├── migrations/                   # D1 SQL マイグレーション（0001〜0013、自動実行）
 ├── shared/                       # フロント・バックエンド共有
 │   ├── types/                    # 型定義 + Zod スキーマ
 │   └── constants/                # 定数（通貨、ページネーション等）
@@ -150,7 +137,7 @@ CostNavigator/
 | POST | `/api/auth/login` | ログイン（アクセストークン + リフレッシュトークン発行） |
 | POST | `/api/auth/refresh` | トークンリフレッシュ（リフレッシュトークンを使って新しいアクセストークンを取得） |
 | GET | `/api/auth/me` | ユーザー情報取得（認証必須） |
-| POST | `/api/auth/setup` | 初期管理者作成（初回のみ） |
+| POST | `/api/auth/setup` | 手動セットアップ（通常は不要、初回アクセス時に自動実行される） |
 
 ### 管理API（JWT認証必須）
 
@@ -198,74 +185,70 @@ APIは以下のエラーコードを返却します。
 
 ## 本番デプロイ
 
-### 1. 環境変数の準備
+### 推奨デプロイ方法: Cloudflare Workers CI/CD（GitHub連携）
 
-**JWT_SECRET の設定**（オプション）:
+最も簡単なデプロイ方法です。**GitHubにpushするだけ**で自動的にデプロイされます。
 
-JWT_SECRETは初回起動時に自動生成され、データベースに安全に保存されます。環境変数での設定は不要です。
+詳細は [DEPLOYMENT.md](./DEPLOYMENT.md) を参照してください。
 
-カスタムのJWT_SECRETを使用したい場合のみ、以下の手順で設定してください:
+**デプロイ手順の概要**:
+
+1. GitHubリポジトリをCloudflare Workers CI/CDに接続
+2. GitHubにpush → 自動ビルド・デプロイ（D1データベースも自動作成）
+3. （初回のみ）Cloudflareダッシュボードで D1 Binding を設定
+4. 管理画面にアクセス → **自動的にセットアップ完了**
+
+**Node.jsのインストール不要、マイグレーション実行不要、環境変数設定不要**です。
+
+### 手動デプロイ方法（ローカル環境から）
+
+開発者向けの方法です。
 
 ```bash
-# 暗号学的に安全なランダム文字列を生成（最低32バイト推奨）
-openssl rand -hex 32
+# 1. Cloudflareにログイン
+npx wrangler login
 
-# 生成された文字列をシークレットとして設定
-wrangler secret put JWT_SECRET
-# プロンプトが表示されたら、生成した文字列を貼り付け
+# 2. ビルドしてデプロイ
+npm run deploy
 ```
 
-**重要**: 環境変数でJWT_SECRETを設定した場合、それがデータベースの値より優先されます。
+デプロイ後、管理画面にアクセス:
+```
+https://your-worker-name.workers.dev/admin/login
+```
 
-**ALLOWED_ORIGINS の設定**（本番環境推奨）:
+初回アクセス時に自動的に:
+- データベースマイグレーション実行
+- JWT_SECRET自動生成
+- 初期管理者アカウント作成（`admin@costnavigator.dev` / `admin1234`）
+
+が完了します。
+
+### 環境変数（オプション）
+
+#### ALLOWED_ORIGINS（本番環境推奨）
+
 ```bash
-# 管理画面・認証APIへのアクセスを許可するオリジンをカンマ区切りで設定
 wrangler secret put ALLOWED_ORIGINS
 # 例: https://admin.example.com,https://costnavigator.example.com
-
-# 未設定の場合: 開発モード（localhostからのアクセスを許可）
-# 公開API (/api/public/*) は常にすべてのオリジンを許可（パートナー埋め込み対応）
 ```
 
-**注意**:
 - 管理API (`/api/admin/*`) と認証API (`/api/auth/*`) は ALLOWED_ORIGINS で指定されたオリジンからのみアクセス可能
 - 公開API (`/api/public/*`) はすべてのオリジンからアクセス可能（パートナー向け埋め込み対応）
 - 開発環境では ALLOWED_ORIGINS 未設定時に `http://localhost:*` からのアクセスを自動許可
 
-### 2. データベースのセットアップ
+#### JWT_SECRET（オプション）
+
+JWT_SECRETは初回起動時に**自動生成**され、データベースに保存されます。環境変数での設定は不要です。
+
+カスタムのJWT_SECRETを使用したい場合のみ:
 
 ```bash
-# D1 データベース作成
-wrangler d1 create cost-navigator-db
-
-# 出力されたdatabase_idをwrangler.jsonc に設定
-# wrangler.jsonc の "database_id": "placeholder-..." を実際のIDに置き換え
-
-# マイグレーション適用（本番）
-for f in migrations/*.sql; do npm run db:migrate:remote -- "$f"; done
+openssl rand -hex 32
+wrangler secret put JWT_SECRET
 ```
 
-### 3. デプロイ
-
-```bash
-# プロジェクトをビルドしてデプロイ
-npm run deploy
-```
-
-### 4. 初期管理者の作成と設定
-
-```bash
-# デプロイ後、初回のみセットアップエンドポイントを実行
-curl -X POST https://your-worker.workers.dev/api/auth/setup
-
-# すぐに管理画面にログイン
-# デフォルト認証情報: admin@costnavigator.dev / admin1234
-
-# ログイン後、必ず以下を実施:
-# 1. パスワードを強力なものに変更
-# 2. 必要に応じて追加の管理者ユーザーを作成
-# 3. /api/auth/setup エンドポイントへのアクセスを制限
-```
+**注意**: 環境変数でJWT_SECRETを設定した場合、それがデータベースの値より優先されます。
 
 ## パートナー独自サイトのデプロイ
 
@@ -338,9 +321,9 @@ CostNavigatorは、各パートナーが独自のサイトとしてデプロイ�
 ### セキュリティ上の注意事項
 
 #### 認証・トークン管理
-- `/api/auth/setup` エンドポイントは初回セットアップ専用です。ユーザーが存在する場合は実行できません。
-- 本番環境では初期セットアップ後、このエンドポイントへのアクセスを制限することを推奨します。
-- デフォルト管理者パスワード (`admin1234`) は初回ログイン後、必ず変更してください。
+- 初回アクセス時に自動的にセットアップ（マイグレーション + 初期管理者作成）が実行されます。
+- デフォルト管理者パスワード (`admin1234`) は初回ログイン後、**必ず変更してください**。
+- JWT_SECRETは自動生成され、データベースに安全に保存されます。
 
 #### トークンストレージ
 - アクセストークンとリフレッシュトークンは localStorage に保存されます
@@ -408,17 +391,14 @@ CostNavigatorは、各パートナーが独自のサイトとしてデプロイ�
 
 ## トラブルシューティング
 
-### マイグレーションエラー
+### 初回アクセス時のエラー
 
-**問題**: `npm run db:migrate:local` でエラーが発生する
+**問題**: 管理画面にアクセスしてもログイン画面が表示されない、またはエラーが発生する
 
 **解決策**:
-```bash
-# .wrangler/state/ ディレクトリを削除して再試行
-rm -rf .wrangler/state/
-npm run db:migrate:local -- migrations/0001_create_users.sql
-# 以降のマイグレーションを順番に実行
-```
+1. D1 Bindingが正しく設定されているか確認（Cloudflareダッシュボード > Workers & Pages > Settings > Variables > D1 database bindings）
+2. ブラウザのコンソールログを確認してエラー内容を特定
+3. ローカル開発の場合、`.wrangler/state/` ディレクトリを削除して開発サーバーを再起動
 
 ### ログインできない
 
@@ -428,8 +408,7 @@ npm run db:migrate:local -- migrations/0001_create_users.sql
 1. ブラウザの開発者ツールで localStorage をクリア
 2. ブラウザのキャッシュをクリア
 3. `/api/auth/me` に直接アクセスして、エラーメッセージを確認
-4. マイグレーション0013（JWT_SECRET追加）が実行されているか確認
-5. カスタムJWT_SECRETを使用している場合、環境変数が正しく設定されているか確認
+4. カスタムJWT_SECRETを使用している場合、環境変数が正しく設定されているか確認
 
 ### トークンが自動更新されない
 
