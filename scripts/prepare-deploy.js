@@ -17,10 +17,17 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const DB_NAME = 'cost-navigator-db';
-const DIST_DIR = path.join(__dirname, '../dist/cost_navigator');
+
+// Cloudflare Vite plugin の出力先を自動検出
+// プロジェクト名 "cost-navigator-app" は "costnavigator" に正規化される
+const wranglerConfigPath = path.join(__dirname, '../wrangler.jsonc');
+const wranglerConfig = JSON.parse(fs.readFileSync(wranglerConfigPath, 'utf-8').replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, ''));
+const projectName = wranglerConfig.name.replace(/-/g, ''); // ハイフンを除去して正規化
+const DIST_DIR = path.join(__dirname, '../dist', projectName);
 const WRANGLER_JSON_PATH = path.join(DIST_DIR, 'wrangler.json');
 
 console.log('🚀 CostNavigator デプロイ準備開始\n');
+console.log(`📁 ビルド出力ディレクトリ: ${DIST_DIR}`);
 
 // Cloudflare API認証の確認
 if (!process.env.CLOUDFLARE_API_TOKEN && !process.env.CLOUDFLARE_ACCOUNT_ID) {

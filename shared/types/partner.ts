@@ -36,7 +36,7 @@ export const PartnerSchema = z.object({
     .number()
     .min(0, "マークアップは0以上で入力してください")
     .max(1000, "マークアップは1000%以下で入力してください")
-    .default(10),
+    .default(20),
   is_active: z.boolean().default(true),
 });
 export type PartnerInput = z.infer<typeof PartnerSchema>;

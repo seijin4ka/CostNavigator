@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS partners (
   primary_color TEXT NOT NULL DEFAULT '#F6821F',
   secondary_color TEXT NOT NULL DEFAULT '#1B1B1B',
   default_markup_type TEXT NOT NULL DEFAULT 'percentage' CHECK (default_markup_type IN ('percentage', 'fixed')),
-  default_markup_value REAL NOT NULL DEFAULT 10,
+  default_markup_value REAL NOT NULL DEFAULT 20,
   is_active INTEGER NOT NULL DEFAULT 1,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))

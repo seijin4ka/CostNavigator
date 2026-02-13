@@ -44,7 +44,7 @@
 | Production branch | `main` |
 | Framework preset | None（デフォルト） |
 | Build command | `npm run build` |
-| Build output directory | `dist/cost_navigator` |
+| Build output directory | `dist/costnavigator` （プロジェクト名から自動生成） |
 
 **重要**: プロジェクト名は、forkしたレポジトリ名（`CostNavigator`）と異なる名前にしてください。同じ名前を使用すると、Cloudflare CI/CDでコンフリクトが発生します。
 
@@ -102,7 +102,7 @@ https://your-worker-name.workers.dev/admin/login
 
 ```bash
 # 1. リポジトリをclone
-git clone https://github.com/your-username/CostNavigator.git
+git clone https://github.com/seijin4ka/CostNavigator.git
 cd CostNavigator
 
 # 2. 依存関係をインストール
@@ -194,4 +194,4 @@ git push origin main
 
 ## サポート
 
-問題が発生した場合は、[GitHub Issues](https://github.com/your-username/CostNavigator/issues)で報告してください。
+問題が発生した場合は、[GitHub Issues](https://github.com/seijin4ka/CostNavigator/issues)で報告してください。
