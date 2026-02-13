@@ -40,13 +40,13 @@
 
 | 項目 | 値 |
 |------|-----|
-| Project name | `costnavigator` |
+| Project name | `cost-navigator-app` |
 | Production branch | `main` |
 | Framework preset | None（デフォルト） |
 | Build command | `npm run build` |
-| Build output directory / Root directory | `dist/costnavigator` |
+| Build output directory / Root directory | `dist/cost_navigator_app` |
 
-**重要**: プロジェクト名は `costnavigator` を使用してください。これはCI/CDシステムと一致する必要があります。
+**注意**: プロジェクト名は `cost-navigator-app` です。初回デプロイ時に既存プロジェクトとの重複エラーが出た場合は、別の名前（例: `cost-navigator-v2`, `costnavigator-your-company` など）に変更してください。
 
 **Deploy site** をクリック
 

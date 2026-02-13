@@ -20,7 +20,8 @@ const DB_NAME = 'cost-navigator-db';
 // Cloudflare Vite plugin の出力先を自動検出
 const wranglerConfigPath = path.join(__dirname, '../wrangler.jsonc');
 const wranglerConfig = JSON.parse(fs.readFileSync(wranglerConfigPath, 'utf-8').replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, ''));
-const projectName = wranglerConfig.name.replace(/-/g, ''); // ハイフンを除去して正規化
+// Cloudflare Vite Pluginの正規化ルール: ハイフン → アンダースコア
+const projectName = wranglerConfig.name.replace(/-/g, '_');
 const DIST_DIR = path.join(__dirname, '../dist', projectName);
 const WRANGLER_JSON_PATH = path.join(DIST_DIR, 'wrangler.json');
 
