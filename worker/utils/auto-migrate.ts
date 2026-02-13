@@ -261,15 +261,17 @@ WHERE id = 'default' AND jwt_secret IS NULL;
     `.trim(),
   },
   {
-    version: 14,
-    name: "0014_system_direct_partner",
+    version: 15,
+    name: "0015_update_default_markup_to_20",
     sql: `
--- システムパートナー「direct」の追加（マークアップ0%）
--- トップページ（/）でのダイレクト見積もり用
+-- デフォルトマークアップを10%から20%に変更
+-- 日本のMSSP市場における標準的なマージンに準拠
 
-INSERT INTO partners (id, name, slug, primary_color, secondary_color, default_markup_type, default_markup_value, is_active)
-VALUES ('system-direct-partner', 'CostNavigator', 'direct', '#F6821F', '#1B1B1B', 'percentage', 0, 1)
-ON CONFLICT(slug) DO NOTHING;
+-- 既存パートナーで、デフォルト値（10%）のままのパートナーを20%に更新
+UPDATE partners
+SET default_markup_value = 20,
+    updated_at = datetime('now')
+WHERE default_markup_type = 'percentage' AND default_markup_value = 10;
     `.trim(),
   },
 ];

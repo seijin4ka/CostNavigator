@@ -1,11 +1,11 @@
 import { useState, useEffect, type FormEvent, type CSSProperties } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { apiClient } from "../../api/client";
 import {
   useEstimateBuilder,
   type PublicProduct,
 } from "../../hooks/useEstimateBuilder";
-import type { PartnerBranding } from "@shared/types";
+import type { PartnerBranding, SystemSettings } from "@shared/types";
 import { USAGE_UNIT_LABELS } from "@shared/constants";
 import { formatCurrency, formatNumber } from "../../lib/formatters";
 
@@ -131,9 +131,8 @@ function StepIndicator({ currentStep, primaryColor }: { currentStep: number; pri
 
 export function EstimatePage() {
   const { partnerSlug } = useParams<{ partnerSlug: string }>();
-  const slug = partnerSlug || "direct";
-  const basePath = partnerSlug ? `/estimate/${partnerSlug}` : "";
   const navigate = useNavigate();
+  const [systemSettings, setSystemSettings] = useState<SystemSettings | null>(null);
   const [partner, setPartner] = useState<PartnerBranding | null>(null);
   const [products, setProducts] = useState<PublicProduct[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -153,8 +152,28 @@ export function EstimatePage() {
 
   const builder = useEstimateBuilder();
 
+  // partnerSlug がない場合、system_settings から primary_partner_slug を取得
+  useEffect(() => {
+    if (!partnerSlug) {
+      const fetchSettings = async () => {
+        try {
+          const res = await apiClient.get<SystemSettings>("/public/system-settings");
+          setSystemSettings(res.data);
+        } catch (err) {
+          console.error("システム設定の読み込みエラー:", err);
+        }
+      };
+      fetchSettings();
+    }
+  }, [partnerSlug]);
+
+  const slug = partnerSlug || systemSettings?.primary_partner_slug;
+  const basePath = partnerSlug ? `/estimate/${partnerSlug}` : "";
+
   // パートナー情報と製品カタログを取得
   useEffect(() => {
+    if (!slug) return;
+
     const fetchData = async () => {
       try {
         const [partnerRes, productsRes] = await Promise.all([
@@ -215,6 +234,51 @@ export function EstimatePage() {
 
   // 現在のステップ判定
   const currentStep = isSubmitModalOpen ? 2 : 1;
+
+  // --- primary_partner_slug が未設定の場合のセットアップ促進画面 ---
+  if (!partnerSlug && !slug && !isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center max-w-lg mx-auto px-6">
+          <div className="w-16 h-16 rounded-full bg-blue-50 flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+            </svg>
+          </div>
+          <h2 className="text-xl font-semibold text-slate-900 font-display mb-3">初期設定が必要です</h2>
+          <p className="text-sm text-slate-600 font-body mb-6 leading-relaxed">
+            見積もりページを表示するには、管理画面でパートナー情報を設定してください。
+            <br />
+            パートナー情報を登録し、システム設定でデフォルトパートナーを指定する必要があります。
+          </p>
+          <div className="bg-white rounded-lg border border-slate-200 p-5 text-left mb-6">
+            <h3 className="text-sm font-semibold text-slate-700 font-display mb-3">セットアップ手順</h3>
+            <ol className="space-y-2 text-sm text-slate-600">
+              <li className="flex gap-2">
+                <span className="font-semibold text-blue-500">1.</span>
+                <span>管理画面にログイン</span>
+              </li>
+              <li className="flex gap-2">
+                <span className="font-semibold text-blue-500">2.</span>
+                <span>パートナー管理で自社パートナー情報を登録</span>
+              </li>
+              <li className="flex gap-2">
+                <span className="font-semibold text-blue-500">3.</span>
+                <span>システム設定でデフォルトパートナーを指定</span>
+              </li>
+            </ol>
+          </div>
+          <Link
+            to="/admin/login"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-blue-500 text-white font-semibold text-sm hover:bg-blue-600 transition-colors"
+          >
+            管理画面へ
+            <ArrowRightIcon className="w-4 h-4" />
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   // --- ローディング ---
   if (isLoading) {

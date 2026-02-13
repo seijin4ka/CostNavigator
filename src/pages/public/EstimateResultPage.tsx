@@ -1,7 +1,7 @@
 import { useState, useEffect, type CSSProperties } from "react";
 import { useParams, useSearchParams, Link } from "react-router-dom";
 import { apiClient } from "../../api/client";
-import type { PartnerBranding } from "@shared/types";
+import type { PartnerBranding, SystemSettings } from "@shared/types";
 import { formatCurrency, formatDate } from "../../lib/formatters";
 
 // --- SVGアイコン ---
@@ -140,15 +140,32 @@ const statusConfig: Record<string, { label: string; className: string }> = {
 
 export function EstimateResultPage() {
   const { partnerSlug } = useParams<{ partnerSlug: string }>();
-  const slug = partnerSlug || "direct";
-  const newEstimatePath = partnerSlug ? `/estimate/${partnerSlug}` : "/";
   const [searchParams] = useSearchParams();
   const ref = searchParams.get("ref");
+  const [systemSettings, setSystemSettings] = useState<SystemSettings | null>(null);
   const [partner, setPartner] = useState<PartnerBranding | null>(null);
   const [estimate, setEstimate] = useState<EstimateResult | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [isDownloading, setIsDownloading] = useState(false);
+
+  // partnerSlug がない場合、system_settings から primary_partner_slug を取得
+  useEffect(() => {
+    if (!partnerSlug) {
+      const fetchSettings = async () => {
+        try {
+          const res = await apiClient.get<SystemSettings>("/public/system-settings");
+          setSystemSettings(res.data);
+        } catch (err) {
+          console.error("システム設定の読み込みエラー:", err);
+        }
+      };
+      fetchSettings();
+    }
+  }, [partnerSlug]);
+
+  const slug = partnerSlug || systemSettings?.primary_partner_slug;
+  const newEstimatePath = partnerSlug ? `/estimate/${partnerSlug}` : "/";
 
   useEffect(() => {
     if (!ref) {
@@ -156,6 +173,8 @@ export function EstimateResultPage() {
       setIsLoading(false);
       return;
     }
+    if (!slug) return;
+
     const fetchData = async () => {
       try {
         const [partnerRes, estimateRes] = await Promise.all([
