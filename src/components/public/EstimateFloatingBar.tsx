@@ -15,7 +15,7 @@ export function EstimateFloatingBar({ itemCount, totalMonthly, slug, primaryColo
         <div>
           <p className="text-xs text-slate-400 font-body">{itemCount}件のサービス</p>
           <p className="cn-price text-lg font-bold font-display" style={{ color: primaryColor }}>
-            {formatCurrency(totalMonthly)}
+            見積もり: {formatCurrency(totalMonthly)}
             <span className="text-xs font-normal text-slate-400 ml-1">/月</span>
           </p>
         </div>

@@ -96,9 +96,20 @@ export function CustomerInfoModal({
           </div>
           <div className="flex justify-end mt-0.5">
             <span className="cn-price text-xs text-slate-400">
-              年額: {formatCurrency(totalYearly)}
+              年額（月額 × 12ヶ月）: {formatCurrency(totalYearly)}
             </span>
           </div>
+        </div>
+
+        {/* 契約条件 */}
+        <div className="px-6 py-4 border-b border-slate-100 bg-slate-50">
+          <h3 className="text-xs font-semibold text-slate-800 mb-2 font-display">契約条件について</h3>
+          <ul className="text-xs text-slate-500 space-y-1.5 list-disc list-inside leading-relaxed">
+            <li>本見積もりは情報提供のみを目的としております。実際の契約には別途契約手続きが必要です。</li>
+            <li>お客様からのお断りはいつでも可能です。お気軽にお問い合わせください。</li>
+            <li>表示価格は予告なく変更される場合があります。</li>
+            <li>お客様の環境や利用状況により、実際の料金と異なる場合があります。</li>
+          </ul>
         </div>
 
         {/* フォーム */}
@@ -219,6 +230,10 @@ export function CustomerInfoModal({
           {/* フォーム下部の信頼シグナル */}
           <p className="text-center text-[11px] text-slate-400 pt-1">
             送信いただいた情報はSSL暗号化通信で保護されます
+          </p>
+          {/* 送信後の動作説明 */}
+          <p className="text-center text-[11px] text-slate-400">
+            送信後、見積もり詳細画面（PDF）が表示されます
           </p>
         </form>
       </div>

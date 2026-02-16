@@ -293,11 +293,13 @@ export function EstimatePage() {
                             {tier.usage_unit && tier.usage_unit_price != null && (
                               <div className="text-xs text-slate-500 mb-3 space-y-0.5">
                                 <div>
-                                  + {formatCurrency(tier.usage_unit_price)} /{" "}
+                                  + 従量料金: {formatCurrency(tier.usage_unit_price)} /{" "}
                                   {USAGE_UNIT_LABELS[tier.usage_unit] ?? tier.usage_unit}
                                 </div>
                                 {tier.usage_included != null && tier.usage_included > 0 && (
-                                  <div className="text-slate-400">{formatNumber(tier.usage_included)} まで無料</div>
+                                  <div className="text-slate-400">
+                                    ({formatNumber(tier.usage_included)} まで無料、超過分は従量課金)
+                                  </div>
                                 )}
                               </div>
                             )}
@@ -428,7 +430,7 @@ export function EstimatePage() {
                       {/* 合計セクション */}
                       <div className="mt-4 pt-4 border-t border-slate-200">
                         <div className="flex items-baseline justify-between">
-                          <span className="text-sm text-slate-500">月額合計</span>
+                          <span className="text-sm text-slate-500">見積もり月額（消費税込）</span>
                           <span
                             className="cn-price text-2xl font-bold font-display"
                             style={{ color: primaryColor }}
@@ -437,7 +439,7 @@ export function EstimatePage() {
                           </span>
                         </div>
                         <div className="flex items-baseline justify-between mt-1">
-                          <span className="text-xs text-slate-400">年額合計</span>
+                          <span className="text-xs text-slate-400">見積もり年額（月額 × 12ヶ月）</span>
                           <span className="cn-price text-sm font-semibold text-slate-600">
                             {formatCurrency(builder.totalYearly)}
                           </span>

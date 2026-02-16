@@ -29,15 +29,15 @@ export function EstimateHero({ currentStep, primaryColor, secondaryColor }: {
           <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
             <div className="flex items-center gap-1.5 text-xs text-slate-500">
               <ClockIcon className="w-3.5 h-3.5" style={{ color: primaryColor }} />
-              <span>最短1分で完了</span>
+              <span>すぐに見積もり完了</span>
             </div>
             <div className="flex items-center gap-1.5 text-xs text-slate-500">
               <DocumentIcon className="w-3.5 h-3.5" style={{ color: primaryColor }} />
-              <span>PDF出力対応</span>
+              <span>見積もりPDFの発行</span>
             </div>
             <div className="flex items-center gap-1.5 text-xs text-slate-500">
               <LockIcon className="w-3.5 h-3.5" style={{ color: primaryColor }} />
-              <span>登録不要・無料</span>
+              <span>会員登録不要</span>
             </div>
           </div>
         </div>
