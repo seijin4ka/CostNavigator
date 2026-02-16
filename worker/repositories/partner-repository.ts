@@ -43,7 +43,7 @@ export class PartnerRepository {
     await executeD1Query(
       this.db,
       `INSERT INTO partners (id, name, slug, logo_url, primary_color, secondary_color, default_markup_type, default_markup_value, is_active)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         data.name,

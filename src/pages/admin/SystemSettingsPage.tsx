@@ -84,105 +84,14 @@ export function SystemSettingsPage() {
   }
 
   return (
-    <div className="space-y-8">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">システム設定</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* 左側：ブランディング・デフォルトパートナー設定 */}
-        <div className="space-y-6">
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-              {error}
-            </div>
-          )}
+    <div className="space-y-6">
+      <h1 className="text-2xl font-bold text-gray-900">システム設定</h1>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <Card>
-              <div className="p-6 space-y-4">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">ブランディング設定</h2>
-
-                <Input
-                  label="ブランド名"
-                  value={formData.brand_name}
-                  onChange={(e) => setFormData({ ...formData, brand_name: e.target.value })}
-                  required
-                  placeholder="例: Partner Solutions"
-                />
-
-                <Input
-                  label="ロゴURL（オプション）"
-                  value={formData.logo_url ?? ""}
-                  onChange={(e) => setFormData({ ...formData, logo_url: e.target.value })}
-                  placeholder="https://example.com/logo.png"
-                />
-
-                <Input
-                  label="プライマリカラー"
-                  type="color"
-                  value={formData.primary_color}
-                  onChange={(e) => setFormData({ ...formData, primary_color: e.target.value })}
-                  required
-                  placeholder="例: #F6821F"
-                />
-
-                <Input
-                  label="セカンダリカラー"
-                  type="color"
-                  value={formData.secondary_color}
-                  onChange={(e) => setFormData({ ...formData, secondary_color: e.target.value })}
-                  required
-                  placeholder="例: #1B1B1B"
-                />
-
-                <Input
-                  label="フッターテキスト"
-                  value={formData.footer_text}
-                  onChange={(e) => setFormData({ ...formData, footer_text: e.target.value })}
-                  placeholder="例: Powered by Your Company"
-                />
-              </div>
-            </Card>
-
-            <Card>
-              <div className="p-6 space-y-4">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">デフォルトパートナー設定</h2>
-                <p className="text-sm text-gray-500 mb-4">
-                  トップページ（/）で表示するパートナーを選択してください。
-                  未設定の場合、トップページは管理画面にリダイレクトされます。
-                </p>
-
-                <Select
-                  label="デフォルトパートナー"
-                  value={formData.primary_partner_slug || ""}
-                  onChange={(e) => {
-                    setFormData({
-                      ...formData,
-                      primary_partner_slug: e.target.value || null,
-                    });
-                  }}
-                >
-                  <option value="">未設定（トップページを無効化）</option>
-                  {partners.map((partner) => (
-                    <option key={partner.id} value={partner.slug}>
-                      {partner.name} ({partner.slug})
-                    </option>
-                  ))}
-                </Select>
-              </div>
-            </Card>
-
-            <div className="flex justify-end gap-2">
-              <Button type="submit" disabled={isSaving}>
-                {isSaving ? "保存中..." : "保存"}
-              </Button>
-            </div>
-          </form>
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+          {error}
         </div>
-
-        {/* 右側：パスワード変更 */}
-        <Card>
-          <PasswordChangeCard />
-        </Card>
-      </div>
+      )}
 
       {success && (
         <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded">
@@ -190,42 +99,144 @@ export function SystemSettingsPage() {
         </div>
       )}
 
-      {settings && (
-        <Card>
-          <div className="p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">プレビュー</h2>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* 左側：設定フォーム（2カラム分） */}
+        <div className="lg:col-span-2">
+          <Card>
+            <form onSubmit={handleSubmit}>
+              <div className="p-6 space-y-6">
+                {/* ブランディング設定 */}
+                <div className="space-y-4">
+                  <h2 className="text-lg font-semibold text-gray-900">ブランディング設定</h2>
 
-            <div className="border rounded p-4 space-y-4">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded border">
-                  {formData.logo_url ? (
-                    <img src={formData.logo_url} alt="ロゴ" className="w-full h-full object-contain" />
-                  ) : (
-                    <span className="w-8 h-8 rounded bg-gray-100 flex items-center justify-center text-gray-400">
-                      {formData.brand_name?.[0] || ""}
-                    </span>
-                  )}
+                  <Input
+                    label="ブランド名"
+                    value={formData.brand_name}
+                    onChange={(e) => setFormData({ ...formData, brand_name: e.target.value })}
+                    required
+                    placeholder="例: Partner Solutions"
+                  />
+
+                  <Input
+                    label="ロゴURL（オプション）"
+                    value={formData.logo_url ?? ""}
+                    onChange={(e) => setFormData({ ...formData, logo_url: e.target.value })}
+                    placeholder="https://example.com/logo.png"
+                  />
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <Input
+                      label="プライマリカラー"
+                      type="color"
+                      value={formData.primary_color}
+                      onChange={(e) => setFormData({ ...formData, primary_color: e.target.value })}
+                      required
+                      placeholder="例: #F6821F"
+                    />
+
+                    <Input
+                      label="セカンダリカラー"
+                      type="color"
+                      value={formData.secondary_color}
+                      onChange={(e) => setFormData({ ...formData, secondary_color: e.target.value })}
+                      required
+                      placeholder="例: #1B1B1B"
+                    />
+                  </div>
+
+                  <Input
+                    label="フッターテキスト"
+                    value={formData.footer_text}
+                    onChange={(e) => setFormData({ ...formData, footer_text: e.target.value })}
+                    placeholder="例: Powered by Your Company"
+                  />
                 </div>
-                <div>
-                  <div className="font-semibold text-gray-900">{formData.brand_name}</div>
-                  <div className="text-sm text-gray-500 mt-1">{formData.footer_text || "Powered by CostNavigator"}</div>
+
+                {/* 区切り線 */}
+                <hr className="border-gray-200" />
+
+                {/* デフォルトパートナー設定 */}
+                <div className="space-y-4">
+                  <h2 className="text-lg font-semibold text-gray-900">デフォルトパートナー設定</h2>
+                  <p className="text-sm text-gray-500">
+                    トップページ（/）で表示するパートナーを選択してください。
+                    未設定の場合、トップページはセットアップページにリダイレクトされます。
+                  </p>
+
+                  <Select
+                    label="デフォルトパートナー"
+                    value={formData.primary_partner_slug || ""}
+                    onChange={(e) => {
+                      setFormData({
+                        ...formData,
+                        primary_partner_slug: e.target.value || null,
+                      });
+                    }}
+                  >
+                    <option value="">未設定</option>
+                    {partners.map((partner) => (
+                      <option key={partner.id} value={partner.slug}>
+                        {partner.name} ({partner.slug})
+                      </option>
+                    ))}
+                  </Select>
                 </div>
+
+                {/* プレビュー */}
+                {settings && (
+                  <>
+                    <hr className="border-gray-200" />
+                    <div className="space-y-3">
+                      <h2 className="text-lg font-semibold text-gray-900">プレビュー</h2>
+                      <div className="border rounded-lg p-4 bg-gray-50">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded border bg-white flex items-center justify-center overflow-hidden">
+                            {formData.logo_url ? (
+                              <img src={formData.logo_url} alt="ロゴ" className="w-full h-full object-contain" />
+                            ) : (
+                              <span className="text-gray-400 text-sm font-bold">
+                                {formData.brand_name?.[0] || ""}
+                              </span>
+                            )}
+                          </div>
+                          <div>
+                            <div className="font-semibold text-gray-900 text-sm">{formData.brand_name}</div>
+                            <div className="text-xs text-gray-500">{formData.footer_text || "Powered by CostNavigator"}</div>
+                          </div>
+                          <div className="ml-auto flex items-center gap-3">
+                            <div className="flex items-center gap-1.5">
+                              <div className="w-5 h-5 rounded border" style={{ backgroundColor: formData.primary_color }} />
+                              <span className="text-xs text-gray-400">Primary</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <div className="w-5 h-5 rounded border" style={{ backgroundColor: formData.secondary_color }} />
+                              <span className="text-xs text-gray-400">Secondary</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
 
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <div className="text-sm text-gray-500">プライマリカラー:</div>
-                  <div className="w-8 h-8 rounded border" style={{ backgroundColor: formData.primary_color }} />
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="text-sm text-gray-500">セカンダリカラー:</div>
-                  <div className="w-8 h-8 rounded border" style={{ backgroundColor: formData.secondary_color }} />
-                </div>
+              {/* 保存ボタン（カード内のフッター） */}
+              <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-b-lg flex justify-end">
+                <Button type="submit" disabled={isSaving}>
+                  {isSaving ? "保存中..." : "保存"}
+                </Button>
               </div>
-            </div>
-          </div>
-        </Card>
-      )}
+            </form>
+          </Card>
+        </div>
+
+        {/* 右側：パスワード変更（1カラム分） */}
+        <div>
+          <Card>
+            <PasswordChangeCard />
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }
