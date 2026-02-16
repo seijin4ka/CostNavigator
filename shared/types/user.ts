@@ -32,7 +32,8 @@ export const AdminPasswordChangeSchema = z.object({
   currentPassword: z.string().min(1, "現在のパスワードを入力してください"),
   newPassword: z.string().min(8, "新しいパスワードは8文字以上で入力してください"),
   confirmPassword: z.string("新しいパスワード確認を入力してください"),
-}).export type AdminPasswordChangeRequest = z.infer<typeof AdminPasswordChangeSchema>;
+});
+export type AdminPasswordChangeRequest = z.infer<typeof AdminPasswordChangeSchema>;
 
 // ログインレスポンス
 export interface LoginResponse {

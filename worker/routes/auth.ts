@@ -22,13 +22,6 @@ const SetupSchema = z.object({
   password: z.string().min(8, "パスワードは8文字以上である必要があります").optional(),
 });
 
-// パスワード変更リクエストスキーマ
-const AdminPasswordChangeSchema = z.object({
-  currentPassword: z.string().min(1, "現在のパスワードを入力してください"),
-  newPassword: z.string().min(8, "新しいパスワードは8文字以上で入力してください"),
-  confirmPassword: z.string("新しいパスワード確認を入力してください"),
-});
-
 const auth = new Hono<{ Bindings: Env }>();
 
 // ログイン（レート制限: 5回/60秒）
