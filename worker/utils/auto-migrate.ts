@@ -368,10 +368,15 @@ async function runMigration(
 
   try {
     // マイグレーションSQLを複数のステートメントに分割して実行
-    const statements = migration.sql
+    // 1. コメント行を除去してから分割（コメント付きSQL文が除外されるバグを防止）
+    const sqlWithoutComments = migration.sql
+      .split('\n')
+      .filter(line => !line.trim().startsWith('--'))
+      .join('\n');
+    const statements = sqlWithoutComments
       .split(';')
       .map(s => s.trim())
-      .filter(s => s.length > 0 && !s.startsWith('--'));
+      .filter(s => s.length > 0);
 
     // 各ステートメントを個別に実行
     for (let i = 0; i < statements.length; i++) {
