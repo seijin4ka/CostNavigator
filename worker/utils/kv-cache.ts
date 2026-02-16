@@ -87,8 +87,8 @@ export class KVCache {
         }
       }
 
-      if (keysToDelete.length > 0) {
-        await this.kv.delete(keysToDelete);
+      for (const key of keysToDelete) {
+        await this.kv.delete(key);
       }
     } catch (error) {
       console.error("タグによるキャッシュ無効化エラー:", error);
@@ -103,8 +103,8 @@ export class KVCache {
       const list = await this.kv.list({ prefix });
       const keys = list.keys.map((k) => k.name);
 
-      if (keys.length > 0) {
-        await this.kv.delete(keys);
+      for (const key of keys) {
+        await this.kv.delete(key);
       }
     } catch (error) {
       console.error(`プレフィックスによるキャッシュ無効化エラー [${prefix}]:`, error);

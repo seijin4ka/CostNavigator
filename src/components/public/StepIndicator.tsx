@@ -1,4 +1,3 @@
-import type { CSSProperties } from "react";
 import { CheckIcon } from "./Icons";
 
 // ステップインジケーター

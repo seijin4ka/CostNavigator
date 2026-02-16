@@ -31,7 +31,7 @@ export type LoginRequest = z.infer<typeof LoginSchema>;
 export const AdminPasswordChangeSchema = z.object({
   currentPassword: z.string().min(1, "現在のパスワードを入力してください"),
   newPassword: z.string().min(8, "新しいパスワードは8文字以上で入力してください"),
-  confirmPassword: z.string("新しいパスワード確認を入力してください"),
+  confirmPassword: z.string({ required_error: "新しいパスワード確認を入力してください" }),
 });
 export type AdminPasswordChangeRequest = z.infer<typeof AdminPasswordChangeSchema>;
 
@@ -53,7 +53,7 @@ export interface RefreshTokenResponse {
 export const PasswordResetSchema = z.object({
   token: z.string().uuid("リセットトークンが無効です"),
   newPassword: z.string().min(8, "パスワードは8文字以上で入力してください"),
-  confirmPassword: z.string("パスワード確認を入力してください"),
+  confirmPassword: z.string({ required_error: "パスワード確認を入力してください" }),
 });
 export type PasswordResetRequest = z.infer<typeof PasswordResetSchema>;
 
@@ -73,7 +73,7 @@ export const AdminSettingsSchema = z.object({
   email: z.string().email("有効なメールアドレスを入力してください").optional(),
   currentPassword: z.string().min(1, "現在のパスワードを入力してください"),
   newPassword: z.string().min(8, "新しいパスワードは8文字以上で入力してください"),
-  confirmPassword: z.string("新しいパスワード確認を入力してください"),
+  confirmPassword: z.string({ required_error: "新しいパスワード確認を入力してください" }),
 });
 export type AdminSettingsRequest = z.infer<typeof AdminSettingsSchema>;
 
@@ -84,7 +84,7 @@ export interface AdminSettingsResponse {
 
 // アカウントロック解除リクエスト
 export const UnlockAccountSchema = z.object({
-  unlockToken: z.string("ロック解除トークンが無効です"),
+  unlockToken: z.string({ required_error: "ロック解除トークンが無効です" }),
 });
 export type UnlockAccountRequest = z.infer<typeof UnlockAccountSchema>;
 

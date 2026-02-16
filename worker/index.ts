@@ -2,18 +2,7 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import type { Context, Next } from "hono";
 import type { Env } from "./env";
-import { errorHandler } from "./middleware/error-handler";
 import { autoSetupMiddleware } from "./middleware/auto-setup";
-import * as authModule from "./routes/auth";
-import * as categoriesModule from "./routes/categories";
-import * as productsModule from "./routes/products";
-import * as tiersModule from "./routes/tiers";
-import * as partnersModule from "./routes/partners";
-import * as markupModule from "./routes/markup";
-import * as publicModule from "./routes/public";
-import * as estimatesModule from "./routes/estimates";
-import * as dashboardModule from "./routes/dashboard";
-import * as systemSettingsModule from "./routes/system-settings";
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -80,15 +69,15 @@ const restrictiveCors = (allowCredentials = true) => {
         if (allowCredentials) {
           c.header("Access-Control-Allow-Credentials", "true");
         }
-        c.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+        c.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS");
         c.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
         c.header("Access-Control-Max-Age", "86400");
       }
 
-      return c.text("", 204);
+      return c.body(null, 204);
     }
 
-    // GET, POST, PUT, DELETEリクエスト
+    // GET, POST, PUT, DELETE, PATCHリクエスト
     const origin = c.req.header("Origin") || "";
     const allowedOrigins = (c.env.ALLOWED_ORIGINS || "").split(",").filter(Boolean);
 
@@ -113,7 +102,7 @@ const restrictiveCors = (allowCredentials = true) => {
       if (allowCredentials) {
         c.header("Access-Control-Allow-Credentials", "true");
       }
-      c.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+      c.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS");
       c.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
       c.header("Access-Control-Max-Age", "86400");
     }
@@ -140,7 +129,23 @@ app.use("/api/auth/*", restrictiveCors(true));
 app.use("/api/admin/*", restrictiveCors(true));
 
 // グローバルエラーハンドラー
-app.onError(errorHandler);
+app.onError((err, c) => {
+  console.error("Unhandled error:", err);
+
+  // AppErrorのサブクラスの場合は、カスタムエラーレスポンスを返す
+  if ("code" in err && "statusCode" in err) {
+    const appErr = err as unknown as { code: string; message: string; statusCode: number; details?: Record<string, string[]> };
+    return c.json(
+      { success: false, error: { code: appErr.code, message: appErr.message, details: appErr.details } },
+      appErr.statusCode as 400
+    );
+  }
+
+  return c.json(
+    { success: false, error: { code: "INTERNAL_ERROR", message: "予期せぬエラーが発生しました" } },
+    500
+  );
+});
 
 // ヘルスチェックエンドポイント
 app.get("/api/health", (c) => {
@@ -148,19 +153,29 @@ app.get("/api/health", (c) => {
 });
 
 // 認証ルート
+// @ts-expect-error Cloudflare Vite Plugin の文字列ベースルーティング
 app.route("/api/auth", "routes/auth.ts");
 
 // 管理API（認証はルート内で適用）
+// @ts-expect-error Cloudflare Vite Plugin の文字列ベースルーティング
 app.route("/api/admin/categories", "routes/categories.ts");
+// @ts-expect-error Cloudflare Vite Plugin の文字列ベースルーティング
 app.route("/api/admin/products", "routes/products.ts");
+// @ts-expect-error Cloudflare Vite Plugin の文字列ベースルーティング
 app.route("/api/admin/product-tiers", "routes/tiers.ts");
+// @ts-expect-error Cloudflare Vite Plugin の文字列ベースルーティング
 app.route("/api/admin/partners", "routes/partners.ts");
+// @ts-expect-error Cloudflare Vite Plugin の文字列ベースルーティング
 app.route("/api/admin/partners", "routes/markup.ts");
+// @ts-expect-error Cloudflare Vite Plugin の文字列ベースルーティング
 app.route("/api/admin/estimates", "routes/estimates.ts");
+// @ts-expect-error Cloudflare Vite Plugin の文字列ベースルーティング
 app.route("/api/admin/dashboard", "routes/dashboard.ts");
+// @ts-expect-error Cloudflare Vite Plugin の文字列ベースルーティング
 app.route("/api/admin/system-settings", "routes/system-settings.ts");
 
 // 公開API（認証不要）
+// @ts-expect-error Cloudflare Vite Plugin の文字列ベースルーティング
 app.route("/api/public", "routes/public.ts");
 
 // 非APIリクエストは静的アセット（SPA）にフォールバック

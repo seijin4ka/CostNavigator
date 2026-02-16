@@ -1,4 +1,3 @@
-import type { CSSProperties } from "react";
 import type { PartnerBranding } from "@shared/types";
 import { ShieldIcon } from "./Icons";
 

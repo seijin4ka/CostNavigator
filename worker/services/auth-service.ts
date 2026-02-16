@@ -1,4 +1,4 @@
-import { sign } from "hono/jwt";
+import { sign, verify } from "hono/jwt";
 import { UserRepository } from "../repositories/user-repository";
 import { hashPassword, verifyPassword } from "../utils/password";
 import type { User, LoginResponse, RefreshTokenResponse } from "../../shared/types";
@@ -69,7 +69,7 @@ export class AuthService {
   }
 
   // アクセストークン生成（JWT、短命）
-  private async generateAccessToken(user: User & { password_hash: string }): Promise<string> {
+  async generateAccessToken(user: Pick<User, "id" | "email" | "role">): Promise<string> {
     const payload = {
       sub: user.id,
       email: user.email,
@@ -80,7 +80,7 @@ export class AuthService {
   }
 
   // リフレッシュトークン生成（ランダム文字列、長命、DB保存）
-  private async generateRefreshToken(userId: string): Promise<string> {
+  async generateRefreshToken(userId: string): Promise<string> {
     // 暗号学的に安全なランダムトークン生成（32バイト = 256ビット）
     const tokenBytes = new Uint8Array(32);
     crypto.getRandomValues(tokenBytes);
@@ -169,19 +169,17 @@ export class AuthService {
   // Cloudflare Accessトークン検証
   async verifyCloudflareToken(token: string): Promise<{ valid: boolean; email: string } | null> {
     try {
-      const payload = await sign(token.replace("Bearer ", ""), "cloudflare_access_validation");
-      const result = payload.payload || {};
+      const rawToken = token.replace("Bearer ", "");
+      const payload = await verify(rawToken, this.jwtSecret, "HS256") as { email?: string; sub?: string };
 
-      // ペイロードを含めてデコード
-      const decoded = JSON.parse(atob(result.cloudflare_access_jwt));
-      if (!decoded.result) {
-        console.error("Cloudflare Accessトークン検証エラー:", result);
+      if (!payload || !payload.email) {
+        console.error("Cloudflare Accessトークン検証エラー: ペイロードにemailがありません");
         return null;
       }
 
       return {
-        valid: decoded.result === true,
-        email: decoded.user?.email || null,
+        valid: true,
+        email: payload.email,
       };
     } catch (error) {
       console.error("Cloudflare Accessトークン検証例外:", error);

@@ -500,7 +500,7 @@ export function EstimatePage() {
         <EstimateFloatingBar
           itemCount={builder.items.length}
           totalMonthly={builder.totalMonthly}
-          slug={slug}
+          slug={slug ?? null}
           primaryColor={primaryColor}
           onSubmit={() => setIsSubmitModalOpen(true)}
         />
@@ -517,11 +517,8 @@ export function EstimatePage() {
         totalMonthly={builder.totalMonthly}
         totalYearly={builder.totalYearly}
         primaryColor={primaryColor}
-        secondaryColor={secondaryColor}
         error={error}
         isSubmitting={isSubmitting}
-        slug={slug}
-        basePath={basePath}
       />
 
       {/* === フッター === */}

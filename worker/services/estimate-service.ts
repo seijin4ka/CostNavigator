@@ -33,13 +33,13 @@ export class EstimateService {
   private estimateRepo: EstimateRepository;
   private cache: KVCache;
 
-  constructor(private db: D1Database, private cache?: KVNamespace) {
+  constructor(db: D1Database, kvNamespace?: KVNamespace) {
     this.partnerRepo = new PartnerRepository(db);
     this.productRepo = new ProductRepository(db);
     this.tierRepo = new TierRepository(db);
     this.markupRepo = new MarkupRepository(db);
     this.estimateRepo = new EstimateRepository(db);
-    this.cache = cache ? new KVCache(cache) : this.createNullCache();
+    this.cache = kvNamespace ? new KVCache(kvNamespace) : this.createNullCache();
   }
 
   // パートナーのブランディング情報取得（キャッシュ利用）
@@ -309,6 +309,7 @@ export class EstimateService {
       put: async () => void 0,
       delete: async () => void 0,
       list: async () => ({ keys: [] }),
-    } as KVNamespace);
+      getWithMetadata: async () => ({ value: null, metadata: null, cacheStatus: null }),
+    } as unknown as KVNamespace);
   }
 }

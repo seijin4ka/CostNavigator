@@ -9,10 +9,10 @@ export class SystemSettingsService {
   private partnerRepo: PartnerRepository;
   private cache: KVCache;
 
-  constructor(private db: D1Database, private cache?: KVNamespace) {
+  constructor(db: D1Database, kvNamespace?: KVNamespace) {
     this.settingsRepo = new SystemSettingsRepository(db);
     this.partnerRepo = new PartnerRepository(db);
-    this.cache = cache ? new KVCache(cache) : this.createNullCache();
+    this.cache = kvNamespace ? new KVCache(kvNamespace) : this.createNullCache();
   }
 
   // システム設定を取得（キャッシュ利用）
@@ -56,6 +56,7 @@ export class SystemSettingsService {
       put: async () => void 0,
       delete: async () => void 0,
       list: async () => ({ keys: [] }),
-    } as KVNamespace);
+      getWithMetadata: async () => ({ value: null, metadata: null, cacheStatus: null }),
+    } as unknown as KVNamespace);
   }
 }

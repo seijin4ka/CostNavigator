@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import { formatCurrency } from "../../lib/formatters";
-import { ArrowRightIcon } from "./Icons";
 
 export function EstimateFloatingBar({ itemCount, totalMonthly, slug, primaryColor, onSubmit }: {
   itemCount: number;

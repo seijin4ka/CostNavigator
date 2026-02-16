@@ -27,7 +27,9 @@ export class DatabaseError extends AppError {
  */
 export class UniqueConstraintError extends DatabaseError {
   constructor(message: string, originalError?: Error) {
-    super("UNIQUE_CONSTRAINT", message, 409, originalError);
+    super(message, originalError);
+    this.code = "UNIQUE_CONSTRAINT";
+    this.statusCode = 409;
   }
 }
 
@@ -36,7 +38,9 @@ export class UniqueConstraintError extends DatabaseError {
  */
 export class ForeignKeyConstraintError extends DatabaseError {
   constructor(message: string, originalError?: Error) {
-    super("FOREIGN_KEY_CONSTRAINT", message, 400, originalError);
+    super(message, originalError);
+    this.code = "FOREIGN_KEY_CONSTRAINT";
+    this.statusCode = 400;
   }
 }
 
@@ -45,7 +49,9 @@ export class ForeignKeyConstraintError extends DatabaseError {
  */
 export class NotNullConstraintError extends DatabaseError {
   constructor(message: string, originalError?: Error) {
-    super("NOT_NULL_CONSTRAINT", message, 400, originalError);
+    super(message, originalError);
+    this.code = "NOT_NULL_CONSTRAINT";
+    this.statusCode = 400;
   }
 }
 

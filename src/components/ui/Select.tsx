@@ -1,12 +1,13 @@
-import type { SelectHTMLAttributes } from "react";
+import type { SelectHTMLAttributes, ReactNode } from "react";
 
-interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
+export interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
   label?: string;
   error?: string;
-  options: { value: string; label: string }[];
+  options?: { value: string; label: string }[];
+  children?: ReactNode;
 }
 
-export function Select({ label, error, options, className = "", id, ...props }: SelectProps) {
+export function Select({ label, error, options, children, className = "", id, ...props }: SelectProps) {
   const selectId = id || label?.toLowerCase().replace(/\s+/g, "-");
   return (
     <div className="space-y-1">
@@ -22,7 +23,7 @@ export function Select({ label, error, options, className = "", id, ...props }: 
         } ${className}`}
         {...props}
       >
-        {options.map((opt) => (
+        {children ?? options?.map((opt) => (
           <option key={opt.value} value={opt.value}>
             {opt.label}
           </option>

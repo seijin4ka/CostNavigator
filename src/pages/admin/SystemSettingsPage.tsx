@@ -110,10 +110,9 @@ export function SystemSettingsPage() {
 
                 <Input
                   label="ロゴURL（オプション）"
-                  value={formData.logo_url}
+                  value={formData.logo_url ?? ""}
                   onChange={(e) => setFormData({ ...formData, logo_url: e.target.value })}
                   placeholder="https://example.com/logo.png"
-                  helperText="外部URLまたは相対パスを指定してください"
                 />
 
                 <Input

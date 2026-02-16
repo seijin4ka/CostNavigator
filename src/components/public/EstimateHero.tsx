@@ -1,4 +1,3 @@
-import type { CSSProperties } from "react";
 import { StepIndicator } from "./StepIndicator";
 import { ClockIcon, DocumentIcon, LockIcon } from "./Icons";
 

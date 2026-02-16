@@ -1,5 +1,4 @@
-import { useState, type FormEvent, type CSSProperties } from "react";
-import { Link } from "react-router-dom";
+import { type FormEvent, type CSSProperties } from "react";
 import { formatCurrency } from "../../lib/formatters";
 import { StepIndicator } from "./StepIndicator";
 import { CloseIcon, ArrowRightIcon } from "./Icons";
@@ -26,11 +25,8 @@ interface CustomerInfoModalProps {
   totalMonthly: number;
   totalYearly: number;
   primaryColor: string;
-  secondaryColor: string;
   error: string;
   isSubmitting: boolean;
-  slug: string | null;
-  basePath: string;
 }
 
 export function CustomerInfoModal({
@@ -43,11 +39,8 @@ export function CustomerInfoModal({
   totalMonthly,
   totalYearly,
   primaryColor,
-  secondaryColor,
   error,
   isSubmitting,
-  slug,
-  basePath,
 }: CustomerInfoModalProps) {
   if (!isOpen) return null;
 

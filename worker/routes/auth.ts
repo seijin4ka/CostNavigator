@@ -25,7 +25,7 @@ const SetupSchema = z.object({
 const authRoutes = new Hono<{ Bindings: Env }>();
 
 // ログイン（レート制限: 5回/60秒）
-auth.post("/login", rateLimit(5, 60000), async (c) => {
+authRoutes.post("/login", rateLimit(5, 60000), async (c) => {
   const data = await validateBody(c, LoginSchema);
   if (!data) return c.res;
 
@@ -42,7 +42,7 @@ auth.post("/login", rateLimit(5, 60000), async (c) => {
 });
 
 // ユーザー情報取得（認証必須）
-auth.get("/me", authMiddleware, async (c) => {
+authRoutes.get("/me", authMiddleware, async (c) => {
   const payload = c.get("jwtPayload");
   const jwtSecret = await getJwtSecret(c.env.DB, c.env.JWT_SECRET);
   const service = new AuthService(c.env.DB, jwtSecret);
@@ -57,7 +57,7 @@ auth.get("/me", authMiddleware, async (c) => {
 
 // トークンリフレッシュ（リフレッシュトークンを使ってアクセストークンを再発行）
 // レート制限: 10回/60秒
-auth.post("/refresh", rateLimit(10, 60000), async (c) => {
+authRoutes.post("/refresh", rateLimit(10, 60000), async (c) => {
   const data = await validateBody(c, RefreshTokenSchema);
   if (!data) return c.res;
 
@@ -76,12 +76,11 @@ auth.post("/refresh", rateLimit(10, 60000), async (c) => {
 });
 
 // セットアップ状態確認
-auth.get("/setup-status", async (c) => {
+authRoutes.get("/setup-status", async (c) => {
   try {
     console.log("🔍 /api/auth/setup-status - 開始");
     console.log("📊 D1バインディング状態:", c.env.DB ? "有効" : "無効");
 
-    const jwtSecret = await getJwtSecret(c.env.DB, c.env.JWT_SECRET);
     const userRepo = new (await import("../repositories/user-repository")).UserRepository(c.env.DB);
 
     const userCount = await userRepo.count();
@@ -100,7 +99,7 @@ auth.get("/setup-status", async (c) => {
 });
 
 // 初期セットアップ（マイグレーション + 初期管理者作成）
-auth.post("/setup", async (c) => {
+authRoutes.post("/setup", async (c) => {
   try {
     // リクエストボディから email と password を取得（オプショナル）
     console.log("📝 セットアップリクエスト受信");
@@ -119,10 +118,6 @@ auth.post("/setup", async (c) => {
 
     // 2. 初期管理者ユーザーを作成（存在しない場合のみ）
     try {
-      console.log("🔑 JWT Secret取得中");
-      const jwtSecret = await getJwtSecret(c.env.DB, c.env.JWT_SECRET);
-      console.log("✅ JWT Secret取得完了");
-
       const userRepo = new (await import("../repositories/user-repository")).UserRepository(c.env.DB);
 
       // 既にユーザーが存在する場合はメッセージを変更
@@ -167,7 +162,7 @@ auth.post("/setup", async (c) => {
 });
 
 // Cloudflare Access（Zero Trust）SSOログインエンドポイント
-auth.post("/sso/cloudflare-login", async (c) => {
+authRoutes.post("/sso/cloudflare-login", async (c) => {
   const { CF_Access_Token } = c.req.header();
 
   if (!CF_Access_Token) {
@@ -190,19 +185,18 @@ auth.post("/sso/cloudflare-login", async (c) => {
   }
 
   // アクセストークンとリフレッシュトークンを発行
-  const { password_hash: _ } = user;
   const accessToken = await service.generateAccessToken(user);
   const refreshToken = await service.generateRefreshToken(user.id);
 
   return success(c, {
     token: accessToken,
     refreshToken,
-    user: { ...user, password_hash: undefined },
+    user,
   });
 });
 
 // パスワード変更エンドポイント（認証必須）
-auth.patch("/admin/change-password", authMiddleware, async (c) => {
+authRoutes.patch("/admin/change-password", authMiddleware, async (c) => {
   const data = await validateBody(c, AdminPasswordChangeSchema);
   if (!data) return c.res;
 
@@ -210,14 +204,16 @@ auth.patch("/admin/change-password", authMiddleware, async (c) => {
   const jwtSecret = await getJwtSecret(c.env.DB, c.env.JWT_SECRET);
   const service = new AuthService(c.env.DB, jwtSecret);
 
-  // 現在のユーザー情報を取得
-  const user = await service.getUser(payload.sub);
-  if (!user) {
+  // 現在のユーザー情報を取得（パスワードハッシュ付き）
+  const { UserRepository } = await import("../repositories/user-repository");
+  const userRepo = new UserRepository(c.env.DB);
+  const userWithPassword = await userRepo.findByEmail(payload.email);
+  if (!userWithPassword) {
     return error(c, "USER_NOT_FOUND", "ユーザーが見つかりません", 404);
   }
 
   // パスワードの検証
-  const isValid = await verifyPassword(data.currentPassword, user.password_hash);
+  const isValid = await verifyPassword(data.currentPassword, userWithPassword.password_hash);
   if (!isValid) {
     return error(c, "INVALID_PASSWORD", "現在のパスワードが正しくありません", 401);
   }
@@ -229,7 +225,7 @@ auth.patch("/admin/change-password", authMiddleware, async (c) => {
 
   // パスワードハッシュ化と更新
   const passwordHash = await hashPassword(data.newPassword);
-  await service.updatePassword(user.id, passwordHash);
+  await service.updatePassword(userWithPassword.id, passwordHash);
 
   return success(c, {
     message: "パスワードを変更しました",
@@ -237,7 +233,7 @@ auth.patch("/admin/change-password", authMiddleware, async (c) => {
 });
 
 // アカウントロック解除エンドポイント（認証必須）
-auth.post("/admin/unlock-account", authMiddleware, async (c) => {
+authRoutes.post("/admin/unlock-account", authMiddleware, async (c) => {
   const payload = c.get("jwtPayload");
   const userRepo = new (await import("../repositories/user-repository")).UserRepository(c.env.DB);
 

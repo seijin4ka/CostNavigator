@@ -7,7 +7,6 @@ const API_BASE = "/api";
 class ApiClient {
   private token: string | null = null;
   private refreshToken: string | null = null;
-  private isRefreshing = false;
   private refreshPromise: Promise<boolean> | null = null;
   private onTokenRefreshFailed: (() => void) | null = null;
 
@@ -94,8 +93,6 @@ class ApiClient {
 
     // 新しいリフレッシュ処理を開始
     this.refreshPromise = (async () => {
-      this.isRefreshing = true;
-
       try {
         const res = await fetch(`${API_BASE}/auth/refresh`, {
           method: "POST",
@@ -127,7 +124,6 @@ class ApiClient {
         console.error("トークンリフレッシュエラー:", error);
         return false;
       } finally {
-        this.isRefreshing = false;
         this.refreshPromise = null;
       }
     })();
@@ -145,6 +141,10 @@ class ApiClient {
 
   put<T>(path: string, body?: unknown) {
     return this.request<T>("PUT", path, body);
+  }
+
+  patch<T>(path: string, body?: unknown) {
+    return this.request<T>("PATCH", path, body);
   }
 
   delete<T>(path: string) {

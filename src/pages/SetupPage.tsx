@@ -11,7 +11,6 @@ interface SetupStatusResponse {
 
 export function SetupPage() {
   const [isLoading, setIsLoading] = useState(true);
-  const [isCheckingStatus, setIsCheckingStatus] = useState(true);
   const [isSettingUp, setIsSettingUp] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -28,7 +27,6 @@ export function SetupPage() {
 
   const checkSetupStatus = async () => {
     try {
-      setIsCheckingStatus(true);
       const res = await apiClient.get<SetupStatusResponse>("/auth/setup-status");
 
       if (res.data.isSetupComplete) {
@@ -39,7 +37,6 @@ export function SetupPage() {
       console.error("セットアップ状態確認エラー:", err);
       // エラーが発生してもセットアップ画面を表示
     } finally {
-      setIsCheckingStatus(false);
       setIsLoading(false);
     }
   };
@@ -136,7 +133,6 @@ export function SetupPage() {
                 placeholder="admin@example.com"
                 required
                 disabled={isSettingUp}
-                helperText="管理者のメールアドレスを入力してください"
               />
 
               <Input
@@ -147,7 +143,6 @@ export function SetupPage() {
                 placeholder="8文字以上で入力してください"
                 required
                 disabled={isSettingUp}
-                helperText="8文字以上で入力してください"
               />
 
               <Input

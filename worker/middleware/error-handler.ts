@@ -1,14 +1,9 @@
 import type { Context, Next } from "hono";
+import type { ContentfulStatusCode } from "hono/utils/http-status";
 import { error } from "../utils/response";
 import {
   AppError,
   DatabaseError,
-  NotFoundError,
-  ValidationError,
-  UnauthorizedError,
-  ForbiddenError,
-  RateLimitError,
-  TokenError,
 } from "../errors/app-error";
 
 /**
@@ -28,7 +23,7 @@ export const errorHandler = async (c: Context, next: Next) => {
 
     // AppErrorのサブクラスの場合は、カスタムエラーレスポンスを返す
     if (err instanceof AppError) {
-      return error(c, err.code, err.message, err.statusCode, err.details);
+      return error(c, err.code, err.message, err.statusCode as ContentfulStatusCode, err.details);
     }
 
     // DatabaseErrorの特殊処理

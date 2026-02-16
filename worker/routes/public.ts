@@ -12,7 +12,7 @@ const publicRoutes = new Hono<{ Bindings: Env }>();
 // 汎用パターン（/:partnerSlug）より前に配置すること。
 
 // システム設定取得（ブランディング用、公開情報のみ）
-publicApi.get("/system-settings", async (c) => {
+publicRoutes.get("/system-settings", async (c) => {
   const service = new SystemSettingsService(c.env.DB);
   const settings = await service.getSettings();
 
@@ -28,7 +28,7 @@ publicApi.get("/system-settings", async (c) => {
 });
 
 // 製品カタログ取得（マークアップなし、パートナー未設定時用）
-publicApi.get("/products", async (c) => {
+publicRoutes.get("/products", async (c) => {
   const service = new EstimateService(c.env.DB);
   // マークアップなしの基本価格で製品を取得
   const products = await service.getProductsWithoutMarkup();
@@ -55,7 +55,7 @@ publicApi.get("/products", async (c) => {
 });
 
 // 見積もり参照番号で取得（/:partnerSlugより前に配置必須）
-publicApi.get("/estimates/:ref", async (c) => {
+publicRoutes.get("/estimates/:ref", async (c) => {
   const service = new EstimateService(c.env.DB);
   const estimate = await service.getEstimateByReference(c.req.param("ref"));
 
@@ -85,7 +85,7 @@ publicApi.get("/estimates/:ref", async (c) => {
 });
 
 // パートナー情報取得（ブランディング用）
-publicApi.get("/:partnerSlug", async (c) => {
+publicRoutes.get("/:partnerSlug", async (c) => {
   const service = new EstimateService(c.env.DB);
   const partner = await service.getPartnerBranding(c.req.param("partnerSlug"));
 
@@ -104,7 +104,7 @@ publicApi.get("/:partnerSlug", async (c) => {
 });
 
 // マークアップ適用済み製品カタログ
-publicApi.get("/:partnerSlug/products", async (c) => {
+publicRoutes.get("/:partnerSlug/products", async (c) => {
   const service = new EstimateService(c.env.DB);
   const partner = await service.getPartnerBranding(c.req.param("partnerSlug"));
 
@@ -137,7 +137,7 @@ publicApi.get("/:partnerSlug/products", async (c) => {
 });
 
 // 見積もり作成
-publicApi.post("/:partnerSlug/estimates", async (c) => {
+publicRoutes.post("/:partnerSlug/estimates", async (c) => {
   const data = await validateBody(c, CreateEstimateSchema);
   if (!data) return c.res;
 

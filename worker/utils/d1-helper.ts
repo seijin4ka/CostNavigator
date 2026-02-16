@@ -61,15 +61,15 @@ export function validateD1Result(
  * @param entityName - エンティティ名（エラーメッセージ用）
  * @returns クエリ実行結果
  */
-export function executeD1Query<T extends { success: boolean }>(
+export async function executeD1Query(
   db: D1Database,
   sql: string,
   params: unknown[] = [],
   operation: string = "クエリ",
   entityName: string = "エンティティ"
-): T {
+): Promise<D1Result<Record<string, unknown>>> {
   const stmt = db.prepare(sql);
-  const result = stmt.bind(...params).run() as T;
+  const result = await stmt.bind(...params).run();
   validateD1Result(result, operation, entityName);
   return result;
 }
@@ -82,13 +82,13 @@ export function executeD1Query<T extends { success: boolean }>(
  * @param params - パラメータ
  * @returns クエリ実行結果（最初の行）
  */
-export function executeD1First<T>(
+export async function executeD1First<T>(
   db: D1Database,
   sql: string,
   params: unknown[] = []
-): T | null {
+): Promise<T | null> {
   const stmt = db.prepare(sql);
-  return stmt.bind(...params).first<T>();
+  return await stmt.bind(...params).first<T>();
 }
 
 /**
@@ -99,11 +99,12 @@ export function executeD1First<T>(
  * @param params - パラメータ
  * @returns クエリ実行結果（全行）
  */
-export function executeD1All<T>(
+export async function executeD1All<T>(
   db: D1Database,
   sql: string,
   params: unknown[] = []
-): T[] {
+): Promise<T[]> {
   const stmt = db.prepare(sql);
-  return stmt.bind(...params).all<T>().results ?? [];
+  const result = await stmt.bind(...params).all<T>();
+  return result.results ?? [];
 }

@@ -17,6 +17,12 @@ const __dirname = path.dirname(__filename);
 
 const DB_NAME = 'cost-navigator-db';
 
+// SKIP_PREPARE_DEPLOYが設定されている場合はスクリプト全体をスキップ
+if (process.env.SKIP_PREPARE_DEPLOY === 'true') {
+  console.log('⏭️ SKIP_PREPARE_DEPLOY=true: デプロイ準備をスキップします');
+  process.exit(0);
+}
+
 // Cloudflare Vite plugin の出力先を自動検出
 const wranglerConfigPath = path.join(__dirname, '../wrangler.jsonc');
 
