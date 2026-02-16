@@ -77,16 +77,26 @@ auth.post("/refresh", rateLimit(10, 60000), async (c) => {
 
 // セットアップ状態確認
 auth.get("/setup-status", async (c) => {
-  const jwtSecret = await getJwtSecret(c.env.DB, c.env.JWT_SECRET);
-  const userRepo = new (await import("../repositories/user-repository")).UserRepository(c.env.DB);
+  try {
+    console.log("🔍 /api/auth/setup-status - 開始");
+    console.log("📊 D1バインディング状態:", c.env.DB ? "有効" : "無効");
 
-  const userCount = await userRepo.count();
-  const isSetupComplete = userCount > 0;
+    const jwtSecret = await getJwtSecret(c.env.DB, c.env.JWT_SECRET);
+    const userRepo = new (await import("../repositories/user-repository")).UserRepository(c.env.DB);
 
-  return success(c, {
-    isSetupComplete,
-    userCount,
-  });
+    const userCount = await userRepo.count();
+    const isSetupComplete = userCount > 0;
+
+    console.log(`✅ /api/auth/setup-status - 完了 (userCount: ${userCount}, isSetupComplete: ${isSetupComplete})`);
+
+    return success(c, {
+      isSetupComplete,
+      userCount,
+    });
+  } catch (error) {
+    console.error("❌ /api/auth/setup-status エラー:", error);
+    throw error;
+  }
 });
 
 // 初期セットアップ（マイグレーション + 初期管理者作成）

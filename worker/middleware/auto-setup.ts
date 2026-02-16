@@ -23,6 +23,15 @@ export async function autoSetupMiddleware(c: Context<{ Bindings: Env }>, next: N
     try {
       console.log("🔍 セットアップ状態を確認中...");
 
+      // D1バインディングをチェック
+      if (!c.env.DB) {
+        console.error("❌ D1データベースバインディングが見つかりません");
+        console.error("   wrangler.jsonc または wrangler.json の d1_databases バインディングを確認してください");
+        throw new Error("D1データベースバインディングが見つかりません");
+      }
+
+      console.log("✅ D1バインディングが有効です");
+
       // schema_migrationsテーブルの存在をチェック
       const tableCheck = await c.env.DB
         .prepare(
@@ -56,6 +65,10 @@ export async function autoSetupMiddleware(c: Context<{ Bindings: Env }>, next: N
       isSetupComplete = true;
     } catch (error) {
       console.error("❌ 自動セットアップエラー:", error);
+      if (error instanceof Error) {
+        console.error("   エラーメッセージ:", error.message);
+        console.error("   スタックトレース:", error.stack);
+      }
       // エラーが発生してもリクエストは続行
       // ユーザーは手動で /api/auth/setup を呼び出すことができる
     }

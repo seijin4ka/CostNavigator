@@ -374,11 +374,29 @@ async function runMigration(
       .filter(s => s.length > 0 && !s.startsWith('--'));
 
     // 各ステートメントを個別に実行
-    for (const statement of statements) {
-      await db.prepare(statement).run();
+    for (let i = 0; i < statements.length; i++) {
+      const statement = statements[i];
+      try {
+        console.log(`   ステートメント ${i + 1}/${statements.length} を実行中...`);
+        const result = await db.prepare(statement).run();
+
+        if (!result.success) {
+          console.error(`   ❌ ステートメント ${i + 1} が失敗しました:`, result);
+          throw new Error(`ステートメント ${i + 1} の実行に失敗しました`);
+        }
+
+        console.log(`   ✅ ステートメント ${i + 1}/${statements.length} 完了 (changes: ${result.meta?.changes || 0})`);
+      } catch (stmtError) {
+        console.error(`   ❌ ステートメント ${i + 1} でエラーが発生:`, stmtError);
+        if (stmtError instanceof Error) {
+          console.error(`      エラーメッセージ: ${stmtError.message}`);
+        }
+        throw stmtError;
+      }
     }
 
     // マイグレーション履歴を記録
+    console.log(`   📝 マイグレーション履歴を記録中...`);
     await db
       .prepare(
         "INSERT INTO schema_migrations (version, name, executed_at) VALUES (?, ?, datetime('now'))"
@@ -386,9 +404,13 @@ async function runMigration(
       .bind(migration.version, migration.name)
       .run();
 
-    console.log(`マイグレーション完了: ${migration.name}`);
+    console.log(`✅ マイグレーション完了: ${migration.name}`);
   } catch (error) {
-    console.error(`マイグレーション失敗: ${migration.name}:`, error);
+    console.error(`❌ マイグレーション失敗: ${migration.name}:`, error);
+    if (error instanceof Error) {
+      console.error(`   エラーメッセージ: ${error.message}`);
+      console.error(`   スタックトレース: ${error.stack}`);
+    }
     throw error;
   }
 }
