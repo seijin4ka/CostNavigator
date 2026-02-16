@@ -6,7 +6,7 @@ import { formatCurrency, formatDate } from "../../lib/formatters";
 
 interface DashboardStats {
   products_count: number;
-  partners_count: number;
+  categories_count: number;
   estimates_count: number;
   total_revenue: number;
   recent_estimates: {
@@ -81,8 +81,8 @@ export function DashboardPage() {
         </Card>
         <Card>
           <div>
-            <p className="text-sm text-gray-500">パートナー数</p>
-            <p className="text-3xl font-bold text-gray-900 mt-1">{stats?.partners_count ?? 0}</p>
+            <p className="text-sm text-gray-500">カテゴリ数</p>
+            <p className="text-3xl font-bold text-gray-900 mt-1">{stats?.categories_count ?? 0}</p>
           </div>
         </Card>
         <Card>

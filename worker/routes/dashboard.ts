@@ -11,10 +11,10 @@ dashboard.use("*", authMiddleware);
 dashboard.get("/stats", async (c) => {
   const db = c.env.DB;
 
-  const [productsCount, partnersCount, estimatesCount, recentEstimates, estimateTotals] =
+  const [productsCount, categoriesCount, estimatesCount, recentEstimates, estimateTotals] =
     await Promise.all([
       db.prepare("SELECT COUNT(*) as count FROM products WHERE is_active = 1").first<{ count: number }>(),
-      db.prepare("SELECT COUNT(*) as count FROM partners WHERE is_active = 1").first<{ count: number }>(),
+      db.prepare("SELECT COUNT(*) as count FROM categories").first<{ count: number }>(),
       db.prepare("SELECT COUNT(*) as count FROM estimates").first<{ count: number }>(),
       db
         .prepare(`
@@ -32,7 +32,7 @@ dashboard.get("/stats", async (c) => {
 
   return success(c, {
     products_count: productsCount?.count ?? 0,
-    partners_count: partnersCount?.count ?? 0,
+    categories_count: categoriesCount?.count ?? 0,
     estimates_count: estimatesCount?.count ?? 0,
     total_revenue: estimateTotals?.total_monthly ?? 0,
     recent_estimates: recentEstimates.results,
