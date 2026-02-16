@@ -9,125 +9,12 @@ import type { PartnerBranding, SystemSettings } from "@shared/types";
 import { USAGE_UNIT_LABELS } from "@shared/constants";
 import { formatCurrency, formatNumber } from "../../lib/formatters";
 
-// --- SVGアイコン ---
-interface IconProps { className?: string; style?: CSSProperties }
-
-function ShieldIcon({ className = "w-5 h-5", style }: IconProps) {
-  return (
-    <svg className={className} style={style} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
-    </svg>
-  );
-}
-
-function PlusIcon({ className = "w-4 h-4", style }: IconProps) {
-  return (
-    <svg className={className} style={style} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-    </svg>
-  );
-}
-
-function MinusIcon({ className = "w-4 h-4", style }: IconProps) {
-  return (
-    <svg className={className} style={style} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 12h-15" />
-    </svg>
-  );
-}
-
-function CloseIcon({ className = "w-5 h-5", style }: IconProps) {
-  return (
-    <svg className={className} style={style} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-    </svg>
-  );
-}
-
-function TrashIcon({ className = "w-4 h-4", style }: IconProps) {
-  return (
-    <svg className={className} style={style} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-      <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-    </svg>
-  );
-}
-
-function ArrowRightIcon({ className = "w-4 h-4", style }: IconProps) {
-  return (
-    <svg className={className} style={style} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-    </svg>
-  );
-}
-
-function CheckIcon({ className = "w-4 h-4", style }: IconProps) {
-  return (
-    <svg className={className} style={style} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-    </svg>
-  );
-}
-
-function ClockIcon({ className = "w-4 h-4", style }: IconProps) {
-  return (
-    <svg className={className} style={style} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-    </svg>
-  );
-}
-
-function DocumentIcon({ className = "w-4 h-4", style }: IconProps) {
-  return (
-    <svg className={className} style={style} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-    </svg>
-  );
-}
-
-function LockIcon({ className = "w-4 h-4", style }: IconProps) {
-  return (
-    <svg className={className} style={style} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-    </svg>
-  );
-}
-
-// ステップインジケーター
-function StepIndicator({ currentStep, primaryColor }: { currentStep: number; primaryColor: string }) {
-  const steps = [
-    { num: 1, label: "サービス選択" },
-    { num: 2, label: "お客様情報入力" },
-    { num: 3, label: "見積もり完了" },
-  ];
-  return (
-    <div className="flex items-center justify-center gap-0">
-      {steps.map((step, i) => (
-        <div key={step.num} className="flex items-center">
-          <div className="flex items-center gap-2">
-            <div
-              className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold font-display transition-all duration-300 ${
-                currentStep >= step.num ? "text-white" : "bg-slate-100 text-slate-400"
-              }`}
-              style={currentStep >= step.num ? { backgroundColor: primaryColor } : undefined}
-            >
-              {currentStep > step.num ? <CheckIcon className="w-3.5 h-3.5" /> : step.num}
-            </div>
-            <span
-              className={`text-xs font-medium hidden sm:inline transition-colors duration-300 ${
-                currentStep >= step.num ? "text-slate-700" : "text-slate-400"
-              }`}
-            >
-              {step.label}
-            </span>
-          </div>
-          {i < steps.length - 1 && (
-            <div className="w-8 sm:w-12 h-px mx-2 sm:mx-3 transition-colors duration-300" style={{ backgroundColor: currentStep > step.num ? primaryColor : "#e2e8f0" }} />
-          )}
-        </div>
-      ))}
-    </div>
-  );
-}
+import { EstimateHeader } from "../../components/public/EstimateHeader";
+import { EstimateHero } from "../../components/public/EstimateHero";
+import { EstimateFooter } from "../../components/public/EstimateFooter";
+import { EstimateFloatingBar } from "../../components/public/EstimateFloatingBar";
+import { CustomerInfoModal } from "../../components/public/CustomerInfoModal";
+import { PlusIcon, MinusIcon, TrashIcon, CheckIcon, ClockIcon, LockIcon } from "../../components/public/Icons";
 
 export function EstimatePage() {
   const { partnerSlug } = useParams<{ partnerSlug: string }>();
@@ -286,87 +173,10 @@ export function EstimatePage() {
       style={{ "--cn-accent": primaryColor, "--cn-accent-dark": secondaryColor } as CSSProperties}
     >
       {/* === ヘッダー === */}
-      <header className="relative overflow-hidden" style={{ backgroundColor: secondaryColor }}>
-        {/* 背景パターン */}
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='6' height='6' viewBox='0 0 6 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5 0h1L0 6V5zM6 5v1H5z' fill='%23ffffff' fill-opacity='0.04'/%3E%3C/svg%3E")`,
-          }}
-        />
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 sm:h-[72px]">
-            {/* ロゴ + パートナー名 */}
-            <div className="flex items-center gap-3 sm:gap-4">
-              {partner?.logo_url && (
-                <img src={partner.logo_url} alt={partner.name} className="h-7 sm:h-8 object-contain" />
-              )}
-              <div>
-                <h1 className="text-base sm:text-lg font-bold text-white tracking-tight font-display">
-                  {partner?.name ?? "CostNavigator"}
-                </h1>
-                <p className="text-[11px] sm:text-xs text-white/50 tracking-wide">
-                  Cloudflare サービス見積もり
-                </p>
-              </div>
-            </div>
-            {/* 認定バッジ */}
-            <div className="hidden sm:flex items-center gap-2 text-white/60 text-xs">
-              <ShieldIcon className="w-4 h-4" />
-              <span className="font-display">Cloudflare 認定パートナー</span>
-            </div>
-          </div>
-        </div>
-        {/* アクセントライン */}
-        <div
-          className="h-[3px]"
-          style={{ background: `linear-gradient(90deg, ${primaryColor}, ${primaryColor}88, transparent)` }}
-        />
-      </header>
+      <EstimateHeader partner={partner} primaryColor={primaryColor} secondaryColor={secondaryColor} />
 
       {/* === ヒーローセクション === */}
-      <div
-        className="relative overflow-hidden"
-        style={{ background: `linear-gradient(135deg, ${secondaryColor}08, ${primaryColor}06, ${secondaryColor}04)` }}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
-          <div className="text-center max-w-3xl mx-auto animate-cn-fade-up opacity-0">
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 tracking-tight font-display leading-tight">
-              最適なCloudflareプランを
-              <br className="sm:hidden" />
-              <span style={{ color: primaryColor }}>簡単お見積もり</span>
-            </h2>
-            <p className="mt-3 text-sm sm:text-base text-slate-500 leading-relaxed max-w-xl mx-auto">
-              必要なサービスを選択するだけで、即座にお見積もりを作成。
-              <br className="hidden sm:block" />
-              PDFでのダウンロードも無料でご利用いただけます。
-            </p>
-
-            {/* バリュープロポジション */}
-            <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
-              <div className="flex items-center gap-1.5 text-xs text-slate-500">
-                <ClockIcon className="w-3.5 h-3.5" style={{ color: primaryColor }} />
-                <span>最短1分で完了</span>
-              </div>
-              <div className="flex items-center gap-1.5 text-xs text-slate-500">
-                <DocumentIcon className="w-3.5 h-3.5" style={{ color: primaryColor }} />
-                <span>PDF出力対応</span>
-              </div>
-              <div className="flex items-center gap-1.5 text-xs text-slate-500">
-                <LockIcon className="w-3.5 h-3.5" style={{ color: primaryColor }} />
-                <span>登録不要・無料</span>
-              </div>
-            </div>
-          </div>
-
-          {/* ステップインジケーター */}
-          <div className="mt-8 animate-cn-fade-up opacity-0" style={{ animationDelay: "100ms" }}>
-            <StepIndicator currentStep={currentStep} primaryColor={primaryColor} />
-          </div>
-        </div>
-        {/* セクション区切り */}
-        <div className="absolute bottom-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
-      </div>
+      <EstimateHero currentStep={currentStep} primaryColor={primaryColor} secondaryColor={secondaryColor} />
 
       {/* === メインコンテンツ === */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-10">
@@ -647,7 +457,6 @@ export function EstimatePage() {
                             className="w-full flex items-center justify-center gap-2 py-3.5 rounded-lg text-sm font-bold text-white transition-all duration-200 hover:opacity-90 hover:shadow-lg font-display bg-blue-500"
                           >
                             管理画面へ
-                            <ArrowRightIcon className="w-4 h-4" />
                           </Link>
                         </div>
                       ) : (
@@ -660,7 +469,6 @@ export function EstimatePage() {
                           }}
                         >
                           見積もりを依頼する
-                          <ArrowRightIcon className="w-4 h-4" />
                         </button>
                       )}
 
@@ -687,223 +495,35 @@ export function EstimatePage() {
 
       {/* === モバイル フローティングバー === */}
       {builder.items.length > 0 && (
-        <div className="fixed bottom-0 inset-x-0 lg:hidden z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
-          <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-            <div>
-              <p className="text-xs text-slate-400 font-body">{builder.items.length}件のサービス</p>
-              <p className="cn-price text-lg font-bold font-display" style={{ color: primaryColor }}>
-                {formatCurrency(builder.totalMonthly)}
-                <span className="text-xs font-normal text-slate-400 ml-1">/月</span>
-              </p>
-            </div>
-            {!slug ? (
-              <Link
-                to="/admin/login"
-                className="px-5 py-2.5 rounded-lg text-sm font-bold text-white font-display transition-all hover:opacity-90 bg-blue-500"
-              >
-                管理画面へ
-              </Link>
-            ) : (
-              <button
-                onClick={() => setIsSubmitModalOpen(true)}
-                className="px-5 py-2.5 rounded-lg text-sm font-bold text-white font-display transition-all hover:opacity-90"
-                style={{ backgroundColor: primaryColor }}
-              >
-                見積もりを依頼
-              </button>
-            )}
-          </div>
-        </div>
+        <EstimateFloatingBar
+          itemCount={builder.items.length}
+          totalMonthly={builder.totalMonthly}
+          slug={slug}
+          primaryColor={primaryColor}
+          onSubmit={() => setIsSubmitModalOpen(true)}
+        />
       )}
 
       {/* === 顧客情報モーダル === */}
-      {isSubmitModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-cn-fade-in opacity-0">
-          <div
-            className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm"
-            onClick={() => setIsSubmitModalOpen(false)}
-          />
-          <div
-            className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto cn-scrollbar animate-cn-slide-up opacity-0"
-            style={{ animationDelay: "50ms" }}
-          >
-            {/* ステップインジケーター（モーダル内） */}
-            <div className="px-6 pt-5 pb-3">
-              <StepIndicator currentStep={2} primaryColor={primaryColor} />
-            </div>
-
-            {/* モーダルヘッダー */}
-            <div className="flex items-center justify-between px-6 py-3 border-b border-slate-100">
-              <div>
-                <h2 className="text-lg font-bold text-slate-900 font-display">お客様情報の入力</h2>
-                <p className="text-xs text-slate-400 mt-0.5">見積もりの送付先情報をご入力ください</p>
-              </div>
-              <button
-                onClick={() => setIsSubmitModalOpen(false)}
-                className="p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
-              >
-                <CloseIcon className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* 見積もりサマリー */}
-            <div
-              className="px-6 py-4 border-b border-slate-100"
-              style={{ backgroundColor: `${primaryColor}06` }}
-            >
-              <div className="flex items-baseline justify-between">
-                <span className="text-sm text-slate-500">{builder.items.length}件のサービス</span>
-                <div className="text-right">
-                  <span className="cn-price text-xl font-bold font-display" style={{ color: primaryColor }}>
-                    {formatCurrency(builder.totalMonthly)}
-                  </span>
-                  <span className="text-xs text-slate-400 ml-1">/月</span>
-                </div>
-              </div>
-              <div className="flex justify-end mt-0.5">
-                <span className="cn-price text-xs text-slate-400">
-                  年額: {formatCurrency(builder.totalYearly)}
-                </span>
-              </div>
-            </div>
-
-            {/* フォーム */}
-            <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
-              {error && (
-                <div className="bg-red-50 border border-red-100 rounded-lg px-4 py-3 text-sm text-red-600 font-body">
-                  {error}
-                </div>
-              )}
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="block text-xs font-semibold text-slate-600 tracking-wide uppercase font-display">
-                    お名前 <span className="text-red-400">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={customerForm.customer_name}
-                    onChange={(e) => setCustomerForm((prev) => ({ ...prev, customer_name: e.target.value }))}
-                    required
-                    className="w-full px-4 py-2.5 rounded-lg border border-slate-200 text-sm text-slate-800 placeholder-slate-300 focus:outline-none focus:ring-2 focus:border-transparent transition-shadow font-body"
-                    style={{ "--tw-ring-color": `${primaryColor}33` } as CSSProperties}
-                    placeholder="例: 山田 太郎"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="block text-xs font-semibold text-slate-600 tracking-wide uppercase font-display">
-                    会社名 <span className="text-slate-300">(任意)</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={customerForm.customer_company}
-                    onChange={(e) => setCustomerForm((prev) => ({ ...prev, customer_company: e.target.value }))}
-                    className="w-full px-4 py-2.5 rounded-lg border border-slate-200 text-sm text-slate-800 placeholder-slate-300 focus:outline-none focus:ring-2 focus:border-transparent transition-shadow font-body"
-                    style={{ "--tw-ring-color": `${primaryColor}33` } as CSSProperties}
-                    placeholder="例: 株式会社サンプル"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="block text-xs font-semibold text-slate-600 tracking-wide uppercase font-display">
-                    メールアドレス <span className="text-red-400">*</span>
-                  </label>
-                  <input
-                    type="email"
-                    value={customerForm.customer_email}
-                    onChange={(e) => setCustomerForm((prev) => ({ ...prev, customer_email: e.target.value }))}
-                    required
-                    className="w-full px-4 py-2.5 rounded-lg border border-slate-200 text-sm text-slate-800 placeholder-slate-300 focus:outline-none focus:ring-2 focus:border-transparent transition-shadow font-body"
-                    style={{ "--tw-ring-color": `${primaryColor}33` } as CSSProperties}
-                    placeholder="例: yamada@example.com"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="block text-xs font-semibold text-slate-600 tracking-wide uppercase font-display">
-                    電話番号 <span className="text-slate-300">(任意)</span>
-                  </label>
-                  <input
-                    type="tel"
-                    value={customerForm.customer_phone}
-                    onChange={(e) => setCustomerForm((prev) => ({ ...prev, customer_phone: e.target.value }))}
-                    className="w-full px-4 py-2.5 rounded-lg border border-slate-200 text-sm text-slate-800 placeholder-slate-300 focus:outline-none focus:ring-2 focus:border-transparent transition-shadow font-body"
-                    style={{ "--tw-ring-color": `${primaryColor}33` } as CSSProperties}
-                    placeholder="例: 03-1234-5678"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-slate-600 tracking-wide uppercase font-display">
-                  備考 <span className="text-slate-300">(任意)</span>
-                </label>
-                <textarea
-                  className="w-full px-4 py-2.5 rounded-lg border border-slate-200 text-sm text-slate-800 placeholder-slate-300 focus:outline-none focus:ring-2 focus:border-transparent transition-shadow resize-none font-body"
-                  style={{ "--tw-ring-color": `${primaryColor}33` } as CSSProperties}
-                  rows={2}
-                  value={customerForm.notes}
-                  onChange={(e) => setCustomerForm((prev) => ({ ...prev, notes: e.target.value }))}
-                  placeholder="ご質問やご要望がございましたらご記入ください"
-                />
-              </div>
-
-              <div className="flex gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setIsSubmitModalOpen(false)}
-                  className="flex-1 py-3 rounded-lg border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors font-display"
-                >
-                  戻る
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="flex-[2] py-3 rounded-lg text-sm font-bold text-white transition-all duration-200 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-display"
-                  style={{
-                    backgroundColor: primaryColor,
-                    boxShadow: `0 4px 14px -3px ${primaryColor}66`,
-                  }}
-                >
-                  {isSubmitting ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      処理中...
-                    </>
-                  ) : (
-                    <>
-                      見積もりを依頼する
-                      <ArrowRightIcon className="w-4 h-4" />
-                    </>
-                  )}
-                </button>
-              </div>
-
-              {/* フォーム下部の信頼シグナル */}
-              <p className="text-center text-[11px] text-slate-400 pt-1">
-                送信いただいた情報はSSL暗号化通信で保護されます
-              </p>
-            </form>
-          </div>
-        </div>
-      )}
+      <CustomerInfoModal
+        isOpen={isSubmitModalOpen}
+        onClose={() => setIsSubmitModalOpen(false)}
+        onSubmit={handleSubmit}
+        customerForm={customerForm}
+        onCustomerFormChange={setCustomerForm}
+        itemCount={builder.items.length}
+        totalMonthly={builder.totalMonthly}
+        totalYearly={builder.totalYearly}
+        primaryColor={primaryColor}
+        secondaryColor={secondaryColor}
+        error={error}
+        isSubmitting={isSubmitting}
+        slug={slug}
+        basePath={basePath}
+      />
 
       {/* === フッター === */}
-      <footer className="mt-16 lg:mt-24 border-t border-slate-200 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
-            <p className="text-xs text-slate-400 font-display">
-              Powered by <span className="font-semibold text-slate-500">Accelia, Inc.</span>
-            </p>
-            <p className="text-xs text-slate-400 font-display">
-              Cloudflare 製品のお見積もりツール
-            </p>
-          </div>
-        </div>
-      </footer>
+      <EstimateFooter />
 
       {/* モバイルフローティングバー用の余白 */}
       {builder.items.length > 0 && <div className="h-20 lg:hidden" />}
