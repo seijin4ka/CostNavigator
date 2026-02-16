@@ -3,7 +3,16 @@
   "private": true,
   "version": "1.0.0",
   "description": "Cloudflare MSSP パートナー向け予算見積もりサービス - パートナー企業が自社ブランドでCloudflareソリューションの見積もりを提供",
-  "keywords": ["cloudflare", "mssp", "partner", "estimate", "pricing", "workers", "d1", "react"],
+  "keywords": [
+    "cloudflare",
+    "mssp",
+    "partner",
+    "estimate",
+    "pricing",
+    "workers",
+    "d1",
+    "react"
+  ],
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -18,16 +27,16 @@
     "db:backup": "wrangler d1 export cost-navigator-db --output backup-$(date +%Y%m%d-%H%M%S).sql"
   },
   "dependencies": {
+    "@react-pdf/renderer": "^4.3.0",
     "hono": "^4.7.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router": "^7.1.0",
     "react-router-dom": "^7.1.0",
-    "zod": "^3.24.0",
-    "@react-pdf/renderer": "^4.3.0"
+    "zod": "^3.24.0"
   },
   "devDependencies": {
-    "@cloudflare/vite-plugin": "^1.0.0",
+    "@cloudflare/vite-plugin": "^1.25.0",
     "@cloudflare/workers-types": "^4.20250109.0",
     "@tailwindcss/vite": "^4.0.0",
     "@types/react": "^19.0.0",
