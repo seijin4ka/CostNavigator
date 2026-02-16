@@ -20,8 +20,21 @@ export function PasswordChangeCard() {
     setPasswordError("");
     setPasswordChangeSuccess("");
 
+    // クライアント側バリデーション: パスワード一致チェック
+    if (passwordFormData.newPassword !== passwordFormData.confirmPassword) {
+      setPasswordError("新しいパスワードと確認用パスワードが一致しません");
+      setIsChangingPassword(false);
+      return;
+    }
+
+    if (passwordFormData.newPassword.length < 8) {
+      setPasswordError("新しいパスワードは8文字以上で入力してください");
+      setIsChangingPassword(false);
+      return;
+    }
+
     try {
-      const res = await apiClient.patch<{ message: string }>("/admin/change-password", passwordFormData);
+      const res = await apiClient.patch<{ message: string }>("/auth/admin/change-password", passwordFormData);
 
       if (res.data.message) {
         setPasswordChangeSuccess(res.data.message);

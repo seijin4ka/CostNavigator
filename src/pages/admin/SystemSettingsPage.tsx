@@ -232,9 +232,7 @@ export function SystemSettingsPage() {
 
         {/* 右側：パスワード変更（1カラム分） */}
         <div>
-          <Card>
-            <PasswordChangeCard />
-          </Card>
+          <PasswordChangeCard />
         </div>
       </div>
     </div>

@@ -93,11 +93,11 @@ export class UserRepository {
       updates.push("updated_at = datetime('now')");
     }
 
-    if (updates.length > 0 || values.length > 0) {
+    if (updates.length > 0) {
       await executeD1Query(
         this.db,
         `UPDATE users SET ${updates.join(", ")} WHERE id = ?`,
-        [userId]
+        [...values, userId]
       );
     }
   }
