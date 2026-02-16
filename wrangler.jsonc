@@ -9,13 +9,13 @@
     "not_found_handling": "single-page-application"
   },
   // D1データベースバインディング
-  // database_idはビルド時にscripts/prepare-deploy.jsで自動的に設定されます
+  // database_idはOne Click Appまたはデプロイ時に自動的に設定されます
   // ローカル開発では自動的に.wrangler/state/v3/d1に作成されます
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "cost-navigator-db",
-      "database_id": "placeholder-will-be-set-on-deploy"
+      "database_id": ""
     }
   ]
 }
