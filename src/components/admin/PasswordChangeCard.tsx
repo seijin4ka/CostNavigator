@@ -1,18 +1,15 @@
 import { useState } from "react";
 import { apiClient } from "../../api/client";
-import { Button } from "../../components/ui/Button";
-import { Input } from "../../components/ui/Input";
+import { Card } from "../ui/Card";
+import { Button } from "../ui/Button";
+import { Input } from "../ui/Input";
 
-interface PasswordChangeCardProps {
-  passwordFormData: {
-    currentPassword: string;
-    newPassword: string;
-    confirmPassword: string;
-  };
-  setFormData: React.Dispatch<React.SetStateAction<PasswordChangeCardProps["passwordFormData"]>>;
-}
-
-export function PasswordChangeCard({ passwordFormData, setFormData }: PasswordChangeCardProps) {
+export function PasswordChangeCard() {
+  const [passwordFormData, setPasswordFormData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
   const [passwordError, setPasswordError] = useState("");
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [passwordChangeSuccess, setPasswordChangeSuccess] = useState("");
@@ -28,9 +25,8 @@ export function PasswordChangeCard({ passwordFormData, setFormData }: PasswordCh
 
       if (res.data.message) {
         setPasswordChangeSuccess(res.data.message);
-        // 3秒後にフォームをリセット
         setTimeout(() => {
-          setFormData({
+          setPasswordFormData({
             currentPassword: "",
             newPassword: "",
             confirmPassword: "",
@@ -46,8 +42,9 @@ export function PasswordChangeCard({ passwordFormData, setFormData }: PasswordCh
   };
 
   return (
-    <div className="p-6 space-y-4">
-      <h2 className="text-lg font-semibold text-gray-900 mb-4">パスワード変更</h2>
+    <Card>
+      <div className="p-6 space-y-4">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">パスワード変更</h2>
         {passwordChangeSuccess && (
           <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded">
             {passwordChangeSuccess}
@@ -63,7 +60,7 @@ export function PasswordChangeCard({ passwordFormData, setFormData }: PasswordCh
             label="現在のパスワード"
             type="password"
             value={passwordFormData.currentPassword}
-            onChange={(e) => setFormData({ ...passwordFormData, currentPassword: e.target.value })}
+            onChange={(e) => setPasswordFormData({ ...passwordFormData, currentPassword: e.target.value })}
             required
             disabled={isChangingPassword}
             placeholder="現在のパスワードを入力してください"
@@ -72,7 +69,7 @@ export function PasswordChangeCard({ passwordFormData, setFormData }: PasswordCh
             label="新しいパスワード"
             type="password"
             value={passwordFormData.newPassword}
-            onChange={(e) => setFormData({ ...passwordFormData, newPassword: e.target.value })}
+            onChange={(e) => setPasswordFormData({ ...passwordFormData, newPassword: e.target.value })}
             required
             disabled={isChangingPassword}
             placeholder="8文字以上で入力してください"
@@ -81,7 +78,7 @@ export function PasswordChangeCard({ passwordFormData, setFormData }: PasswordCh
             label="新しいパスワード（確認用）"
             type="password"
             value={passwordFormData.confirmPassword}
-            onChange={(e) => setFormData({ ...passwordFormData, confirmPassword: e.target.value })}
+            onChange={(e) => setPasswordFormData({ ...passwordFormData, confirmPassword: e.target.value })}
             required
             disabled={isChangingPassword}
             placeholder="新しいパスワードを再度入力してください"
@@ -91,6 +88,6 @@ export function PasswordChangeCard({ passwordFormData, setFormData }: PasswordCh
           </Button>
         </form>
       </div>
-    </div>
+    </Card>
   );
 }

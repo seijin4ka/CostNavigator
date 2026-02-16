@@ -212,10 +212,29 @@ auth.patch("/admin/change-password", authMiddleware, async (c) => {
 
   // パスワードハッシュ化と更新
   const passwordHash = await hashPassword(data.newPassword);
-  await service.updatePasswordChangedAt(user.id);
+  await service.updatePassword(user.id, passwordHash);
 
   return success(c, {
     message: "パスワードを変更しました",
+  });
+});
+
+// アカウントロック解除エンドポイント（認証必須）
+auth.post("/admin/unlock-account", authMiddleware, async (c) => {
+  const payload = c.get("jwtPayload");
+  const userRepo = new (await import("../repositories/user-repository")).UserRepository(c.env.DB);
+
+  // 現在のユーザー情報を取得
+  const user = await userRepo.findById(payload.sub);
+  if (!user) {
+    return error(c, "USER_NOT_FOUND", "ユーザーが見つかりません", 404);
+  }
+
+  // ロック解除実行
+  await userRepo.unlockAccount(user.id);
+
+  return success(c, {
+    message: "アカウントのロックを解除しました",
   });
 });
 

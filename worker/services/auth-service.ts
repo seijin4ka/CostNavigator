@@ -51,6 +51,14 @@ export class AuthService {
       .run();
   }
 
+  // パスワード更新
+  async updatePassword(userId: string, newPasswordHash: string): Promise<void> {
+    await this.db
+      .prepare("UPDATE users SET password_hash = ?, password_changed_at = datetime('now'), updated_at = datetime('now') WHERE id = ?")
+      .bind(newPasswordHash, userId)
+      .run();
+  }
+
   // 初期管理者ユーザーの作成（存在しない場合のみ）
   async ensureAdminExists(): Promise<void> {
     const count = await this.userRepo.count();
