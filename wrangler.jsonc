@@ -16,8 +16,9 @@
       "binding": "DB",
       "database_name": "cost-navigator-db",
       // ローカル開発ではこの値は使用されません（.wrangler/state/v3/d1に自動作成）
-      // 本番デプロイ時はCI/CDで実際のIDに置換されます
-      "database_id": "local-dev-placeholder"
+      // CI/CDデプロイ時はビルド出力のwrangler.jsonで実際のIDに置換されます
+      // Click to Deployではデプロイプロセスが自動設定します
+      "database_id": "placeholder"
     }
   ]
 }
