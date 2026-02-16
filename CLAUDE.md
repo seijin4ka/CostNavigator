@@ -1,4 +1,6 @@
-# CostNavigator - Claude Code プロジェクト設定
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## プロジェクト概要
 
@@ -13,22 +15,6 @@ Cloudflare MSSP パートナー向け予算見積もりサービス。
 - PDF: @react-pdf/renderer（クライアントサイド、遅延読み込み）
 - バリデーション: Zod（shared/ で型定義を共有）
 - デプロイ: @cloudflare/vite-plugin（単一Worker + 静的アセット）
-
-## ディレクトリ構成ルール
-
-- `shared/` - フロント・バックエンドで共有する型定義と定数。ここに業務ロジックは置かない。
-- `worker/` - Hono API バックエンド。Repository パターンで D1 を直接操作（ORM不使用）。
-- `src/` - React SPA フロントエンド。
-- `migrations/` - D1 SQL マイグレーション。番号順に適用。
-
-## アーキテクチャルール
-
-- `/api/*` は Worker が処理、それ以外は SPA にルーティング（wrangler.jsonc の not_found_handling: single-page-application）
-- DB操作は必ず Repository 層を経由する（`worker/repositories/`）
-- ビジネスロジックは Service 層に集約（`worker/services/`）
-- 公開 API ではマークアップ額や基本価格を返却しない（最終価格のみ公開）
-- マークアップ解決は3段階カスケード: パートナー+製品+ティア → パートナー+製品 → パートナーデフォルト
-- ID は Text UUID（crypto.randomUUID()）を使用
 
 ## 開発コマンド
 
@@ -48,6 +34,52 @@ npm run db:migrate:remote -- migrations/XXXX.sql # 本番DB マイグレーシ�
 4. `curl -X POST http://localhost:5173/api/auth/setup` で管理者作成
 5. admin@costnavigator.dev / admin1234 でログイン
 
+## アーキテクチャ
+
+### ディレクトリ構成
+
+- `shared/` - フロント・バックエンドで共有する型定義（Zod スキーマ）と定数。業務ロジックは置かない。
+- `worker/` - Hono API バックエンド。Repository パターンで D1 を直接操作（ORM不使用）。
+- `src/` - React SPA フロントエンド。
+- `migrations/` - D1 SQL マイグレーション。番号順に適用。
+
+### TypeScript プロジェクト構成
+
+- `tsconfig.app.json` - フロントエンド（src/ + shared/）。DOM型あり、`@shared/*` パスエイリアス。
+- `tsconfig.worker.json` - バックエンド（worker/ + shared/）。`@cloudflare/workers-types` 使用、DOM型なし。
+- インポートは `@shared/types` や `../../shared/types` の両方が使われている（worker は相対パス、src は `@shared` エイリアス）。
+
+### API ルーティング
+
+- `/api/*` は Worker（Hono）が処理、それ以外は SPA にフォールバック（wrangler.jsonc の `not_found_handling: single-page-application`）
+- `/api/admin/*` - 管理API。各ルートファイル内で `authMiddleware` を `app.use("*", authMiddleware)` で適用
+- `/api/public/*` - 公開API（認証不要）。マークアップ額や基本価格を返却せず最終価格のみ公開
+- `/api/auth/*` - 認証（ログイン / セットアップ）
+- `/api/health` - ヘルスチェック
+
+### バックエンド層構造
+
+- Routes（`worker/routes/`）→ Services（`worker/services/`）→ Repositories（`worker/repositories/`）→ D1
+- Service はルートハンドラ内で `new EstimateService(c.env.DB)` のようにリクエスト毎にインスタンス化
+- リクエストバリデーションは `validateBody(c, ZodSchema)` ユーティリティ経由（`worker/utils/validation.ts`）
+- レスポンスは `success(c, data)` / `error(c, code, message, status)` ヘルパー経由（`worker/utils/response.ts`）
+
+### フロントエンド構造
+
+- SPA ルーティング: `/` と `/result` がダイレクト見積もり、`/estimate/:partnerSlug` がパートナー経由見積もり、`/admin/*` が管理画面
+- 管理画面は `ProtectedRoute` + `AdminLayout` でラップ。認証状態は `AuthContext` で管理
+- API通信はシングルトン `apiClient`（`src/api/client.ts`）経由。JWT トークンを自動付与
+- 見積もりビルダーロジックは `useEstimateBuilder` フック（`src/hooks/useEstimateBuilder.ts`）に集約
+
+### マークアップ解決（重要なビジネスロジック）
+
+3段階カスケードで適用するマークアップルールを解決する（`MarkupRepository.resolveMarkup`）:
+1. パートナー + 製品 + ティア（最も具体的）
+2. パートナー + 製品（ティア指定なし）
+3. パートナーのデフォルト設定（フォールバック）
+
+マークアップ種別は `percentage`（パーセント加算）と固定額加算の2種類。
+
 ## コーディング規約
 
 - コメントは日本語で記載する
@@ -55,6 +87,8 @@ npm run db:migrate:remote -- migrations/XXXX.sql # 本番DB マイグレーシ�
 - Zod スキーマは shared/types/ に定義し、フロント・バックエンドで共用
 - API レスポンスは `{ success: true, data: T }` または `{ success: false, error: { code, message } }` の統一フォーマット
 - フロントエンドの UI コンポーネントは `src/components/ui/` に配置（Button, Input, Select, Card, Modal, Table）
+- DB操作は必ず Repository 層を経由する
+- ID は Text UUID（`crypto.randomUUID()`）を使用
 
 ## デザインシステム（公開ページ）
 
