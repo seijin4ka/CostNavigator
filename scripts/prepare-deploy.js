@@ -5,9 +5,8 @@
  * Cloudflare Workers CI/CD環境で実行され、以下を自動的に行います：
  * 1. D1データベースの存在確認・作成
  * 2. wrangler.jsonにdatabase_idを動的に設定
- * 3. D1データベースのマイグレーション実行
+ * 3. D1データベースのマイグレーション実行（GitHub Actions環境ではスキップ）
  */
-
 import { execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
@@ -17,7 +16,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const DB_NAME = 'cost-navigator-db';
-const KV_NAMESPACE = 'cost-navigator-cache';
 
 // Cloudflare Vite plugin の出力先を自動検出
 const wranglerConfigPath = path.join(__dirname, '../wrangler.jsonc');
@@ -31,8 +29,11 @@ console.log('🚀 CostNavigator デプロイ準備開始\n');
 console.log(`📁 ビルド出力ディレクトリ: ${DIST_DIR}`);
 
 // CI/CD環境かどうかをチェック
-const isCI = process.env.CF_PAGES === '1' || process.env.CI === 'true';
+const isCI = process.env.CF_PAGES === '1' || process.env.CI === 'true' || process.env.GITHUB_ACTIONS === 'true';
 console.log(`🔍 実行環境: ${isCI ? 'CI/CD' : 'ローカル'}\n`);
+
+// GitHub Actions環境ではマイグレーションをスキップ
+const skipMigration = isCI || process.env.SKIP_PREPARE_DEPLOY === 'true';
 
 try {
   // D1データベースの確認・作成
@@ -121,8 +122,13 @@ try {
       console.error('   vite build を先に実行してください');
       process.exit(1);
     }
+  } else {
+    console.warn('⚠️  Database IDを取得できませんでした');
+    console.warn('   Cloudflare Workers CI/CDの自動解決機能に頼ります\n');
+  }
 
-    // マイグレーション実行
+  // マイグレーション実行（GitHub Actions環境ではスキップ）
+  if (!skipMigration) {
     console.log('📊 データベースマイグレーションを実行中...');
     try {
       // マイグレーションSQLファイルを作成
@@ -168,7 +174,7 @@ INSERT OR IGNORE INTO schema_migrations VALUES (2, '0002_create_partners', datet
 
 -- 0003: product_categoriesテーブル
 CREATE TABLE IF NOT EXISTS product_categories (
-  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16))),
   name TEXT NOT NULL,
   slug TEXT NOT NULL UNIQUE,
   display_order INTEGER NOT NULL DEFAULT 0,
@@ -179,7 +185,7 @@ INSERT OR IGNORE INTO schema_migrations VALUES (3, '0003_create_product_categori
 
 -- 0004: productsテーブル
 CREATE TABLE IF NOT EXISTS products (
-  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16))),
   category_id TEXT NOT NULL REFERENCES product_categories(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   slug TEXT NOT NULL UNIQUE,
@@ -195,7 +201,7 @@ INSERT OR IGNORE INTO schema_migrations VALUES (4, '0004_create_products', datet
 
 -- 0005: product_tiersテーブル
 CREATE TABLE IF NOT EXISTS product_tiers (
-  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16))),
   product_id TEXT NOT NULL REFERENCES products(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   slug TEXT NOT NULL,
@@ -212,7 +218,7 @@ INSERT OR IGNORE INTO schema_migrations VALUES (5, '0005_create_product_tiers', 
 
 -- 0006: markup_rulesテーブル
 CREATE TABLE IF NOT EXISTS markup_rules (
-  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16))),
   partner_id TEXT NOT NULL REFERENCES partners(id) ON DELETE CASCADE,
   product_id TEXT REFERENCES products(id) ON DELETE CASCADE,
   tier_id TEXT REFERENCES product_tiers(id) ON DELETE CASCADE,
@@ -228,11 +234,12 @@ INSERT OR IGNORE INTO schema_migrations VALUES (6, '0006_create_markup_rules', d
 
 -- 0007: estimatesテーブル
 CREATE TABLE IF NOT EXISTS estimates (
-  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16))),
   partner_id TEXT NOT NULL REFERENCES partners(id) ON DELETE CASCADE,
   reference_number TEXT NOT NULL UNIQUE,
   customer_name TEXT NOT NULL,
   customer_email TEXT NOT NULL,
+  customer_phone TEXT,
   customer_company TEXT,
   status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'sent', 'accepted', 'expired')),
   notes TEXT,
@@ -248,7 +255,7 @@ INSERT OR IGNORE INTO schema_migrations VALUES (7, '0007_create_estimates', date
 
 -- 0008: estimate_itemsテーブル
 CREATE TABLE IF NOT EXISTS estimate_items (
-  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16))),
   estimate_id TEXT NOT NULL REFERENCES estimates(id) ON DELETE CASCADE,
   product_id TEXT NOT NULL,
   product_name TEXT NOT NULL,
@@ -262,65 +269,6 @@ CREATE TABLE IF NOT EXISTS estimate_items (
 );
 CREATE INDEX IF NOT EXISTS idx_estimate_items_estimate ON estimate_items(estimate_id);
 INSERT OR IGNORE INTO schema_migrations VALUES (8, '0008_create_estimate_items', datetime('now'));
-
--- 0009: シードデータ
-INSERT OR IGNORE INTO product_categories (id, name, slug, display_order) VALUES
-  ('cat-cdn', 'CDN / パフォーマンス', 'cdn-performance', 1),
-  ('cat-security', 'セキュリティ', 'security', 2),
-  ('cat-zerotrust', 'Zero Trust', 'zero-trust', 3),
-  ('cat-devplatform', 'Developer Platform', 'developer-platform', 4),
-  ('cat-network', 'ネットワークサービス', 'network-services', 5);
-
-INSERT OR IGNORE INTO products (id, category_id, name, slug, description, pricing_model) VALUES
-  ('prod-cdn', 'cat-cdn', 'CDN', 'cdn', 'コンテンツ配信ネットワーク', 'tier'),
-  ('prod-dns', 'cat-cdn', 'DNS', 'dns', 'エンタープライズDNS', 'tier'),
-  ('prod-images', 'cat-cdn', 'Cloudflare Images', 'images', '画像最適化・配信', 'tier_plus_usage'),
-  ('prod-waf', 'cat-security', 'WAF', 'waf', 'Web Application Firewall', 'tier'),
-  ('prod-ddos', 'cat-security', 'DDoS Protection', 'ddos', 'DDoS攻撃対策', 'tier'),
-  ('prod-bot', 'cat-security', 'Bot Management', 'bot-management', 'ボット管理', 'tier'),
-  ('prod-access', 'cat-zerotrust', 'Cloudflare Access', 'access', 'ゼロトラストアクセス', 'tier_plus_usage'),
-  ('prod-gateway', 'cat-zerotrust', 'Cloudflare Gateway', 'gateway', 'セキュアWebゲートウェイ', 'tier_plus_usage'),
-  ('prod-tunnel', 'cat-zerotrust', 'Cloudflare Tunnel', 'tunnel', 'セキュアトンネル接続', 'tier'),
-  ('prod-workers', 'cat-devplatform', 'Workers', 'workers', 'サーバーレスコンピューティング', 'tier_plus_usage'),
-  ('prod-pages', 'cat-devplatform', 'Pages', 'pages', '静的サイトホスティング', 'tier'),
-  ('prod-r2', 'cat-devplatform', 'R2 Storage', 'r2', 'オブジェクトストレージ', 'usage'),
-  ('prod-argo', 'cat-network', 'Argo Smart Routing', 'argo', 'スマートルーティング', 'usage'),
-  ('prod-spectrum', 'cat-network', 'Spectrum', 'spectrum', 'TCP/UDPプロキシ', 'tier');
-
-INSERT OR IGNORE INTO product_tiers (id, product_id, name, slug, base_price, usage_unit, usage_unit_price, usage_included, display_order) VALUES
-  ('tier-cdn-free', 'prod-cdn', 'Free', 'free', 0, NULL, NULL, NULL, 1),
-  ('tier-cdn-pro', 'prod-cdn', 'Pro', 'pro', 20, NULL, NULL, NULL, 2),
-  ('tier-cdn-biz', 'prod-cdn', 'Business', 'business', 200, NULL, NULL, NULL, 3),
-  ('tier-cdn-ent', 'prod-cdn', 'Enterprise', 'enterprise', 5000, NULL, NULL, NULL, 4),
-  ('tier-dns-free', 'prod-dns', 'Free', 'free', 0, NULL, NULL, NULL, 1),
-  ('tier-dns-ent', 'prod-dns', 'Enterprise', 'enterprise', 300, 'domains', NULL, NULL, 2),
-  ('tier-images-basic', 'prod-images', 'Basic', 'basic', 5, 'images', 0.001, 100000, 1),
-  ('tier-waf-pro', 'prod-waf', 'Pro', 'pro', 20, NULL, NULL, NULL, 1),
-  ('tier-waf-biz', 'prod-waf', 'Business', 'business', 200, NULL, NULL, NULL, 2),
-  ('tier-waf-ent', 'prod-waf', 'Enterprise', 'enterprise', 5000, NULL, NULL, NULL, 3),
-  ('tier-ddos-free', 'prod-ddos', 'Free（基本保護）', 'free', 0, NULL, NULL, NULL, 1),
-  ('tier-ddos-ent', 'prod-ddos', 'Advanced', 'advanced', 3000, NULL, NULL, NULL, 2),
-  ('tier-bot-ent', 'prod-bot', 'Enterprise', 'enterprise', 3000, NULL, NULL, NULL, 1),
-  ('tier-access-free', 'prod-access', 'Free', 'free', 0, 'users', NULL, 50, 1),
-  ('tier-access-std', 'prod-access', 'Standard', 'standard', 7, 'seats', NULL, NULL, 2),
-  ('tier-gw-free', 'prod-gateway', 'Free', 'free', 0, 'users', NULL, 50, 1),
-  ('tier-gw-std', 'prod-gateway', 'Standard', 'standard', 7, 'seats', NULL, NULL, 2),
-  ('tier-tunnel-free', 'prod-tunnel', 'Free', 'free', 0, NULL, NULL, NULL, 1),
-  ('tier-tunnel-ent', 'prod-tunnel', 'Enterprise', 'enterprise', 500, NULL, NULL, NULL, 2),
-  ('tier-workers-free', 'prod-workers', 'Free', 'free', 0, 'million_requests', NULL, 0.1, 1),
-  ('tier-workers-paid', 'prod-workers', 'Paid', 'paid', 5, 'million_requests', 0.50, 10, 2),
-  ('tier-pages-free', 'prod-pages', 'Free', 'free', 0, NULL, NULL, NULL, 1),
-  ('tier-pages-pro', 'prod-pages', 'Pro', 'pro', 20, NULL, NULL, NULL, 2),
-  ('tier-r2-usage', 'prod-r2', 'Usage', 'usage', 0, 'gb_storage', 0.015, 10, 1),
-  ('tier-argo-usage', 'prod-argo', 'Usage', 'usage', 5, 'bandwidth_gb', 0.10, 0, 1),
-  ('tier-spectrum-pro', 'prod-spectrum', 'Pro', 'pro', 1, NULL, NULL, NULL, 1),
-  ('tier-spectrum-ent', 'prod-spectrum', 'Enterprise', 'enterprise', 5000, NULL, NULL, NULL, 2);
-
-INSERT OR IGNORE INTO partners (id, name, slug, primary_color, secondary_color, default_markup_type, default_markup_value)
-VALUES
-  ('partner-demo', 'デモパートナー', 'demo', '#F6821F', '#1B1B1B', 'percentage', 20);
-
-INSERT OR IGNORE INTO schema_migrations VALUES (9, '0009_seed_data', datetime('now'));
 
 -- 0010: customer_phoneカラム追加
 ALTER TABLE estimates ADD COLUMN customer_phone TEXT;
@@ -394,13 +342,11 @@ INSERT OR IGNORE INTO schema_migrations VALUES (15, '0015_update_default_markup_
       console.log('   Worker起動時の自動マイグレーションに頼ります\n');
     }
   } else {
-    console.warn('⚠️  Database IDを取得できませんでした');
-    console.warn('   Cloudflare Workers CI/CDの自動解決機能に頼ります\n');
+    console.log('⏭️ マイグレーションをスキップします（GitHub Actions環境）');
   }
 
   console.log('✅ デプロイ準備完了\n');
   process.exit(0);
-
 } catch (error) {
   console.error('❌ デプロイ準備中にエラーが発生しました');
   console.error(error.message);
