@@ -5,4 +5,5 @@ export interface Env {
   CACHE: KVNamespace; // キャッシュ用 KV ストア
   JWT_SECRET: string;
   ALLOWED_ORIGINS?: string; // カンマ区切りの許可オリジンリスト（本番環境用）
+  CLOUDFLARE_ACCESS_AUDIT_ID?: string; // Cloudflare Access（Zero Trust）監査ID
 }

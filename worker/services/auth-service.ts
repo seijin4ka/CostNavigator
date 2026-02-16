@@ -157,4 +157,27 @@ export class AuthService {
       .bind(userId)
       .run();
   }
+
+  // Cloudflare Accessトークン検証
+  async verifyCloudflareToken(token: string): Promise<{ valid: boolean; email: string } | null> {
+    try {
+      const payload = await sign(token.replace("Bearer ", ""), "cloudflare_access_validation");
+      const result = payload.payload || {};
+
+      // ペイロードを含めてデコード
+      const decoded = JSON.parse(atob(result.cloudflare_access_jwt));
+      if (!decoded.result) {
+        console.error("Cloudflare Accessトークン検証エラー:", result);
+        return null;
+      }
+
+      return {
+        valid: decoded.result === true,
+        email: decoded.user?.email || null,
+      };
+    } catch (error) {
+      console.error("Cloudflare Accessトークン検証例外:", error);
+      return null;
+    }
+  }
 }
