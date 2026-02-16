@@ -3,6 +3,16 @@ import { cors } from "hono/cors";
 import type { Context, Next } from "hono";
 import type { Env } from "./env";
 import { autoSetupMiddleware } from "./middleware/auto-setup";
+import authRoutes from "./routes/auth";
+import categoriesRoutes from "./routes/categories";
+import productsRoutes from "./routes/products";
+import tiersRoutes from "./routes/tiers";
+import partnersRoutes from "./routes/partners";
+import markupRoutes from "./routes/markup";
+import estimatesRoutes from "./routes/estimates";
+import dashboardRoutes from "./routes/dashboard";
+import systemSettingsRoutes from "./routes/system-settings";
+import publicRoutes from "./routes/public";
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -153,30 +163,20 @@ app.get("/api/health", (c) => {
 });
 
 // 認証ルート
-// @ts-expect-error Cloudflare Vite Plugin の文字列ベースルーティング
-app.route("/api/auth", "routes/auth.ts");
+app.route("/api/auth", authRoutes);
 
 // 管理API（認証はルート内で適用）
-// @ts-expect-error Cloudflare Vite Plugin の文字列ベースルーティング
-app.route("/api/admin/categories", "routes/categories.ts");
-// @ts-expect-error Cloudflare Vite Plugin の文字列ベースルーティング
-app.route("/api/admin/products", "routes/products.ts");
-// @ts-expect-error Cloudflare Vite Plugin の文字列ベースルーティング
-app.route("/api/admin/product-tiers", "routes/tiers.ts");
-// @ts-expect-error Cloudflare Vite Plugin の文字列ベースルーティング
-app.route("/api/admin/partners", "routes/partners.ts");
-// @ts-expect-error Cloudflare Vite Plugin の文字列ベースルーティング
-app.route("/api/admin/partners", "routes/markup.ts");
-// @ts-expect-error Cloudflare Vite Plugin の文字列ベースルーティング
-app.route("/api/admin/estimates", "routes/estimates.ts");
-// @ts-expect-error Cloudflare Vite Plugin の文字列ベースルーティング
-app.route("/api/admin/dashboard", "routes/dashboard.ts");
-// @ts-expect-error Cloudflare Vite Plugin の文字列ベースルーティング
-app.route("/api/admin/system-settings", "routes/system-settings.ts");
+app.route("/api/admin/categories", categoriesRoutes);
+app.route("/api/admin/products", productsRoutes);
+app.route("/api/admin/product-tiers", tiersRoutes);
+app.route("/api/admin/partners", partnersRoutes);
+app.route("/api/admin/partners", markupRoutes);
+app.route("/api/admin/estimates", estimatesRoutes);
+app.route("/api/admin/dashboard", dashboardRoutes);
+app.route("/api/admin/system-settings", systemSettingsRoutes);
 
 // 公開API（認証不要）
-// @ts-expect-error Cloudflare Vite Plugin の文字列ベースルーティング
-app.route("/api/public", "routes/public.ts");
+app.route("/api/public", publicRoutes);
 
 // 非APIリクエストは静的アセット（SPA）にフォールバック
 app.all("*", async (c) => {
