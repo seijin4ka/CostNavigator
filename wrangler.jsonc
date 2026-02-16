@@ -19,11 +19,11 @@
     }
   ],
   // KVストアバインディング（キャッシュ用）
-  // kv_namespace_idはビルド時にscripts/prepare-deploy.jsで自動的に設定されます
+  // One Click AppではCloudflareが自動的にKVを作成してIDを割り当てるため、空文字列を設定
   "kv_namespaces": [
     {
       "binding": "CACHE",
-      "id": "placeholder-will-be-set-on-deploy"
+      "id": ""
     }
   ]
   // 注意: JWT_SECRETは本番環境でCloudflareダッシュボードまたはwrangler secretコマンドで設定すること
