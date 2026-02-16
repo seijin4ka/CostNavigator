@@ -1,0 +1,96 @@
+import { useState } from "react";
+import { apiClient } from "../../api/client";
+import { Button } from "../../components/ui/Button";
+import { Input } from "../../components/ui/Input";
+
+interface PasswordChangeCardProps {
+  passwordFormData: {
+    currentPassword: string;
+    newPassword: string;
+    confirmPassword: string;
+  };
+  setFormData: React.Dispatch<React.SetStateAction<PasswordChangeCardProps["passwordFormData"]>>;
+}
+
+export function PasswordChangeCard({ passwordFormData, setFormData }: PasswordChangeCardProps) {
+  const [passwordError, setPasswordError] = useState("");
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [passwordChangeSuccess, setPasswordChangeSuccess] = useState("");
+
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsChangingPassword(true);
+    setPasswordError("");
+    setPasswordChangeSuccess("");
+
+    try {
+      const res = await apiClient.patch<{ message: string }>("/admin/change-password", passwordFormData);
+
+      if (res.data.message) {
+        setPasswordChangeSuccess(res.data.message);
+        // 3秒後にフォームをリセット
+        setTimeout(() => {
+          setFormData({
+            currentPassword: "",
+            newPassword: "",
+            confirmPassword: "",
+          });
+          setPasswordChangeSuccess("");
+        }, 3000);
+      }
+    } catch (err) {
+      setPasswordError(err instanceof Error ? err.message : "パスワード変更に失敗しました");
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
+  return (
+    <div className="p-6 space-y-4">
+      <h2 className="text-lg font-semibold text-gray-900 mb-4">パスワード変更</h2>
+        {passwordChangeSuccess && (
+          <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded">
+            {passwordChangeSuccess}
+          </div>
+        )}
+        {passwordError && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+            {passwordError}
+          </div>
+        )}
+        <form onSubmit={handlePasswordChange} className="space-y-4">
+          <Input
+            label="現在のパスワード"
+            type="password"
+            value={passwordFormData.currentPassword}
+            onChange={(e) => setFormData({ ...passwordFormData, currentPassword: e.target.value })}
+            required
+            disabled={isChangingPassword}
+            placeholder="現在のパスワードを入力してください"
+          />
+          <Input
+            label="新しいパスワード"
+            type="password"
+            value={passwordFormData.newPassword}
+            onChange={(e) => setFormData({ ...passwordFormData, newPassword: e.target.value })}
+            required
+            disabled={isChangingPassword}
+            placeholder="8文字以上で入力してください"
+          />
+          <Input
+            label="新しいパスワード（確認用）"
+            type="password"
+            value={passwordFormData.confirmPassword}
+            onChange={(e) => setFormData({ ...passwordFormData, confirmPassword: e.target.value })}
+            required
+            disabled={isChangingPassword}
+            placeholder="新しいパスワードを再度入力してください"
+          />
+          <Button type="submit" disabled={isChangingPassword}>
+            {isChangingPassword ? "変更中..." : "変更する"}
+          </Button>
+        </form>
+      </div>
+    </div>
+  );
+}
