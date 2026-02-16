@@ -1,4 +1,3 @@
-import { Link } from "react-router-dom";
 import { formatCurrency } from "../../lib/formatters";
 
 export function EstimateFloatingBar({ itemCount, totalMonthly, slug, primaryColor, onSubmit }: {
@@ -18,22 +17,13 @@ export function EstimateFloatingBar({ itemCount, totalMonthly, slug, primaryColo
             <span className="text-xs font-normal text-slate-400 ml-1">/月</span>
           </p>
         </div>
-        {!slug ? (
-          <Link
-            to="/admin/login"
-            className="px-5 py-2.5 rounded-lg text-sm font-bold text-white font-display transition-all hover:opacity-90 bg-blue-500"
-          >
-            管理画面へ
-          </Link>
-        ) : (
-          <button
-            onClick={onSubmit}
-            className="px-5 py-2.5 rounded-lg text-sm font-bold text-white font-display transition-all hover:opacity-90"
-            style={{ backgroundColor: primaryColor }}
-          >
-            見積もりを依頼
-          </button>
-        )}
+        <button
+          onClick={onSubmit}
+          className="px-5 py-2.5 rounded-lg text-sm font-bold text-white font-display transition-all hover:opacity-90"
+          style={{ backgroundColor: primaryColor }}
+        >
+          見積もりを依頼
+        </button>
       </div>
     </div>
   );

@@ -447,18 +447,22 @@ export function EstimatePage() {
                       </div>
 
                       {/* CTAボタン */}
-                      {slug && (
-                        <button
-                          onClick={() => setIsSubmitModalOpen(true)}
-                          className="mt-5 w-full flex items-center justify-center gap-2 py-3.5 rounded-lg text-sm font-bold text-white transition-all duration-200 hover:opacity-90 hover:shadow-lg font-display"
-                          style={{
-                            backgroundColor: primaryColor,
-                            boxShadow: `0 4px 14px -3px ${primaryColor}66`,
-                          }}
-                        >
-                          見積もりを依頼する
-                        </button>
-                      )}
+                      <button
+                        onClick={() => {
+                          if (!slug) {
+                            setError("見積もりを送信するには、パートナー経由のURLからアクセスしてください。管理画面でデフォルトパートナーを設定することもできます。");
+                            return;
+                          }
+                          setIsSubmitModalOpen(true);
+                        }}
+                        className="mt-5 w-full flex items-center justify-center gap-2 py-3.5 rounded-lg text-sm font-bold text-white transition-all duration-200 hover:opacity-90 hover:shadow-lg font-display"
+                        style={{
+                          backgroundColor: primaryColor,
+                          boxShadow: `0 4px 14px -3px ${primaryColor}66`,
+                        }}
+                      >
+                        見積もりを依頼する
+                      </button>
 
                       {/* 信頼シグナル */}
                       <div className="mt-3 flex items-center justify-center gap-3 text-[11px] text-slate-400">
@@ -488,7 +492,13 @@ export function EstimatePage() {
           totalMonthly={builder.totalMonthly}
           slug={slug ?? null}
           primaryColor={primaryColor}
-          onSubmit={() => setIsSubmitModalOpen(true)}
+          onSubmit={() => {
+            if (!slug) {
+              setError("見積もりを送信するには、パートナー経由のURLからアクセスしてください。管理画面でデフォルトパートナーを設定することもできます。");
+              return;
+            }
+            setIsSubmitModalOpen(true);
+          }}
         />
       )}
 
