@@ -56,6 +56,39 @@ app.use("*", async (c, next) => {
 // 制限的CORSミドルウェア（管理API・認証API用）
 const restrictiveCors = (allowCredentials = true) => {
   return async (c: Context<{ Bindings: Env }>, next: Next) => {
+    // OPTIONSリクエスト（プリフライト）は即座に応答
+    if (c.req.method === "OPTIONS") {
+      const origin = c.req.header("Origin") || "";
+      const allowedOrigins = (c.env.ALLOWED_ORIGINS || "").split(",").filter(Boolean);
+
+      // 開発環境のより厳密な検出（localhost/127.0.0.1/[::1] のみ許可）
+      const isLocalhostOrigin =
+        origin.startsWith("http://localhost:") ||
+        origin.startsWith("http://127.0.0.1:") ||
+        origin.startsWith("http://[::1]:");
+      const isDevelopment = allowedOrigins.length === 0 && isLocalhostOrigin;
+
+      let allowOrigin: string | undefined;
+      if (isDevelopment) {
+        allowOrigin = origin;
+      } else if (allowedOrigins.includes(origin)) {
+        allowOrigin = origin;
+      }
+
+      if (allowOrigin) {
+        c.header("Access-Control-Allow-Origin", allowOrigin);
+        if (allowCredentials) {
+          c.header("Access-Control-Allow-Credentials", "true");
+        }
+        c.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+        c.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+        c.header("Access-Control-Max-Age", "86400");
+      }
+
+      return c.text("", 204);
+    }
+
+    // GET, POST, PUT, DELETEリクエスト
     const origin = c.req.header("Origin") || "";
     const allowedOrigins = (c.env.ALLOWED_ORIGINS || "").split(",").filter(Boolean);
 
@@ -83,11 +116,6 @@ const restrictiveCors = (allowCredentials = true) => {
       c.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
       c.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
       c.header("Access-Control-Max-Age", "86400");
-    }
-
-    // OPTIONSリクエスト（プリフライト）に対応
-    if (c.req.method === "OPTIONS") {
-      return c.text("", 204);
     }
 
     await next();
@@ -136,7 +164,7 @@ app.route("/api/admin/system-settings", systemSettingsRoutes);
 app.route("/api/public", publicRoutes);
 
 // 非APIリクエストは静的アセット（SPA）にフォールバック
-app.get("*", async (c) => {
+app.all("*", async (c) => {
   return c.env.ASSETS.fetch(c.req.raw);
 });
 

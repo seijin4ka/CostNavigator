@@ -6,7 +6,7 @@ import { validateBody } from "../utils/validation";
 import { success, error } from "../utils/response";
 import { CreateEstimateSchema } from "../../shared/types";
 
-const publicApi = new Hono<{ Bindings: Env }>();
+const publicRoutes = new Hono<{ Bindings: Env }>();
 
 // 注意: ルート定義順序が重要。具体的なパス（/estimates/:ref, /system-settings）を
 // 汎用パターン（/:partnerSlug）より前に配置すること。
@@ -163,4 +163,4 @@ publicApi.post("/:partnerSlug/estimates", async (c) => {
   }, 201);
 });
 
-export default publicApi;
+export default publicRoutes;

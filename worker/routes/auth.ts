@@ -22,7 +22,7 @@ const SetupSchema = z.object({
   password: z.string().min(8, "パスワードは8文字以上である必要があります").optional(),
 });
 
-const auth = new Hono<{ Bindings: Env }>();
+const authRoutes = new Hono<{ Bindings: Env }>();
 
 // ログイン（レート制限: 5回/60秒）
 auth.post("/login", rateLimit(5, 60000), async (c) => {
@@ -255,4 +255,4 @@ auth.post("/admin/unlock-account", authMiddleware, async (c) => {
   });
 });
 
-export default auth;
+export default authRoutes;
