@@ -17,4 +17,5 @@
       "database_name": "cost-navigator-db",
       "database_id": "placeholder-will-be-set-on-deploy"
     }
-  ],
+  ]
+}

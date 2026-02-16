@@ -19,7 +19,20 @@ const DB_NAME = 'cost-navigator-db';
 
 // Cloudflare Vite plugin の出力先を自動検出
 const wranglerConfigPath = path.join(__dirname, '../wrangler.jsonc');
-const wranglerConfig = JSON.parse(fs.readFileSync(wranglerConfigPath, 'utf-8').replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, ''));
+
+// wrangler.jsoncを読み取る際にコメントを削除して、パースエラーを回避
+let wranglerConfigContent = fs.readFileSync(wranglerConfigPath, 'utf-8');
+// 全てのコメントを削除（単一行コメント // と複数行コメント /* */）
+const wranglerConfigJSON = wranglerConfigContent
+  // 複数行コメントを削除
+  .replace(/\/\*[\s\S]*?\*\//g, '')
+  // 単一行コメントを削除
+  .replace(/\/\/.*$/gm, '')
+  // 余分なカンマを削除（配列やオブジェクトの最後のカンマ）
+  .replace(/,(\s*[}\]])/g, '$1');
+
+const wranglerConfig = JSON.parse(wranglerConfigJSON);
+
 // Cloudflare Vite Pluginの正規化ルール: ハイフン → アンダースコア
 const projectName = wranglerConfig.name.replace(/-/g, '_');
 const DIST_DIR = path.join(__dirname, '../dist', projectName);
@@ -157,7 +170,7 @@ INSERT OR IGNORE INTO schema_migrations VALUES (1, '0001_create_users', datetime
 
 -- 0002: partnersテーブル
 CREATE TABLE IF NOT EXISTS partners (
-  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16))),
   name TEXT NOT NULL,
   slug TEXT NOT NULL UNIQUE,
   logo_url TEXT,
