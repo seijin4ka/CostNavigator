@@ -11,6 +11,7 @@ import type {
   EstimateWithItems,
 } from "../../shared/types";
 import { ESTIMATE_REF_PREFIX, RETRY } from "../../shared/constants";
+import { KVCache, CacheKeys, PRODUCT_CACHE_TTL, PARTNER_CACHE_TTL, CacheTags } from "../utils/kv-cache";
 
 // マークアップ適用済みティア
 export interface TierWithMarkupPrice extends ProductTier {
@@ -30,22 +31,37 @@ export class EstimateService {
   private tierRepo: TierRepository;
   private markupRepo: MarkupRepository;
   private estimateRepo: EstimateRepository;
+  private cache: KVCache;
 
-  constructor(private db: D1Database) {
+  constructor(private db: D1Database, private cache?: KVNamespace) {
     this.partnerRepo = new PartnerRepository(db);
     this.productRepo = new ProductRepository(db);
     this.tierRepo = new TierRepository(db);
     this.markupRepo = new MarkupRepository(db);
     this.estimateRepo = new EstimateRepository(db);
+    this.cache = cache ? new KVCache(cache) : this.createNullCache();
   }
 
-  // パートナーのブランディング情報取得
+  // パートナーのブランディング情報取得（キャッシュ利用）
   async getPartnerBranding(slug: string): Promise<Partner | null> {
-    return this.partnerRepo.findBySlug(slug);
+    return await this.cache.getOrSet(
+      CacheKeys.partnerBySlug(slug),
+      () => this.partnerRepo.findBySlug(slug),
+      { ttl: PARTNER_CACHE_TTL, tags: [CacheTags.partners] }
+    );
   }
 
-  // マークアップなし製品カタログ取得（パートナー未設定時用）
+  // マークアップなし製品カタログ取得（パートナー未設定時用、キャッシュ利用）
   async getProductsWithoutMarkup(): Promise<ProductWithMarkupPrices[]> {
+    return await this.cache.getOrSet(
+      CacheKeys.products(),
+      async () => this.buildProductsWithoutMarkup(),
+      { ttl: PRODUCT_CACHE_TTL, tags: [CacheTags.products] }
+    );
+  }
+
+  // マークアップなし製品カタログの構築（内部メソッド）
+  private async buildProductsWithoutMarkup(): Promise<ProductWithMarkupPrices[]> {
     const products = await this.productRepo.findAllWithTiers();
 
     // 有効な製品のみ、基本価格をそのまま使用
@@ -284,5 +300,15 @@ export class EstimateService {
       }
     }
     throw new Error(`参照番号の生成に${maxAttempts}回失敗しました`);
+  }
+
+  // キャッシュなしのNullCache（開発環境などKVが設定されていない場合用）
+  private createNullCache(): KVCache {
+    return new KVCache({
+      get: async () => null,
+      put: async () => void 0,
+      delete: async () => void 0,
+      list: async () => ({ keys: [] }),
+    } as KVNamespace);
   }
 }

@@ -17,6 +17,14 @@
       "database_name": "cost-navigator-db",
       "database_id": "placeholder-will-be-set-on-deploy"
     }
+  ],
+  // KVストアバインディング（キャッシュ用）
+  // kv_namespace_idはビルド時にscripts/prepare-deploy.jsで自動的に設定されます
+  "kv_namespaces": [
+    {
+      "binding": "CACHE",
+      "id": "placeholder-will-be-set-on-deploy"
+    }
   ]
   // 注意: JWT_SECRETは本番環境でCloudflareダッシュボードまたはwrangler secretコマンドで設定すること
   // 開発環境ではwrangler.dev.vars ファイルに設定（.gitignore済み）

@@ -47,8 +47,12 @@ export function EstimatesPage() {
       setCurrentPage(res.data.page);
       setTotalPages(res.data.totalPages);
       setTotal(res.data.total);
-    } catch {
-      setError("見積もりの取得に失敗しました");
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message || "見積もりの取得に失敗しました");
+      } else {
+        setError("見積もりの取得に失敗しました");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -64,8 +68,12 @@ export function EstimatesPage() {
       const res = await apiClient.get<EstimateWithItems>(`/admin/estimates/${id}`);
       setSelectedEstimate(res.data);
       setIsDetailModalOpen(true);
-    } catch {
-      setError("見積もり詳細の取得に失敗しました");
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message || "見積もり詳細の取得に失敗しました");
+      } else {
+        setError("見積もり詳細の取得に失敗しました");
+      }
     }
   };
 
@@ -77,8 +85,12 @@ export function EstimatesPage() {
       if (selectedEstimate?.id === id) {
         setSelectedEstimate((prev) => (prev ? { ...prev, status: status as Estimate["status"] } : null));
       }
-    } catch {
-      setError("ステータスの更新に失敗しました");
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message || "ステータスの更新に失敗しました");
+      } else {
+        setError("ステータスの更新に失敗しました");
+      }
     }
   };
 
@@ -92,8 +104,12 @@ export function EstimatesPage() {
       const newTotalPages = Math.ceil(newTotal / DEFAULT_PAGE_LIMIT);
       const targetPage = currentPage > newTotalPages ? Math.max(1, newTotalPages) : currentPage;
       fetchEstimates(targetPage);
-    } catch {
-      setError("削除に失敗しました");
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message || "削除に失敗しました");
+      } else {
+        setError("削除に失敗しました");
+      }
     }
   };
 

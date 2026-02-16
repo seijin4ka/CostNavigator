@@ -43,7 +43,13 @@ export function DashboardPage() {
     apiClient
       .get<DashboardStats>("/admin/dashboard/stats")
       .then((res) => setStats(res.data))
-      .catch(() => setError("統計情報の取得に失敗しました"))
+      .catch((err) => {
+        if (err instanceof Error) {
+          setError(err.message || "統計情報の取得に失敗しました");
+        } else {
+          setError("統計情報の取得に失敗しました");
+        }
+      })
       .finally(() => setIsLoading(false));
   }, []);
 

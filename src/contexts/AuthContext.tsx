@@ -16,16 +16,30 @@ const AuthContext = createContext<AuthContextType | null>(null);
 // JWTペイロードのデコード（有効期限の取得用）
 function decodeJwt(token: string): { exp: number } | null {
   try {
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(
-      atob(base64)
+    // JWTは3つの部分（ヘッダー、ペイロード、署名）で構成される
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+
+    const base64Url = parts[1]
+      .replace(/-/g, '+')
+      .replace(/_/g, '/');
+
+    const base64 = decodeURIComponent(
+      atob(base64Url)
         .split('')
         .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
         .join('')
     );
-    return JSON.parse(jsonPayload);
-  } catch {
+
+    const payload = JSON.parse(base64);
+
+    // ペイロードの必須フィールドを検証
+    if (!payload || typeof payload !== 'object') return null;
+    if (typeof payload.exp !== 'number') return null;
+
+    return payload;
+  } catch (error) {
+    console.error("JWTデコードエラー:", error);
     return null;
   }
 }
