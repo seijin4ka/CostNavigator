@@ -1,5 +1,5 @@
 import { useState, useEffect, type FormEvent, type CSSProperties } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { apiClient } from "../../api/client";
 import {
   useEstimateBuilder,
@@ -447,21 +447,7 @@ export function EstimatePage() {
                       </div>
 
                       {/* CTAボタン */}
-                      {!slug ? (
-                        <div className="mt-5 space-y-3">
-                          <div className="text-center py-3 px-4 bg-amber-50 border border-amber-200 rounded-lg">
-                            <p className="text-xs text-amber-800 font-medium">
-                              見積もり作成には管理画面でパートナー情報の設定が必要です
-                            </p>
-                          </div>
-                          <Link
-                            to="/admin/login"
-                            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-lg text-sm font-bold text-white transition-all duration-200 hover:opacity-90 hover:shadow-lg font-display bg-blue-500"
-                          >
-                            管理画面へ
-                          </Link>
-                        </div>
-                      ) : (
+                      {slug && (
                         <button
                           onClick={() => setIsSubmitModalOpen(true)}
                           className="mt-5 w-full flex items-center justify-center gap-2 py-3.5 rounded-lg text-sm font-bold text-white transition-all duration-200 hover:opacity-90 hover:shadow-lg font-display"
