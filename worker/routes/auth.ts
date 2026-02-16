@@ -3,6 +3,7 @@ import { z } from "zod";
 import type { Env } from "../env";
 import { AuthService } from "../services/auth-service";
 import { authMiddleware } from "../middleware/auth";
+import { rateLimit } from "../middleware/rate-limit";
 import { validateBody } from "../utils/validation";
 import { success, error } from "../utils/response";
 import { LoginSchema } from "../../shared/types";
@@ -22,8 +23,8 @@ const SetupSchema = z.object({
 
 const auth = new Hono<{ Bindings: Env }>();
 
-// ログイン
-auth.post("/login", async (c) => {
+// ログイン（レート制限: 5回/60秒）
+auth.post("/login", rateLimit(5, 60000), async (c) => {
   const data = await validateBody(c, LoginSchema);
   if (!data) return c.res;
 
@@ -54,7 +55,8 @@ auth.get("/me", authMiddleware, async (c) => {
 });
 
 // トークンリフレッシュ（リフレッシュトークンを使ってアクセストークンを再発行）
-auth.post("/refresh", async (c) => {
+// レート制限: 10回/60秒
+auth.post("/refresh", rateLimit(10, 60000), async (c) => {
   const data = await validateBody(c, RefreshTokenSchema);
   if (!data) return c.res;
 

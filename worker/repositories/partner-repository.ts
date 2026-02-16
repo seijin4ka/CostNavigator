@@ -1,28 +1,32 @@
 import type { Partner } from "../../shared/types";
+import { executeD1All, executeD1First, executeD1Query } from "../utils/d1-helper";
 
 // パートナーリポジトリ
 export class PartnerRepository {
   constructor(private db: D1Database) {}
 
   async findAll(): Promise<Partner[]> {
-    const result = await this.db
-      .prepare("SELECT * FROM partners ORDER BY name ASC")
-      .all<Partner>();
-    return result.results;
+    const result = await executeD1All<Partner>(
+      this.db,
+      "SELECT * FROM partners ORDER BY name ASC"
+    );
+    return result;
   }
 
   async findById(id: string): Promise<Partner | null> {
-    return await this.db
-      .prepare("SELECT * FROM partners WHERE id = ?")
-      .bind(id)
-      .first<Partner>();
+    return await executeD1First<Partner>(
+      this.db,
+      "SELECT * FROM partners WHERE id = ?",
+      [id]
+    );
   }
 
   async findBySlug(slug: string): Promise<Partner | null> {
-    return await this.db
-      .prepare("SELECT * FROM partners WHERE slug = ? AND is_active = 1")
-      .bind(slug)
-      .first<Partner>();
+    return await executeD1First<Partner>(
+      this.db,
+      "SELECT * FROM partners WHERE slug = ? AND is_active = 1",
+      [slug]
+    );
   }
 
   async create(data: {
@@ -36,12 +40,11 @@ export class PartnerRepository {
     is_active: boolean;
   }): Promise<string> {
     const id = crypto.randomUUID();
-    await this.db
-      .prepare(
-        `INSERT INTO partners (id, name, slug, logo_url, primary_color, secondary_color, default_markup_type, default_markup_value, is_active)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
-      )
-      .bind(
+    await executeD1Query(
+      this.db,
+      `INSERT INTO partners (id, name, slug, logo_url, primary_color, secondary_color, default_markup_type, default_markup_value, is_active)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
         id,
         data.name,
         data.slug,
@@ -51,8 +54,10 @@ export class PartnerRepository {
         data.default_markup_type,
         data.default_markup_value,
         data.is_active ? 1 : 0
-      )
-      .run();
+      ],
+      "作成",
+      "パートナー"
+    );
     return id;
   }
 
@@ -66,13 +71,12 @@ export class PartnerRepository {
     default_markup_value: number;
     is_active: boolean;
   }): Promise<void> {
-    await this.db
-      .prepare(
-        `UPDATE partners SET name = ?, slug = ?, logo_url = ?, primary_color = ?, secondary_color = ?,
+    await executeD1Query(
+      this.db,
+      `UPDATE partners SET name = ?, slug = ?, logo_url = ?, primary_color = ?, secondary_color = ?,
          default_markup_type = ?, default_markup_value = ?, is_active = ?, updated_at = datetime('now')
-         WHERE id = ?`
-      )
-      .bind(
+         WHERE id = ?`,
+      [
         data.name,
         data.slug,
         data.logo_url,
@@ -82,21 +86,27 @@ export class PartnerRepository {
         data.default_markup_value,
         data.is_active ? 1 : 0,
         id
-      )
-      .run();
+      ],
+      "更新",
+      "パートナー"
+    );
   }
 
   async delete(id: string): Promise<void> {
-    await this.db
-      .prepare("DELETE FROM partners WHERE id = ?")
-      .bind(id)
-      .run();
+    await executeD1Query(
+      this.db,
+      "DELETE FROM partners WHERE id = ?",
+      [id],
+      "削除",
+      "パートナー"
+    );
   }
 
   async count(): Promise<number> {
-    const result = await this.db
-      .prepare("SELECT COUNT(*) as count FROM partners")
-      .first<{ count: number }>();
+    const result = await executeD1First<{ count: number }>(
+      this.db,
+      "SELECT COUNT(*) as count FROM partners"
+    );
     return result?.count ?? 0;
   }
 }

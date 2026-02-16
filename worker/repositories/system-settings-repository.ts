@@ -1,4 +1,5 @@
 import type { SystemSettings, SystemSettingsInternal } from "../../shared/types";
+import { executeD1First, executeD1Query } from "../utils/d1-helper";
 
 // システム設定リポジトリ
 export class SystemSettingsRepository {
@@ -6,35 +7,41 @@ export class SystemSettingsRepository {
 
   // システム設定を取得（常にIDは'default'）
   async get(): Promise<SystemSettings | null> {
-    return await this.db
-      .prepare("SELECT * FROM system_settings WHERE id = ?")
-      .bind("default")
-      .first<SystemSettings>();
+    return await executeD1First<SystemSettings>(
+      this.db,
+      "SELECT * FROM system_settings WHERE id = ?",
+      ["default"]
+    );
   }
 
   // システム設定を取得（JWT_SECRETを含む内部用）
   async getInternal(): Promise<SystemSettingsInternal | null> {
-    return await this.db
-      .prepare("SELECT * FROM system_settings WHERE id = ?")
-      .bind("default")
-      .first<SystemSettingsInternal>();
+    return await executeD1First<SystemSettingsInternal>(
+      this.db,
+      "SELECT * FROM system_settings WHERE id = ?",
+      ["default"]
+    );
   }
 
   // JWT_SECRETのみを取得
   async getJwtSecret(): Promise<string | null> {
-    const result = await this.db
-      .prepare("SELECT jwt_secret FROM system_settings WHERE id = ?")
-      .bind("default")
-      .first<{ jwt_secret: string | null }>();
+    const result = await executeD1First<{ jwt_secret: string | null }>(
+      this.db,
+      "SELECT jwt_secret FROM system_settings WHERE id = ?",
+      ["default"]
+    );
     return result?.jwt_secret || null;
   }
 
   // JWT_SECRETを設定
   async setJwtSecret(secret: string): Promise<void> {
-    await this.db
-      .prepare("UPDATE system_settings SET jwt_secret = ?, updated_at = datetime('now') WHERE id = ?")
-      .bind(secret, "default")
-      .run();
+    await executeD1Query(
+      this.db,
+      "UPDATE system_settings SET jwt_secret = ?, updated_at = datetime('now') WHERE id = ?",
+      [secret, "default"],
+      "更新",
+      "システム設定"
+    );
   }
 
   // システム設定を更新
@@ -78,10 +85,13 @@ export class SystemSettingsRepository {
 
     fields.push("updated_at = datetime('now')");
 
-    await this.db
-      .prepare(`UPDATE system_settings SET ${fields.join(", ")} WHERE id = ?`)
-      .bind(...values, "default")
-      .run();
+    await executeD1Query(
+      this.db,
+      `UPDATE system_settings SET ${fields.join(", ")} WHERE id = ?`,
+      [...values, "default"],
+      "更新",
+      "システム設定"
+    );
   }
 
   // システム設定を初期化（存在しない場合のみ作成）
@@ -94,13 +104,14 @@ export class SystemSettingsRepository {
         .map((b) => b.toString(16).padStart(2, "0"))
         .join("");
 
-      await this.db
-        .prepare(
-          `INSERT INTO system_settings (id, brand_name, footer_text, jwt_secret)
-           VALUES (?, ?, ?, ?)`
-        )
-        .bind("default", "CostNavigator", "Powered by CostNavigator", jwtSecret)
-        .run();
+      await executeD1Query(
+        this.db,
+        `INSERT INTO system_settings (id, brand_name, footer_text, jwt_secret)
+           VALUES (?, ?, ?, ?)`,
+        ["default", "CostNavigator", "Powered by CostNavigator", jwtSecret],
+        "作成",
+        "システム設定"
+      );
     }
   }
 

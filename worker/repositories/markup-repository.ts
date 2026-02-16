@@ -1,4 +1,5 @@
 import type { MarkupRule, MarkupRuleWithNames, ResolvedMarkup } from "../../shared/types";
+import { executeD1First, executeD1Query } from "../utils/d1-helper";
 
 // マークアップルールリポジトリ
 export class MarkupRepository {
@@ -23,10 +24,11 @@ export class MarkupRepository {
   }
 
   async findById(id: string): Promise<MarkupRule | null> {
-    return await this.db
-      .prepare("SELECT * FROM markup_rules WHERE id = ?")
-      .bind(id)
-      .first<MarkupRule>();
+    return await executeD1First<MarkupRule>(
+      this.db,
+      "SELECT * FROM markup_rules WHERE id = ?",
+      [id]
+    );
   }
 
   async create(data: {
@@ -37,13 +39,14 @@ export class MarkupRepository {
     markup_value: number;
   }): Promise<string> {
     const id = crypto.randomUUID();
-    await this.db
-      .prepare(
-        `INSERT INTO markup_rules (id, partner_id, product_id, tier_id, markup_type, markup_value)
-         VALUES (?, ?, ?, ?, ?, ?)`
-      )
-      .bind(id, data.partner_id, data.product_id, data.tier_id, data.markup_type, data.markup_value)
-      .run();
+    await executeD1Query(
+      this.db,
+      `INSERT INTO markup_rules (id, partner_id, product_id, tier_id, markup_type, markup_value)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+      [id, data.partner_id, data.product_id, data.tier_id, data.markup_type, data.markup_value],
+      "作成",
+      "マークアップルール"
+    );
     return id;
   }
 
@@ -53,20 +56,24 @@ export class MarkupRepository {
     product_id: string | null;
     tier_id: string | null;
   }): Promise<void> {
-    await this.db
-      .prepare(
-        `UPDATE markup_rules SET markup_type = ?, markup_value = ?, product_id = ?, tier_id = ?, updated_at = datetime('now')
-         WHERE id = ?`
-      )
-      .bind(data.markup_type, data.markup_value, data.product_id, data.tier_id, id)
-      .run();
+    await executeD1Query(
+      this.db,
+      `UPDATE markup_rules SET markup_type = ?, markup_value = ?, product_id = ?, tier_id = ?, updated_at = datetime('now')
+         WHERE id = ?`,
+      [data.markup_type, data.markup_value, data.product_id, data.tier_id, id],
+      "更新",
+      "マークアップルール"
+    );
   }
 
   async delete(id: string): Promise<void> {
-    await this.db
-      .prepare("DELETE FROM markup_rules WHERE id = ?")
-      .bind(id)
-      .run();
+    await executeD1Query(
+      this.db,
+      "DELETE FROM markup_rules WHERE id = ?",
+      [id],
+      "削除",
+      "マークアップルール"
+    );
   }
 
   // マークアップ解決（優先度順カスケード）
@@ -82,12 +89,11 @@ export class MarkupRepository {
   ): Promise<ResolvedMarkup> {
     // ティア指定がある場合、最も具体的なルールを探す
     if (tierId) {
-      const tierRule = await this.db
-        .prepare(
-          "SELECT * FROM markup_rules WHERE partner_id = ? AND product_id = ? AND tier_id = ?"
-        )
-        .bind(partnerId, productId, tierId)
-        .first<MarkupRule>();
+      const tierRule = await executeD1First<MarkupRule>(
+        this.db,
+        "SELECT * FROM markup_rules WHERE partner_id = ? AND product_id = ? AND tier_id = ?",
+        [partnerId, productId, tierId]
+      );
       if (tierRule) {
         return {
           markup_type: tierRule.markup_type as ResolvedMarkup["markup_type"],
@@ -98,12 +104,11 @@ export class MarkupRepository {
     }
 
     // 製品レベルのルールを探す
-    const productRule = await this.db
-      .prepare(
-        "SELECT * FROM markup_rules WHERE partner_id = ? AND product_id = ? AND tier_id IS NULL"
-      )
-      .bind(partnerId, productId)
-      .first<MarkupRule>();
+    const productRule = await executeD1First<MarkupRule>(
+      this.db,
+      "SELECT * FROM markup_rules WHERE partner_id = ? AND product_id = ? AND tier_id IS NULL",
+      [partnerId, productId]
+    );
     if (productRule) {
       return {
         markup_type: productRule.markup_type as ResolvedMarkup["markup_type"],

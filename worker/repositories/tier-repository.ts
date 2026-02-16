@@ -1,22 +1,25 @@
 import type { ProductTier } from "../../shared/types";
+import { executeD1All, executeD1First, executeD1Query } from "../utils/d1-helper";
 
 // ティアリポジトリ
 export class TierRepository {
   constructor(private db: D1Database) {}
 
   async findByProductId(productId: string): Promise<ProductTier[]> {
-    const result = await this.db
-      .prepare("SELECT * FROM product_tiers WHERE product_id = ? ORDER BY display_order ASC")
-      .bind(productId)
-      .all<ProductTier>();
-    return result.results;
+    const result = await executeD1All<ProductTier>(
+      this.db,
+      "SELECT * FROM product_tiers WHERE product_id = ? ORDER BY display_order ASC",
+      [productId]
+    );
+    return result;
   }
 
   async findById(id: string): Promise<ProductTier | null> {
-    return await this.db
-      .prepare("SELECT * FROM product_tiers WHERE id = ?")
-      .bind(id)
-      .first<ProductTier>();
+    return await executeD1First<ProductTier>(
+      this.db,
+      "SELECT * FROM product_tiers WHERE id = ?",
+      [id]
+    );
   }
 
   // 複数のティアを一括取得（IDのリスト）
@@ -50,12 +53,11 @@ export class TierRepository {
     is_active: boolean;
   }): Promise<string> {
     const id = crypto.randomUUID();
-    await this.db
-      .prepare(
-        `INSERT INTO product_tiers (id, product_id, name, slug, base_price, usage_unit, usage_unit_price, usage_included, display_order, is_active)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-      )
-      .bind(
+    await executeD1Query(
+      this.db,
+      `INSERT INTO product_tiers (id, product_id, name, slug, base_price, usage_unit, usage_unit_price, usage_included, display_order, is_active)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
         id,
         data.product_id,
         data.name,
@@ -66,8 +68,10 @@ export class TierRepository {
         data.usage_included,
         data.display_order,
         data.is_active ? 1 : 0
-      )
-      .run();
+      ],
+      "作成",
+      "ティア"
+    );
     return id;
   }
 
@@ -84,12 +88,11 @@ export class TierRepository {
       is_active: boolean;
     }
   ): Promise<void> {
-    await this.db
-      .prepare(
-        `UPDATE product_tiers SET name = ?, slug = ?, base_price = ?, usage_unit = ?, usage_unit_price = ?, usage_included = ?, display_order = ?, is_active = ?
-         WHERE id = ?`
-      )
-      .bind(
+    await executeD1Query(
+      this.db,
+      `UPDATE product_tiers SET name = ?, slug = ?, base_price = ?, usage_unit = ?, usage_unit_price = ?, usage_included = ?, display_order = ?, is_active = ?
+         WHERE id = ?`,
+      [
         data.name,
         data.slug,
         data.base_price,
@@ -99,14 +102,19 @@ export class TierRepository {
         data.display_order,
         data.is_active ? 1 : 0,
         id
-      )
-      .run();
+      ],
+      "更新",
+      "ティア"
+    );
   }
 
   async delete(id: string): Promise<void> {
-    await this.db
-      .prepare("DELETE FROM product_tiers WHERE id = ?")
-      .bind(id)
-      .run();
+    await executeD1Query(
+      this.db,
+      "DELETE FROM product_tiers WHERE id = ?",
+      [id],
+      "削除",
+      "ティア"
+    );
   }
 }

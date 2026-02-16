@@ -58,10 +58,16 @@ const restrictiveCors = (allowCredentials = true) => {
   return async (c: Context<{ Bindings: Env }>, next: Next) => {
     const origin = c.req.header("Origin") || "";
     const allowedOrigins = (c.env.ALLOWED_ORIGINS || "").split(",").filter(Boolean);
-    const isDevelopment = allowedOrigins.length === 0;
+
+    // 開発環境のより厳密な検出（localhost/127.0.0.1/[::1] のみ許可）
+    const isLocalhostOrigin =
+      origin.startsWith("http://localhost:") ||
+      origin.startsWith("http://127.0.0.1:") ||
+      origin.startsWith("http://[::1]:");
+    const isDevelopment = allowedOrigins.length === 0 && isLocalhostOrigin;
 
     let allowOrigin: string | undefined;
-    if (isDevelopment && origin.startsWith("http://localhost:")) {
+    if (isDevelopment) {
       // 開発環境: localhost からのアクセスを許可
       allowOrigin = origin;
     } else if (allowedOrigins.includes(origin)) {

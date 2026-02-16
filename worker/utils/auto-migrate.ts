@@ -310,6 +310,18 @@ SET default_markup_value = 20,
 WHERE default_markup_type = 'percentage' AND default_markup_value < 20;
     `.trim(),
   },
+  {
+    version: 16,
+    name: "0016_add_password_changed_at_to_users",
+    sql: `
+-- users テーブルに password_changed_at カラムを追加
+-- パスワード変更日時を追跡するため
+ALTER TABLE users ADD COLUMN password_changed_at TEXT;
+
+-- 既存ユーザーのパスワード変更日時を現在時刻に設定
+UPDATE users SET password_changed_at = datetime('now') WHERE password_changed_at IS NULL;
+    `.trim(),
+  },
 ];
 
 // 現在のスキーマバージョンを取得

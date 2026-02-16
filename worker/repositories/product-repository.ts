@@ -1,21 +1,24 @@
 import type { Product, ProductWithTiers, ProductTier } from "../../shared/types";
+import { executeD1All, executeD1First, executeD1Query } from "../utils/d1-helper";
 
 // 製品リポジトリ
 export class ProductRepository {
   constructor(private db: D1Database) {}
 
   async findAll(): Promise<Product[]> {
-    const result = await this.db
-      .prepare("SELECT * FROM products ORDER BY name ASC")
-      .all<Product>();
-    return result.results;
+    const result = await executeD1All<Product>(
+      this.db,
+      "SELECT * FROM products ORDER BY name ASC"
+    );
+    return result;
   }
 
   async findById(id: string): Promise<Product | null> {
-    return await this.db
-      .prepare("SELECT * FROM products WHERE id = ?")
-      .bind(id)
-      .first<Product>();
+    return await executeD1First<Product>(
+      this.db,
+      "SELECT * FROM products WHERE id = ?",
+      [id]
+    );
   }
 
   // 複数の製品を一括取得（IDのリスト）
@@ -76,12 +79,13 @@ export class ProductRepository {
     is_active: boolean;
   }): Promise<string> {
     const id = crypto.randomUUID();
-    await this.db
-      .prepare(
-        "INSERT INTO products (id, category_id, name, slug, description, pricing_model, is_active) VALUES (?, ?, ?, ?, ?, ?, ?)"
-      )
-      .bind(id, data.category_id, data.name, data.slug, data.description, data.pricing_model, data.is_active ? 1 : 0)
-      .run();
+    await executeD1Query(
+      this.db,
+      "INSERT INTO products (id, category_id, name, slug, description, pricing_model, is_active) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      [id, data.category_id, data.name, data.slug, data.description, data.pricing_model, data.is_active ? 1 : 0],
+      "作成",
+      "製品"
+    );
     return id;
   }
 
@@ -96,18 +100,22 @@ export class ProductRepository {
       is_active: boolean;
     }
   ): Promise<void> {
-    await this.db
-      .prepare(
-        "UPDATE products SET category_id = ?, name = ?, slug = ?, description = ?, pricing_model = ?, is_active = ?, updated_at = datetime('now') WHERE id = ?"
-      )
-      .bind(data.category_id, data.name, data.slug, data.description, data.pricing_model, data.is_active ? 1 : 0, id)
-      .run();
+    await executeD1Query(
+      this.db,
+      "UPDATE products SET category_id = ?, name = ?, slug = ?, description = ?, pricing_model = ?, is_active = ?, updated_at = datetime('now') WHERE id = ?",
+      [data.category_id, data.name, data.slug, data.description, data.pricing_model, data.is_active ? 1 : 0, id],
+      "更新",
+      "製品"
+    );
   }
 
   async delete(id: string): Promise<void> {
-    await this.db
-      .prepare("DELETE FROM products WHERE id = ?")
-      .bind(id)
-      .run();
+    await executeD1Query(
+      this.db,
+      "DELETE FROM products WHERE id = ?",
+      [id],
+      "削除",
+      "製品"
+    );
   }
 }

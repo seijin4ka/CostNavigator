@@ -1,4 +1,5 @@
 import type { Estimate, EstimateItem, EstimateWithItems } from "../../shared/types";
+import { executeD1All, executeD1First, executeD1Query } from "../utils/d1-helper";
 
 // 見積もりリポジトリ
 export class EstimateRepository {
@@ -55,50 +56,55 @@ export class EstimateRepository {
   }
 
   async findById(id: string): Promise<Estimate | null> {
-    return await this.db
-      .prepare("SELECT * FROM estimates WHERE id = ?")
-      .bind(id)
-      .first<Estimate>();
+    return await executeD1First<Estimate>(
+      this.db,
+      "SELECT * FROM estimates WHERE id = ?",
+      [id]
+    );
   }
 
   async findByIdWithItems(id: string): Promise<EstimateWithItems | null> {
-    const estimate = await this.db
-      .prepare(`
+    const estimate = await executeD1First<Estimate & { partner_name: string }>(
+      this.db,
+      `
         SELECT e.*, p.name as partner_name
         FROM estimates e
         JOIN partners p ON e.partner_id = p.id
         WHERE e.id = ?
-      `)
-      .bind(id)
-      .first<Estimate & { partner_name: string }>();
+      `,
+      [id]
+    );
     if (!estimate) return null;
 
-    const items = await this.db
-      .prepare("SELECT * FROM estimate_items WHERE estimate_id = ?")
-      .bind(id)
-      .all<EstimateItem>();
+    const items = await executeD1All<EstimateItem>(
+      this.db,
+      "SELECT * FROM estimate_items WHERE estimate_id = ?",
+      [id]
+    );
 
-    return { ...estimate, items: items.results };
+    return { ...estimate, items };
   }
 
   async findByReferenceWithItems(referenceNumber: string): Promise<EstimateWithItems | null> {
-    const estimate = await this.db
-      .prepare(`
+    const estimate = await executeD1First<Estimate & { partner_name: string }>(
+      this.db,
+      `
         SELECT e.*, p.name as partner_name
         FROM estimates e
         JOIN partners p ON e.partner_id = p.id
         WHERE e.reference_number = ?
-      `)
-      .bind(referenceNumber)
-      .first<Estimate & { partner_name: string }>();
+      `,
+      [referenceNumber]
+    );
     if (!estimate) return null;
 
-    const items = await this.db
-      .prepare("SELECT * FROM estimate_items WHERE estimate_id = ?")
-      .bind(estimate.id)
-      .all<EstimateItem>();
+    const items = await executeD1All<EstimateItem>(
+      this.db,
+      "SELECT * FROM estimate_items WHERE estimate_id = ?",
+      [estimate.id]
+    );
 
-    return { ...estimate, items: items.results };
+    return { ...estimate, items };
   }
 
   async create(data: {
@@ -113,12 +119,11 @@ export class EstimateRepository {
     total_yearly: number;
   }): Promise<string> {
     const id = crypto.randomUUID();
-    await this.db
-      .prepare(
-        `INSERT INTO estimates (id, partner_id, reference_number, customer_name, customer_email, customer_phone, customer_company, notes, total_monthly, total_yearly)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-      )
-      .bind(
+    await executeD1Query(
+      this.db,
+      `INSERT INTO estimates (id, partner_id, reference_number, customer_name, customer_email, customer_phone, customer_company, notes, total_monthly, total_yearly)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
         id,
         data.partner_id,
         data.reference_number,
@@ -129,8 +134,10 @@ export class EstimateRepository {
         data.notes,
         data.total_monthly,
         data.total_yearly
-      )
-      .run();
+      ],
+      "作成",
+      "見積もり"
+    );
     return id;
   }
 
@@ -149,12 +156,11 @@ export class EstimateRepository {
     }
   ): Promise<void> {
     const id = crypto.randomUUID();
-    await this.db
-      .prepare(
-        `INSERT INTO estimate_items (id, estimate_id, product_id, product_name, tier_id, tier_name, quantity, usage_quantity, base_price, markup_amount, final_price)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-      )
-      .bind(
+    await executeD1Query(
+      this.db,
+      `INSERT INTO estimate_items (id, estimate_id, product_id, product_name, tier_id, tier_name, quantity, usage_quantity, base_price, markup_amount, final_price)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
         id,
         estimateId,
         data.product_id,
@@ -166,28 +172,37 @@ export class EstimateRepository {
         data.base_price,
         data.markup_amount,
         data.final_price
-      )
-      .run();
+      ],
+      "作成",
+      "見積もり項目"
+    );
   }
 
   async updateStatus(id: string, status: string): Promise<void> {
-    await this.db
-      .prepare("UPDATE estimates SET status = ?, updated_at = datetime('now') WHERE id = ?")
-      .bind(status, id)
-      .run();
+    await executeD1Query(
+      this.db,
+      "UPDATE estimates SET status = ?, updated_at = datetime('now') WHERE id = ?",
+      [status, id],
+      "更新",
+      "見積もり"
+    );
   }
 
   async count(): Promise<number> {
-    const result = await this.db
-      .prepare("SELECT COUNT(*) as count FROM estimates")
-      .first<{ count: number }>();
+    const result = await executeD1First<{ count: number }>(
+      this.db,
+      "SELECT COUNT(*) as count FROM estimates"
+    );
     return result?.count ?? 0;
   }
 
   async delete(id: string): Promise<void> {
-    await this.db
-      .prepare("DELETE FROM estimates WHERE id = ?")
-      .bind(id)
-      .run();
+    await executeD1Query(
+      this.db,
+      "DELETE FROM estimates WHERE id = ?",
+      [id],
+      "削除",
+      "見積もり"
+    );
   }
 }

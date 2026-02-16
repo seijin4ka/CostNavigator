@@ -8,6 +8,7 @@ class ApiClient {
   private token: string | null = null;
   private refreshToken: string | null = null;
   private isRefreshing = false;
+  private refreshPromise: Promise<boolean> | null = null;
   private onTokenRefreshFailed: (() => void) | null = null;
 
   setToken(token: string | null) {
@@ -86,46 +87,52 @@ class ApiClient {
 
   // トークンリフレッシュ試行
   private async tryRefreshToken(): Promise<boolean> {
-    if (this.isRefreshing) {
-      // 既にリフレッシュ中の場合は待機（同時リフレッシュを防ぐ）
-      return false;
+    // 既に進行中のリフレッシュがあれば、それを待機
+    if (this.refreshPromise) {
+      return this.refreshPromise;
     }
 
-    this.isRefreshing = true;
+    // 新しいリフレッシュ処理を開始
+    this.refreshPromise = (async () => {
+      this.isRefreshing = true;
 
-    try {
-      const res = await fetch(`${API_BASE}/auth/refresh`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ refreshToken: this.refreshToken }),
-      });
+      try {
+        const res = await fetch(`${API_BASE}/auth/refresh`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ refreshToken: this.refreshToken }),
+        });
 
-      if (!res.ok) {
+        if (!res.ok) {
+          return false;
+        }
+
+        const data = await res.json();
+        if (data.success && data.data) {
+          // 新しいトークンを保存
+          this.token = data.data.token;
+          this.refreshToken = data.data.refreshToken;
+
+          // localStorageにも保存
+          localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, data.data.token);
+          localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, data.data.refreshToken);
+
+          return true;
+        }
+
         return false;
+      } catch (error) {
+        console.error("トークンリフレッシュエラー:", error);
+        return false;
+      } finally {
+        this.isRefreshing = false;
+        this.refreshPromise = null;
       }
+    })();
 
-      const data = await res.json();
-      if (data.success && data.data) {
-        // 新しいトークンを保存
-        this.token = data.data.token;
-        this.refreshToken = data.data.refreshToken;
-
-        // localStorageにも保存
-        localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, data.data.token);
-        localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, data.data.refreshToken);
-
-        return true;
-      }
-
-      return false;
-    } catch (error) {
-      console.error("トークンリフレッシュエラー:", error);
-      return false;
-    } finally {
-      this.isRefreshing = false;
-    }
+    return this.refreshPromise;
   }
 
   get<T>(path: string) {

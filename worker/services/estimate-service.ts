@@ -192,26 +192,42 @@ export class EstimateService {
       totalMonthly += finalPrice;
     }
 
-    // 見積もり保存（参照番号の衝突をリトライで対応）
-    const estimateId = await this.createEstimateWithRetry({
-      partner_id: partner.id,
-      customer_name: request.customer_name,
-      customer_email: request.customer_email,
-      customer_phone: request.customer_phone ?? null,
-      customer_company: request.customer_company ?? null,
-      notes: request.notes ?? null,
-      total_monthly: totalMonthly,
-      total_yearly: totalMonthly * 12,
-    });
+    // トランザクション処理（D1はネイティブトランザクションをサポートしていないため、手動でロールバック）
+    let estimateId: string | null = null;
 
-    // 明細保存
-    for (const item of items) {
-      await this.estimateRepo.createItem(estimateId, item);
+    try {
+      // 見積もり保存（参照番号の衝突をリトライで対応）
+      estimateId = await this.createEstimateWithRetry({
+        partner_id: partner.id,
+        customer_name: request.customer_name,
+        customer_email: request.customer_email,
+        customer_phone: request.customer_phone ?? null,
+        customer_company: request.customer_company ?? null,
+        notes: request.notes ?? null,
+        total_monthly: totalMonthly,
+        total_yearly: totalMonthly * 12,
+      });
+
+      // 明細保存
+      for (const item of items) {
+        await this.estimateRepo.createItem(estimateId, item);
+      }
+
+      const estimate = await this.estimateRepo.findByIdWithItems(estimateId);
+      if (!estimate) throw new Error("見積もりの作成に失敗しました");
+      return estimate;
+    } catch (error) {
+      // エラー発生時、作成された見積もりを削除（不完全な見積もりを残さない）
+      if (estimateId) {
+        try {
+          await this.estimateRepo.delete(estimateId);
+          console.error("不完全な見積もりを削除しました:", estimateId);
+        } catch (deleteError) {
+          console.error("不完全な見積もりの削除に失敗しました:", deleteError);
+        }
+      }
+      throw error;
     }
-
-    const estimate = await this.estimateRepo.findByIdWithItems(estimateId);
-    if (!estimate) throw new Error("見積もりの作成に失敗しました");
-    return estimate;
   }
 
   // 参照番号で見積もり取得

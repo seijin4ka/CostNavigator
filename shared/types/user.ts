@@ -12,6 +12,7 @@ export interface User {
   role: UserRole;
   created_at: string;
   updated_at: string;
+  password_changed_at: string | null;
 }
 
 // ログインリクエスト
@@ -26,6 +27,7 @@ export interface LoginResponse {
   token: string;
   refreshToken: string;
   user: User;
+  passwordChangeRequired: boolean;
 }
 
 // リフレッシュトークンレスポンス

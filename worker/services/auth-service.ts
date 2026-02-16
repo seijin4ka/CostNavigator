@@ -26,12 +26,29 @@ export class AuthService {
     const token = await this.generateAccessToken(user);
     const refreshToken = await this.generateRefreshToken(user.id);
     const { password_hash: _, ...userWithoutPassword } = user;
-    return { token, refreshToken, user: userWithoutPassword };
+
+    // デフォルトパスワードか、パスワード変更日時が古い場合（90日以上前）は変更を要求
+    const isDefaultPassword = password === "admin1234";
+    const isPasswordOld = user.password_changed_at
+      ? (Date.now() - new Date(user.password_changed_at).getTime()) > 90 * 24 * 60 * 60 * 1000
+      : true; // password_changed_at が null の場合は古いとみなす
+
+    const passwordChangeRequired = isDefaultPassword || isPasswordOld;
+
+    return { token, refreshToken, user: userWithoutPassword, passwordChangeRequired };
   }
 
   // ユーザー情報取得
   async getUser(id: string): Promise<User | null> {
     return this.userRepo.findById(id);
+  }
+
+  // パスワード変更日時を更新
+  async updatePasswordChangedAt(userId: string): Promise<void> {
+    await this.db
+      .prepare("UPDATE users SET password_changed_at = datetime('now'), updated_at = datetime('now') WHERE id = ?")
+      .bind(userId)
+      .run();
   }
 
   // 初期管理者ユーザーの作成（存在しない場合のみ）
