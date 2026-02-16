@@ -29,10 +29,22 @@ jobs:
       - name: Resolve D1 database_id
         run: |
           # D1データベースのIDを取得（存在しない場合は作成）
-          DB_ID=$(npx wrangler d1 list --json | jq -r '.[] | select(.name == "cost-navigator-db") | .uuid')
+          DB_ID=$(npx wrangler d1 list --json 2>/dev/null | jq -r '.[] | select(.name == "cost-navigator-db") | .uuid' 2>/dev/null || echo "")
           if [ -z "$DB_ID" ] || [ "$DB_ID" = "null" ]; then
             echo "D1データベースが見つかりません。新規作成します..."
-            DB_ID=$(npx wrangler d1 create cost-navigator-db --json | jq -r '.uuid // .database_id')
+            # d1 createはテキスト出力からUUIDを抽出
+            CREATE_OUTPUT=$(npx wrangler d1 create cost-navigator-db 2>&1 || true)
+            echo "$CREATE_OUTPUT"
+            DB_ID=$(echo "$CREATE_OUTPUT" | grep -oP 'database_id\s*[:=]\s*"?\K[a-f0-9-]+' || echo "")
+            # 作成後に再取得
+            if [ -z "$DB_ID" ]; then
+              DB_ID=$(npx wrangler d1 list --json 2>/dev/null | jq -r '.[] | select(.name == "cost-navigator-db") | .uuid' 2>/dev/null || echo "")
+            fi
+          fi
+
+          if [ -z "$DB_ID" ] || [ "$DB_ID" = "null" ]; then
+            echo "Error: D1 database_id を取得できませんでした"
+            exit 1
           fi
           echo "D1 Database ID: $DB_ID"
 
@@ -41,6 +53,7 @@ jobs:
           if [ -f "$WRANGLER_JSON" ]; then
             jq --arg id "$DB_ID" '.d1_databases[0].database_id = $id' "$WRANGLER_JSON" > tmp.json && mv tmp.json "$WRANGLER_JSON"
             echo "wrangler.json にdatabase_idを設定しました"
+            cat "$WRANGLER_JSON" | jq '.d1_databases'
           else
             echo "Error: $WRANGLER_JSON が見つかりません"
             exit 1
