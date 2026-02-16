@@ -13,7 +13,7 @@ const publicApi = new Hono<{ Bindings: Env }>();
 
 // システム設定取得（ブランディング用、公開情報のみ）
 publicApi.get("/system-settings", async (c) => {
-  const service = new SystemSettingsService(c.env.DB, c.env.CACHE);
+  const service = new SystemSettingsService(c.env.DB);
   const settings = await service.getSettings();
 
   // 公開情報のみ返却
@@ -29,7 +29,7 @@ publicApi.get("/system-settings", async (c) => {
 
 // 製品カタログ取得（マークアップなし、パートナー未設定時用）
 publicApi.get("/products", async (c) => {
-  const service = new EstimateService(c.env.DB, c.env.CACHE);
+  const service = new EstimateService(c.env.DB);
   // マークアップなしの基本価格で製品を取得
   const products = await service.getProductsWithoutMarkup();
 
@@ -56,7 +56,7 @@ publicApi.get("/products", async (c) => {
 
 // 見積もり参照番号で取得（/:partnerSlugより前に配置必須）
 publicApi.get("/estimates/:ref", async (c) => {
-  const service = new EstimateService(c.env.DB, c.env.CACHE);
+  const service = new EstimateService(c.env.DB);
   const estimate = await service.getEstimateByReference(c.req.param("ref"));
 
   if (!estimate) {
@@ -86,7 +86,7 @@ publicApi.get("/estimates/:ref", async (c) => {
 
 // パートナー情報取得（ブランディング用）
 publicApi.get("/:partnerSlug", async (c) => {
-  const service = new EstimateService(c.env.DB, c.env.CACHE);
+  const service = new EstimateService(c.env.DB);
   const partner = await service.getPartnerBranding(c.req.param("partnerSlug"));
 
   if (!partner) {
@@ -105,7 +105,7 @@ publicApi.get("/:partnerSlug", async (c) => {
 
 // マークアップ適用済み製品カタログ
 publicApi.get("/:partnerSlug/products", async (c) => {
-  const service = new EstimateService(c.env.DB, c.env.CACHE);
+  const service = new EstimateService(c.env.DB);
   const partner = await service.getPartnerBranding(c.req.param("partnerSlug"));
 
   if (!partner) {
@@ -141,7 +141,7 @@ publicApi.post("/:partnerSlug/estimates", async (c) => {
   const data = await validateBody(c, CreateEstimateSchema);
   if (!data) return c.res;
 
-  const service = new EstimateService(c.env.DB, c.env.CACHE);
+  const service = new EstimateService(c.env.DB);
   const partner = await service.getPartnerBranding(c.req.param("partnerSlug"));
 
   if (!partner) {
