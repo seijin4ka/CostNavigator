@@ -75,7 +75,7 @@ try {
   if (!dbId) {
     console.log('📊 D1データベースを新規作成中...');
     try {
-      const createOutput = execSync(`npx wrangler d1 create ${DB_NAME} --json`, {
+      const createOutput = execSync(`npx wrangler d1 create ${DB_NAME}`, {
         encoding: 'utf-8',
         stdio: ['pipe', 'pipe', 'pipe']
       });
