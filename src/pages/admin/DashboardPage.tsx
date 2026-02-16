@@ -13,7 +13,7 @@ interface DashboardStats {
     reference_number: string;
     customer_name: string;
     customer_company: string | null;
-    total_amount: number;
+    total_monthly: number;
     status: string;
     created_at: string;
     partner_name: string;
@@ -126,7 +126,7 @@ export function DashboardPage() {
                     )}
                   </td>
                   <td className="py-3 px-2 text-gray-600">{est.partner_name}</td>
-                  <td className="py-3 px-2 text-right font-medium">{formatCurrency(est.total_amount)}</td>
+                  <td className="py-3 px-2 text-right font-medium">{formatCurrency(est.total_monthly)}</td>
                   <td className="py-3 px-2">
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[est.status] ?? ""}`}>
                       {statusLabels[est.status] ?? est.status}

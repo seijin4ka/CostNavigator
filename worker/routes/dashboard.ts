@@ -18,7 +18,7 @@ dashboard.get("/stats", async (c) => {
       db.prepare("SELECT COUNT(*) as count FROM estimates").first<{ count: number }>(),
       db
         .prepare(`
-          SELECT e.reference_number, e.customer_name, e.customer_company, e.total_amount, e.status, e.created_at, p.name as partner_name
+          SELECT e.reference_number, e.customer_name, e.customer_company, e.total_monthly, e.status, e.created_at, p.name as partner_name
           FROM estimates e
           JOIN partners p ON e.partner_id = p.id
           ORDER BY e.created_at DESC
@@ -26,15 +26,15 @@ dashboard.get("/stats", async (c) => {
         `)
         .all(),
       db
-        .prepare("SELECT SUM(total_amount) as total_amount FROM estimates")
-        .first<{ total_amount: number | null }>(),
+        .prepare("SELECT SUM(total_monthly) as total_monthly FROM estimates")
+        .first<{ total_monthly: number | null }>(),
     ]);
 
   return success(c, {
     products_count: productsCount?.count ?? 0,
     partners_count: partnersCount?.count ?? 0,
     estimates_count: estimatesCount?.count ?? 0,
-    total_revenue: estimateTotals?.total_amount ?? 0,
+    total_revenue: estimateTotals?.total_monthly ?? 0,
     recent_estimates: recentEstimates.results,
   });
 });

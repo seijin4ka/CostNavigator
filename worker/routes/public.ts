@@ -19,6 +19,7 @@ publicApi.get("/system-settings", async (c) => {
   // 公開情報のみ返却
   return success(c, {
     brand_name: settings.brand_name,
+    primary_partner_slug: settings.primary_partner_slug,
     logo_url: settings.logo_url,
     primary_color: settings.primary_color,
     secondary_color: settings.secondary_color,
@@ -43,9 +44,9 @@ publicApi.get("/products", async (c) => {
       id: t.id,
       name: t.name,
       slug: t.slug,
-      price: t.unit_price,
+      price: t.final_price,
       usage_unit: t.usage_unit,
-      usage_unit_price: t.usage_unit_price,
+      usage_unit_price: t.final_usage_unit_price,
       usage_included: t.usage_included,
     })),
   }));
