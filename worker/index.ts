@@ -4,16 +4,16 @@ import type { Context, Next } from "hono";
 import type { Env } from "./env";
 import { errorHandler } from "./middleware/error-handler";
 import { autoSetupMiddleware } from "./middleware/auto-setup";
-import authRoutes from "./routes/auth";
-import categoryRoutes from "./routes/categories";
-import productRoutes from "./routes/products";
-import tierRoutes from "./routes/tiers";
-import partnerRoutes from "./routes/partners";
-import markupRoutes from "./routes/markup";
-import publicRoutes from "./routes/public";
-import estimateRoutes from "./routes/estimates";
-import dashboardRoutes from "./routes/dashboard";
-import systemSettingsRoutes from "./routes/system-settings";
+import * as authModule from "./routes/auth";
+import * as categoriesModule from "./routes/categories";
+import * as productsModule from "./routes/products";
+import * as tiersModule from "./routes/tiers";
+import * as partnersModule from "./routes/partners";
+import * as markupModule from "./routes/markup";
+import * as publicModule from "./routes/public";
+import * as estimatesModule from "./routes/estimates";
+import * as dashboardModule from "./routes/dashboard";
+import * as systemSettingsModule from "./routes/system-settings";
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -148,20 +148,20 @@ app.get("/api/health", (c) => {
 });
 
 // 認証ルート
-app.route("/api/auth", authRoutes);
+app.route("/api/auth", "routes/auth.ts");
 
 // 管理API（認証はルート内で適用）
-app.route("/api/admin/categories", categoryRoutes);
-app.route("/api/admin/products", productRoutes);
-app.route("/api/admin/product-tiers", tierRoutes);
-app.route("/api/admin/partners", partnerRoutes);
-app.route("/api/admin/partners", markupRoutes);
-app.route("/api/admin/estimates", estimateRoutes);
-app.route("/api/admin/dashboard", dashboardRoutes);
-app.route("/api/admin/system-settings", systemSettingsRoutes);
+app.route("/api/admin/categories", "routes/categories.ts");
+app.route("/api/admin/products", "routes/products.ts");
+app.route("/api/admin/product-tiers", "routes/tiers.ts");
+app.route("/api/admin/partners", "routes/partners.ts");
+app.route("/api/admin/partners", "routes/markup.ts");
+app.route("/api/admin/estimates", "routes/estimates.ts");
+app.route("/api/admin/dashboard", "routes/dashboard.ts");
+app.route("/api/admin/system-settings", "routes/system-settings.ts");
 
 // 公開API（認証不要）
-app.route("/api/public", publicRoutes);
+app.route("/api/public", "routes/public.ts");
 
 // 非APIリクエストは静的アセット（SPA）にフォールバック
 app.all("*", async (c) => {
