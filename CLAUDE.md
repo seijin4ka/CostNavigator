@@ -67,7 +67,7 @@ npm run db:backup        # 本番DB のバックアップ（SQL出力）
 - `/api/public/*` - 公開API（認証不要）。マークアップ額や基本価格を返却せず最終価格のみ公開
 - `/api/auth/*` - 認証（ログイン / セットアップ / リフレッシュ）
 - `/api/health` - ヘルスチェック
-- Worker のルーティングは Cloudflare Vite Plugin 固有の文字列パス参照を使用: `app.route("/api/auth", "routes/auth.ts")`
+- Worker のルーティングは各ルートモジュールを直接インポートして `app.route()` に渡す（文字列ベースルーティングは本番ビルドで変換されないため使用禁止）
 
 ### バックエンド層構造
 
