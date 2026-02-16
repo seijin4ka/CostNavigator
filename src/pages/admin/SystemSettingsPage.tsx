@@ -32,10 +32,10 @@ export function SystemSettingsPage() {
       setIsLoading(true);
       const [settingsRes, partnersRes] = await Promise.all([
         apiClient.get<SystemSettings>("/admin/system-settings"),
-        apiClient.get<{ data: Partner[]; total: number }>("/admin/partners"),
+        apiClient.get<Partner[]>("/admin/partners"),
       ]);
       setSettings(settingsRes.data);
-      setPartners(partnersRes.data.data);
+      setPartners(partnersRes.data);
       setFormData({
         brand_name: settingsRes.data.brand_name,
         primary_partner_slug: settingsRes.data.primary_partner_slug,
