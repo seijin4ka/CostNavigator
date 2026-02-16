@@ -82,6 +82,20 @@ auth.post("/refresh", rateLimit(10, 60000), async (c) => {
   });
 });
 
+// セットアップ状態確認
+auth.get("/setup-status", async (c) => {
+  const jwtSecret = await getJwtSecret(c.env.DB, c.env.JWT_SECRET);
+  const userRepo = new (await import("../repositories/user-repository")).UserRepository(c.env.DB);
+
+  const userCount = await userRepo.count();
+  const isSetupComplete = userCount > 0;
+
+  return success(c, {
+    isSetupComplete,
+    userCount,
+  });
+});
+
 // 初期セットアップ（マイグレーション + 初期管理者作成）
 auth.post("/setup", async (c) => {
   try {

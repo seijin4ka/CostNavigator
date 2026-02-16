@@ -12,13 +12,18 @@ import { EstimatesPage } from "./pages/admin/EstimatesPage";
 import { SystemSettingsPage } from "./pages/admin/SystemSettingsPage";
 import { EstimatePage } from "./pages/public/EstimatePage";
 import { EstimateResultPage } from "./pages/public/EstimateResultPage";
+import { HomePage } from "./pages/HomePage";
+import { SetupPage } from "./pages/SetupPage";
 
 function App() {
   return (
     <AuthProvider>
       <Routes>
-        {/* トップページ: ダイレクト見積もり（パートナー経由なし） */}
-        <Route path="/" element={<EstimatePage />} />
+        {/* セットアップページ */}
+        <Route path="/setup" element={<SetupPage />} />
+
+        {/* トップページ: セットアップ状態確認後、見積もりページへ */}
+        <Route path="/" element={<HomePage />} />
         <Route path="/result" element={<EstimateResultPage />} />
 
         {/* パートナー経由の見積もり */}
