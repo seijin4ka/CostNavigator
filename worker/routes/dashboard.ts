@@ -14,7 +14,7 @@ dashboard.get("/stats", async (c) => {
   const [productsCount, categoriesCount, estimatesCount, recentEstimates, estimateTotals] =
     await Promise.all([
       db.prepare("SELECT COUNT(*) as count FROM products WHERE is_active = 1").first<{ count: number }>(),
-      db.prepare("SELECT COUNT(*) as count FROM categories").first<{ count: number }>(),
+      db.prepare("SELECT COUNT(*) as count FROM product_categories").first<{ count: number }>(),
       db.prepare("SELECT COUNT(*) as count FROM estimates").first<{ count: number }>(),
       db
         .prepare(`
