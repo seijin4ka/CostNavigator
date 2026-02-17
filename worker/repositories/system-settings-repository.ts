@@ -47,7 +47,6 @@ export class SystemSettingsRepository {
   // システム設定を更新
   async update(data: {
     brand_name?: string;
-    primary_partner_slug?: string | null;
     logo_url?: string | null;
     primary_color?: string;
     secondary_color?: string;
@@ -59,10 +58,6 @@ export class SystemSettingsRepository {
     if (data.brand_name !== undefined) {
       fields.push("brand_name = ?");
       values.push(data.brand_name);
-    }
-    if (data.primary_partner_slug !== undefined) {
-      fields.push("primary_partner_slug = ?");
-      values.push(data.primary_partner_slug);
     }
     if (data.logo_url !== undefined) {
       fields.push("logo_url = ?");

@@ -16,7 +16,6 @@ interface DashboardStats {
     total_monthly: number;
     status: string;
     created_at: string;
-    partner_name: string;
   }[];
 }
 
@@ -115,7 +114,6 @@ export function DashboardPage() {
               <tr className="border-b border-gray-200">
                 <th className="text-left py-3 px-2 font-medium text-gray-500 text-xs uppercase">参照番号</th>
                 <th className="text-left py-3 px-2 font-medium text-gray-500 text-xs uppercase">お客様</th>
-                <th className="text-left py-3 px-2 font-medium text-gray-500 text-xs uppercase">パートナー</th>
                 <th className="text-right py-3 px-2 font-medium text-gray-500 text-xs uppercase">金額</th>
                 <th className="text-left py-3 px-2 font-medium text-gray-500 text-xs uppercase">状態</th>
                 <th className="text-left py-3 px-2 font-medium text-gray-500 text-xs uppercase">日付</th>
@@ -131,7 +129,6 @@ export function DashboardPage() {
                       <div className="text-xs text-gray-400">{est.customer_company}</div>
                     )}
                   </td>
-                  <td className="py-3 px-2 text-gray-600">{est.partner_name}</td>
                   <td className="py-3 px-2 text-right font-medium">{formatCurrency(est.total_monthly)}</td>
                   <td className="py-3 px-2">
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[est.status] ?? ""}`}>

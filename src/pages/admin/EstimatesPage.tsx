@@ -24,7 +24,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export function EstimatesPage() {
-  const [estimates, setEstimates] = useState<(Estimate & { partner_name: string })[]>([]);
+  const [estimates, setEstimates] = useState<Estimate[]>([]);
   const [selectedEstimate, setSelectedEstimate] = useState<EstimateWithItems | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
@@ -37,7 +37,7 @@ export function EstimatesPage() {
     try {
       setIsLoading(true);
       const res = await apiClient.get<{
-        data: (Estimate & { partner_name: string })[];
+        data: Estimate[];
         total: number;
         page: number;
         limit: number;
@@ -156,7 +156,6 @@ export function EstimatesPage() {
                 </div>
               ),
             },
-            { header: "パートナー", accessor: "partner_name" },
             {
               header: "月額",
               accessor: (row) => (
@@ -265,10 +264,6 @@ export function EstimatesPage() {
                 </div>
               )}
               <div>
-                <p className="text-gray-500">パートナー</p>
-                <p>{selectedEstimate.partner_name}</p>
-              </div>
-              <div>
                 <p className="text-gray-500">ステータス</p>
                 <Select
                   value={selectedEstimate.status}
@@ -290,7 +285,7 @@ export function EstimatesPage() {
               </div>
             )}
 
-            {/* 明細テーブル（管理者はbase_price, markup_amountも表示） */}
+            {/* 明細テーブル */}
             <div className="border-t pt-4">
               <h4 className="font-medium text-sm mb-2">見積もり明細</h4>
               <table className="w-full text-sm">
@@ -300,7 +295,6 @@ export function EstimatesPage() {
                     <th className="text-left py-2">プラン</th>
                     <th className="text-right py-2">数量</th>
                     <th className="text-right py-2">基本価格</th>
-                    <th className="text-right py-2">マークアップ</th>
                     <th className="text-right py-2">最終価格</th>
                   </tr>
                 </thead>
@@ -311,20 +305,19 @@ export function EstimatesPage() {
                       <td className="py-2 text-gray-600">{item.tier_name ?? "-"}</td>
                       <td className="py-2 text-right">{item.quantity}</td>
                       <td className="py-2 text-right">{formatCurrency(item.base_price)}</td>
-                      <td className="py-2 text-right text-green-600">+{formatCurrency(item.markup_amount)}</td>
                       <td className="py-2 text-right font-medium">{formatCurrency(item.final_price)}</td>
                     </tr>
                   ))}
                 </tbody>
                 <tfoot>
                   <tr className="border-t-2 border-gray-300">
-                    <td colSpan={5} className="py-2 text-right font-bold">月額合計</td>
+                    <td colSpan={4} className="py-2 text-right font-bold">月額合計</td>
                     <td className="py-2 text-right font-bold text-orange-500">
                       {formatCurrency(selectedEstimate.total_monthly)}
                     </td>
                   </tr>
                   <tr>
-                    <td colSpan={5} className="py-1 text-right text-gray-500">年額合計</td>
+                    <td colSpan={4} className="py-1 text-right text-gray-500">年額合計</td>
                     <td className="py-1 text-right font-medium">
                       {formatCurrency(selectedEstimate.total_yearly)}
                     </td>

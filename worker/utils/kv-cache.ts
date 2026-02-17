@@ -9,7 +9,6 @@ export interface CacheOptions {
 // キャッシュのデフォルト設定
 export const DEFAULT_CACHE_TTL = 300; // 5分
 export const PRODUCT_CACHE_TTL = 600; // 製品データ: 10分
-export const PARTNER_CACHE_TTL = 600; // パートナー: 10分
 export const SETTINGS_CACHE_TTL = 1800; // 設定: 30分
 
 export class KVCache {
@@ -146,23 +145,13 @@ export const CacheKeys = {
   categories: () => "categories:all",
   category: (id: string) => `category:${id}`,
 
-  // パートナー関連
-  partners: () => "partners:all",
-  partner: (id: string) => `partner:${id}`,
-  partnerBySlug: (slug: string) => `partner:slug:${slug}`,
-
   // システム設定関連
   systemSettings: () => "system:settings",
-
-  // マークアップルール関連
-  markupRules: (partnerId: string) => `markup:partner:${partnerId}`,
 } as const;
 
 // キャッシュタグ定義（一括無効化用）
 export const CacheTags = {
   products: "products",
   categories: "categories",
-  partners: "partners",
   settings: "settings",
-  markupRules: "markup-rules",
 } as const;

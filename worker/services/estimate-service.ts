@@ -1,82 +1,66 @@
-import { PartnerRepository } from "../repositories/partner-repository";
 import { ProductRepository } from "../repositories/product-repository";
 import { TierRepository } from "../repositories/tier-repository";
-import { MarkupRepository } from "../repositories/markup-repository";
 import { EstimateRepository } from "../repositories/estimate-repository";
 import type {
-  Partner,
   ProductWithTiers,
   ProductTier,
   CreateEstimateRequest,
   EstimateWithItems,
 } from "../../shared/types";
 import { ESTIMATE_REF_PREFIX, RETRY } from "../../shared/constants";
-import { KVCache, CacheKeys, PRODUCT_CACHE_TTL, PARTNER_CACHE_TTL, CacheTags } from "../utils/kv-cache";
+import { KVCache, CacheKeys, PRODUCT_CACHE_TTL, CacheTags } from "../utils/kv-cache";
 
-// マークアップ適用済みティア
-export interface TierWithMarkupPrice extends ProductTier {
+// 販売価格適用済みティア
+export interface TierWithSellingPrice extends ProductTier {
   final_price: number;
   final_usage_unit_price: number | null;
 }
 
-// マークアップ適用済み製品
-export interface ProductWithMarkupPrices extends Omit<ProductWithTiers, "tiers"> {
-  tiers: TierWithMarkupPrice[];
+// 販売価格適用済み製品
+export interface ProductWithSellingPrices extends Omit<ProductWithTiers, "tiers"> {
+  tiers: TierWithSellingPrice[];
 }
 
 // 見積もりサービス
 export class EstimateService {
-  private partnerRepo: PartnerRepository;
   private productRepo: ProductRepository;
   private tierRepo: TierRepository;
-  private markupRepo: MarkupRepository;
   private estimateRepo: EstimateRepository;
   private cache: KVCache;
 
   constructor(db: D1Database, kvNamespace?: KVNamespace) {
-    this.partnerRepo = new PartnerRepository(db);
     this.productRepo = new ProductRepository(db);
     this.tierRepo = new TierRepository(db);
-    this.markupRepo = new MarkupRepository(db);
     this.estimateRepo = new EstimateRepository(db);
     this.cache = kvNamespace ? new KVCache(kvNamespace) : this.createNullCache();
   }
 
-  // パートナーのブランディング情報取得（キャッシュ利用）
-  async getPartnerBranding(slug: string): Promise<Partner | null> {
-    return await this.cache.getOrSet(
-      CacheKeys.partnerBySlug(slug),
-      () => this.partnerRepo.findBySlug(slug),
-      { ttl: PARTNER_CACHE_TTL, tags: [CacheTags.partners] }
-    );
-  }
-
-  // マークアップなし製品カタログ取得（パートナー未設定時用、キャッシュ利用）
-  async getProductsWithoutMarkup(): Promise<ProductWithMarkupPrices[]> {
+  // 製品カタログ取得（selling_price優先、キャッシュ利用）
+  async getProducts(): Promise<ProductWithSellingPrices[]> {
     return await this.cache.getOrSet(
       CacheKeys.products(),
-      async () => this.buildProductsWithoutMarkup(),
+      async () => this.buildProducts(),
       { ttl: PRODUCT_CACHE_TTL, tags: [CacheTags.products] }
     );
   }
 
-  // マークアップなし製品カタログの構築（内部メソッド）
-  private async buildProductsWithoutMarkup(): Promise<ProductWithMarkupPrices[]> {
+  // 製品カタログの構築（内部メソッド）
+  private async buildProducts(): Promise<ProductWithSellingPrices[]> {
     const products = await this.productRepo.findAllWithTiers();
 
-    // 有効な製品のみ、基本価格をそのまま使用
-    const result: ProductWithMarkupPrices[] = [];
+    // 有効な製品のみ、selling_price > base_price のフォールバックで価格を返す
+    const result: ProductWithSellingPrices[] = [];
     for (const product of products) {
       if (!product.is_active) continue;
 
-      const tiersWithPrice: TierWithMarkupPrice[] = [];
+      const tiersWithPrice: TierWithSellingPrice[] = [];
       for (const tier of product.tiers) {
         if (!tier.is_active) continue;
 
         tiersWithPrice.push({
           ...tier,
-          final_price: tier.base_price,
-          final_usage_unit_price: tier.usage_unit_price,
+          final_price: tier.selling_price ?? tier.base_price,
+          final_usage_unit_price: tier.selling_usage_unit_price ?? tier.usage_unit_price,
         });
       }
 
@@ -88,51 +72,8 @@ export class EstimateService {
     return result;
   }
 
-  // マークアップ適用済み製品カタログ取得
-  async getProductsWithMarkup(partner: Partner): Promise<ProductWithMarkupPrices[]> {
-    const products = await this.productRepo.findAllWithTiers();
-
-    // 有効な製品のみ、マークアップを適用
-    const result: ProductWithMarkupPrices[] = [];
-    for (const product of products) {
-      if (!product.is_active) continue;
-
-      const tiersWithMarkup: TierWithMarkupPrice[] = [];
-      for (const tier of product.tiers) {
-        if (!tier.is_active) continue;
-
-        const markup = await this.markupRepo.resolveMarkup(
-          partner.id,
-          product.id,
-          tier.id,
-          partner.default_markup_type,
-          partner.default_markup_value
-        );
-
-        // マークアップ適用後の価格を計算
-        const finalPrice = this.applyMarkup(tier.base_price, markup.markup_type, markup.markup_value);
-        const finalUsageUnitPrice = tier.usage_unit_price != null
-          ? this.applyMarkup(tier.usage_unit_price, markup.markup_type, markup.markup_value)
-          : null;
-
-        tiersWithMarkup.push({
-          ...tier,
-          final_price: finalPrice,
-          final_usage_unit_price: finalUsageUnitPrice,
-        });
-      }
-
-      if (tiersWithMarkup.length > 0) {
-        result.push({ ...product, tiers: tiersWithMarkup });
-      }
-    }
-
-    return result;
-  }
-
   // 見積もり作成
   async createEstimate(
-    partner: Partner,
     request: CreateEstimateRequest
   ): Promise<EstimateWithItems> {
     // N+1クエリを避けるため、必要な製品とティアを一括取得
@@ -170,28 +111,21 @@ export class EstimateService {
       if (item.tier_id && !tier) {
         throw new Error(`ティアID ${item.tier_id} が見つかりません`);
       }
-      const basePrice = tier?.base_price ?? 0;
 
-      // 従量料金の計算
+      // 販売価格を使用（未設定時は基本価格にフォールバック）
+      const unitPrice = tier ? (tier.selling_price ?? tier.base_price) : 0;
+
+      // 従量料金の計算（販売従量単価を使用）
       let usagePrice = 0;
-      if (tier && tier.usage_unit_price != null && item.usage_quantity) {
-        const billableUsage = Math.max(0, item.usage_quantity - (tier.usage_included ?? 0));
-        usagePrice = billableUsage * tier.usage_unit_price;
+      if (tier && item.usage_quantity) {
+        const usageUnitPrice = tier.selling_usage_unit_price ?? tier.usage_unit_price;
+        if (usageUnitPrice != null) {
+          const billableUsage = Math.max(0, item.usage_quantity - (tier.usage_included ?? 0));
+          usagePrice = billableUsage * usageUnitPrice;
+        }
       }
 
-      const totalBasePrice = (basePrice + usagePrice) * item.quantity;
-
-      // マークアップ解決・適用
-      const markup = await this.markupRepo.resolveMarkup(
-        partner.id,
-        product.id,
-        tier?.id ?? null,
-        partner.default_markup_type,
-        partner.default_markup_value
-      );
-
-      const finalPrice = this.applyMarkup(totalBasePrice, markup.markup_type, markup.markup_value);
-      const markupAmount = finalPrice - totalBasePrice;
+      const finalPrice = Math.round((unitPrice + usagePrice) * item.quantity * 100) / 100;
 
       items.push({
         product_id: product.id,
@@ -200,8 +134,8 @@ export class EstimateService {
         tier_name: tier?.name ?? null,
         quantity: item.quantity,
         usage_quantity: item.usage_quantity ?? null,
-        base_price: totalBasePrice,
-        markup_amount: markupAmount,
+        base_price: finalPrice,
+        markup_amount: 0,
         final_price: finalPrice,
       });
 
@@ -214,7 +148,6 @@ export class EstimateService {
     try {
       // 見積もり保存（参照番号の衝突をリトライで対応）
       estimateId = await this.createEstimateWithRetry({
-        partner_id: partner.id,
         customer_name: request.customer_name,
         customer_email: request.customer_email,
         customer_phone: request.customer_phone ?? null,
@@ -249,15 +182,6 @@ export class EstimateService {
   // 参照番号で見積もり取得
   async getEstimateByReference(referenceNumber: string): Promise<EstimateWithItems | null> {
     return this.estimateRepo.findByReferenceWithItems(referenceNumber);
-  }
-
-  // マークアップ適用
-  private applyMarkup(basePrice: number, markupType: string, markupValue: number): number {
-    if (markupType === "percentage") {
-      return Math.round(basePrice * (1 + markupValue / 100) * 100) / 100;
-    }
-    // 固定額の場合
-    return Math.round((basePrice + markupValue) * 100) / 100;
   }
 
   // 参照番号生成（暗号学的に安全なランダム値を使用）

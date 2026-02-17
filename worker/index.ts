@@ -7,8 +7,6 @@ import authRoutes from "./routes/auth";
 import categoriesRoutes from "./routes/categories";
 import productsRoutes from "./routes/products";
 import tiersRoutes from "./routes/tiers";
-import partnersRoutes from "./routes/partners";
-import markupRoutes from "./routes/markup";
 import estimatesRoutes from "./routes/estimates";
 import dashboardRoutes from "./routes/dashboard";
 import systemSettingsRoutes from "./routes/system-settings";
@@ -121,7 +119,7 @@ const restrictiveCors = (allowCredentials = true) => {
   };
 };
 
-// 公開API: すべてのオリジンを許可（パートナー向け埋め込み対応）
+// 公開API: すべてのオリジンを許可
 app.use("/api/public/*", cors({
   origin: "*",
   credentials: false,
@@ -169,8 +167,6 @@ app.route("/api/auth", authRoutes);
 app.route("/api/admin/categories", categoriesRoutes);
 app.route("/api/admin/products", productsRoutes);
 app.route("/api/admin/product-tiers", tiersRoutes);
-app.route("/api/admin/partners", partnersRoutes);
-app.route("/api/admin/partners", markupRoutes);
 app.route("/api/admin/estimates", estimatesRoutes);
 app.route("/api/admin/dashboard", dashboardRoutes);
 app.route("/api/admin/system-settings", systemSettingsRoutes);

@@ -35,7 +35,6 @@ export function HomePage() {
     );
   }
 
-  // primary_partner_slugが設定されている場合は、そのパートナーの見積もりページへ
-  // 設定されていない場合は、ダイレクト見積もりページを表示
+  // 見積もりページを直接表示
   return <EstimatePage />;
 }

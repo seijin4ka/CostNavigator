@@ -1,4 +1,3 @@
-import type { PartnerBranding } from "@shared/types";
 import { formatCurrency, formatDate } from "./formatters";
 
 // 見積もり結果型（公開API）
@@ -7,7 +6,6 @@ interface EstimateResult {
   customer_name: string;
   customer_phone: string | null;
   customer_company: string | null;
-  partner_name: string;
   total_monthly: number;
   total_yearly: number;
   created_at: string;
@@ -19,13 +17,19 @@ interface EstimateResult {
   }[];
 }
 
+// ブランド情報（SystemSettingsから渡される）
+interface PdfBranding {
+  name: string;
+  primary_color: string;
+}
+
 // 日本語フォント登録済みフラグ
 let fontRegistered = false;
 
 // PDF生成（@react-pdf/rendererを遅延読み込み）
 export async function generateEstimatePdf(
   estimate: EstimateResult,
-  partner: PartnerBranding
+  branding: PdfBranding
 ): Promise<void> {
   const ReactPDF = await import("@react-pdf/renderer");
   const { Document, Page, Text, View, StyleSheet, Font, pdf } = ReactPDF;
@@ -78,7 +82,7 @@ export async function generateEstimatePdf(
       borderTopColor: "#333",
     },
     totalLabel: { width: "75%", textAlign: "right", fontWeight: "bold", fontSize: 12 },
-    totalValue: { width: "25%", textAlign: "right", fontWeight: "bold", fontSize: 14, color: partner.primary_color },
+    totalValue: { width: "25%", textAlign: "right", fontWeight: "bold", fontSize: 14, color: branding.primary_color },
     yearlyRow: {
       flexDirection: "row",
       marginTop: 4,
@@ -92,7 +96,7 @@ export async function generateEstimatePdf(
     <Document>
       <Page size="A4" style={styles.page}>
         <View style={styles.header}>
-          <Text style={styles.title}>{partner.name}</Text>
+          <Text style={styles.title}>{branding.name}</Text>
           <Text style={styles.subtitle}>Cloudflare サービス見積もり</Text>
         </View>
 

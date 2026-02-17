@@ -1,8 +1,12 @@
-import type { PartnerBranding } from "@shared/types";
 import { ShieldIcon } from "./Icons";
 
-export function EstimateHeader({ partner, primaryColor, secondaryColor }: {
-  partner: PartnerBranding | null;
+interface Branding {
+  name: string;
+  logo_url: string | null;
+}
+
+export function EstimateHeader({ branding, primaryColor, secondaryColor }: {
+  branding: Branding | null;
   primaryColor: string;
   secondaryColor: string;
 }) {
@@ -17,14 +21,14 @@ export function EstimateHeader({ partner, primaryColor, secondaryColor }: {
       />
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 sm:h-[72px]">
-          {/* ロゴ + パートナー名 */}
+          {/* ロゴ + ブランド名 */}
           <div className="flex items-center gap-3 sm:gap-4">
-            {partner?.logo_url && (
-              <img src={partner.logo_url} alt={partner.name} className="h-7 sm:h-8 object-contain" />
+            {branding?.logo_url && (
+              <img src={branding.logo_url} alt={branding.name} className="h-7 sm:h-8 object-contain" />
             )}
             <div>
               <h1 className="text-base sm:text-lg font-bold text-white tracking-tight font-display">
-                {partner?.name ?? "CostNavigator"}
+                {branding?.name ?? "CostNavigator"}
               </h1>
               <p className="text-[11px] sm:text-xs text-white/50 tracking-wide">
                 Cloudflare サービス見積もり

@@ -1,9 +1,8 @@
 import { formatCurrency } from "../../lib/formatters";
 
-export function EstimateFloatingBar({ itemCount, totalMonthly, slug, primaryColor, onSubmit }: {
+export function EstimateFloatingBar({ itemCount, totalMonthly, primaryColor, onSubmit }: {
   itemCount: number;
   totalMonthly: number;
-  slug: string | null;
   primaryColor: string;
   onSubmit: () => void;
 }) {

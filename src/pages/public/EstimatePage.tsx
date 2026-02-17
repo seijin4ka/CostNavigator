@@ -1,11 +1,11 @@
 import { useState, useEffect, type FormEvent, type CSSProperties } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { apiClient } from "../../api/client";
 import {
   useEstimateBuilder,
   type PublicProduct,
 } from "../../hooks/useEstimateBuilder";
-import type { PartnerBranding, SystemSettings } from "@shared/types";
+import type { SystemSettings } from "@shared/types";
 import { USAGE_UNIT_LABELS } from "@shared/constants";
 import { formatCurrency, formatNumber } from "../../lib/formatters";
 
@@ -17,10 +17,8 @@ import { CustomerInfoModal } from "../../components/public/CustomerInfoModal";
 import { PlusIcon, MinusIcon, TrashIcon, CheckIcon, ClockIcon, LockIcon } from "../../components/public/Icons";
 
 export function EstimatePage() {
-  const { partnerSlug } = useParams<{ partnerSlug: string }>();
   const navigate = useNavigate();
   const [systemSettings, setSystemSettings] = useState<SystemSettings | null>(null);
-  const [partner, setPartner] = useState<PartnerBranding | null>(null);
   const [products, setProducts] = useState<PublicProduct[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
@@ -39,50 +37,19 @@ export function EstimatePage() {
 
   const builder = useEstimateBuilder();
 
-  // partnerSlug がない場合、system_settings から primary_partner_slug を取得
-  useEffect(() => {
-    if (!partnerSlug) {
-      const fetchSettings = async () => {
-        try {
-          const res = await apiClient.get<SystemSettings>("/public/system-settings");
-          setSystemSettings(res.data);
-          // primary_partner_slug が未設定の場合は isLoading を false に
-          if (!res.data.primary_partner_slug) {
-            setIsLoading(false);
-          }
-        } catch (err) {
-          console.error("システム設定の読み込みエラー:", err);
-          setIsLoading(false);
-        }
-      };
-      fetchSettings();
-    }
-  }, [partnerSlug]);
-
-  const slug = partnerSlug || systemSettings?.primary_partner_slug;
-  const basePath = partnerSlug ? `/estimate/${partnerSlug}` : "";
-
-  // パートナー情報と製品カタログを取得
+  // システム設定と製品カタログを取得
   useEffect(() => {
     const fetchData = async () => {
       try {
-        if (slug) {
-          // slug がある場合: パートナー情報とマークアップ適用済み製品を取得
-          const [partnerRes, productsRes] = await Promise.all([
-            apiClient.get<PartnerBranding>(`/public/${slug}`),
-            apiClient.get<PublicProduct[]>(`/public/${slug}/products`),
-          ]);
-          setPartner(partnerRes.data);
-          setProducts(productsRes.data);
-        } else {
-          // slug がない場合: マークアップなし製品のみを取得（プレビューモード）
-          const productsRes = await apiClient.get<PublicProduct[]>(`/public/products`);
-          setProducts(productsRes.data);
-          setPartner(null);
-        }
+        const [settingsRes, productsRes] = await Promise.all([
+          apiClient.get<SystemSettings>("/public/system-settings"),
+          apiClient.get<PublicProduct[]>("/public/products"),
+        ]);
+        setSystemSettings(settingsRes.data);
+        setProducts(productsRes.data);
 
-        const categories = [...new Set(products.map((p) => p.category_name))];
-        if (categories.length > 0 && products.length > 0) {
+        const categories = [...new Set(productsRes.data.map((p) => p.category_name))];
+        if (categories.length > 0) {
           setSelectedCategory(categories[0]);
         }
       } catch (err) {
@@ -93,7 +60,7 @@ export function EstimatePage() {
       }
     };
     fetchData();
-  }, [slug]);
+  }, []);
 
   const categories = [...new Set(products.map((p) => p.category_name))];
   const filteredProducts = products.filter((p) => p.category_name === selectedCategory);
@@ -107,7 +74,7 @@ export function EstimatePage() {
     setError("");
     try {
       const res = await apiClient.post<{ reference_number: string }>(
-        `/public/${slug}/estimates`,
+        "/public/estimates",
         {
           ...customerForm,
           customer_phone: customerForm.customer_phone || null,
@@ -121,7 +88,7 @@ export function EstimatePage() {
           })),
         }
       );
-      navigate(`${basePath}/result?ref=${res.data.reference_number}`);
+      navigate(`/result?ref=${res.data.reference_number}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "見積もりの保存に失敗しました");
     } finally {
@@ -129,8 +96,14 @@ export function EstimatePage() {
     }
   };
 
-  const primaryColor = partner?.primary_color ?? systemSettings?.primary_color ?? "#F6821F";
-  const secondaryColor = partner?.secondary_color ?? systemSettings?.secondary_color ?? "#1B1B1B";
+  const primaryColor = systemSettings?.primary_color ?? "#F6821F";
+  const secondaryColor = systemSettings?.secondary_color ?? "#1B1B1B";
+
+  // ブランディング情報をヘッダー用に変換
+  const branding = systemSettings ? {
+    name: systemSettings.brand_name,
+    logo_url: systemSettings.logo_url,
+  } : null;
 
   // 現在のステップ判定
   const currentStep = isSubmitModalOpen ? 2 : 1;
@@ -151,7 +124,7 @@ export function EstimatePage() {
   }
 
   // --- エラー ---
-  if (error && !partner) {
+  if (error && products.length === 0) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center max-w-md mx-auto px-6">
@@ -173,7 +146,7 @@ export function EstimatePage() {
       style={{ "--cn-accent": primaryColor, "--cn-accent-dark": secondaryColor } as CSSProperties}
     >
       {/* === ヘッダー === */}
-      <EstimateHeader partner={partner} primaryColor={primaryColor} secondaryColor={secondaryColor} />
+      <EstimateHeader branding={branding} primaryColor={primaryColor} secondaryColor={secondaryColor} />
 
       {/* === ヒーローセクション === */}
       <EstimateHero currentStep={currentStep} primaryColor={primaryColor} secondaryColor={secondaryColor} />
@@ -448,13 +421,7 @@ export function EstimatePage() {
 
                       {/* CTAボタン */}
                       <button
-                        onClick={() => {
-                          if (!slug) {
-                            setError("見積もりを送信するには、パートナー経由のURLからアクセスしてください。管理画面でデフォルトパートナーを設定することもできます。");
-                            return;
-                          }
-                          setIsSubmitModalOpen(true);
-                        }}
+                        onClick={() => setIsSubmitModalOpen(true)}
                         className="mt-5 w-full flex items-center justify-center gap-2 py-3.5 rounded-lg text-sm font-bold text-white transition-all duration-200 hover:opacity-90 hover:shadow-lg font-display"
                         style={{
                           backgroundColor: primaryColor,
@@ -490,15 +457,8 @@ export function EstimatePage() {
         <EstimateFloatingBar
           itemCount={builder.items.length}
           totalMonthly={builder.totalMonthly}
-          slug={slug ?? null}
           primaryColor={primaryColor}
-          onSubmit={() => {
-            if (!slug) {
-              setError("見積もりを送信するには、パートナー経由のURLからアクセスしてください。管理画面でデフォルトパートナーを設定することもできます。");
-              return;
-            }
-            setIsSubmitModalOpen(true);
-          }}
+          onSubmit={() => setIsSubmitModalOpen(true)}
         />
       )}
 

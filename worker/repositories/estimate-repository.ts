@@ -5,15 +5,14 @@ import { executeD1All, executeD1First, executeD1Query } from "../utils/d1-helper
 export class EstimateRepository {
   constructor(private db: D1Database) {}
 
-  async findAll(): Promise<(Estimate & { partner_name: string })[]> {
+  async findAll(): Promise<Estimate[]> {
     const result = await this.db
       .prepare(`
-        SELECT e.*, p.name as partner_name
-        FROM estimates e
-        JOIN partners p ON e.partner_id = p.id
-        ORDER BY e.created_at DESC
+        SELECT *
+        FROM estimates
+        ORDER BY created_at DESC
       `)
-      .all<Estimate & { partner_name: string }>();
+      .all<Estimate>();
     return result.results;
   }
 
@@ -22,7 +21,7 @@ export class EstimateRepository {
     page: number,
     limit: number
   ): Promise<{
-    data: (Estimate & { partner_name: string })[];
+    data: Estimate[];
     total: number;
     page: number;
     limit: number;
@@ -35,14 +34,13 @@ export class EstimateRepository {
     const offset = (page - 1) * limit;
     const result = await this.db
       .prepare(`
-        SELECT e.*, p.name as partner_name
-        FROM estimates e
-        JOIN partners p ON e.partner_id = p.id
-        ORDER BY e.created_at DESC
+        SELECT *
+        FROM estimates
+        ORDER BY created_at DESC
         LIMIT ? OFFSET ?
       `)
       .bind(limit, offset)
-      .all<Estimate & { partner_name: string }>();
+      .all<Estimate>();
 
     const totalPages = Math.ceil(total / limit);
 
@@ -64,14 +62,9 @@ export class EstimateRepository {
   }
 
   async findByIdWithItems(id: string): Promise<EstimateWithItems | null> {
-    const estimate = await executeD1First<Estimate & { partner_name: string }>(
+    const estimate = await executeD1First<Estimate>(
       this.db,
-      `
-        SELECT e.*, p.name as partner_name
-        FROM estimates e
-        JOIN partners p ON e.partner_id = p.id
-        WHERE e.id = ?
-      `,
+      "SELECT * FROM estimates WHERE id = ?",
       [id]
     );
     if (!estimate) return null;
@@ -86,14 +79,9 @@ export class EstimateRepository {
   }
 
   async findByReferenceWithItems(referenceNumber: string): Promise<EstimateWithItems | null> {
-    const estimate = await executeD1First<Estimate & { partner_name: string }>(
+    const estimate = await executeD1First<Estimate>(
       this.db,
-      `
-        SELECT e.*, p.name as partner_name
-        FROM estimates e
-        JOIN partners p ON e.partner_id = p.id
-        WHERE e.reference_number = ?
-      `,
+      "SELECT * FROM estimates WHERE reference_number = ?",
       [referenceNumber]
     );
     if (!estimate) return null;
@@ -108,7 +96,6 @@ export class EstimateRepository {
   }
 
   async create(data: {
-    partner_id: string;
     reference_number: string;
     customer_name: string;
     customer_email: string;
@@ -121,11 +108,10 @@ export class EstimateRepository {
     const id = crypto.randomUUID();
     await executeD1Query(
       this.db,
-      `INSERT INTO estimates (id, partner_id, reference_number, customer_name, customer_email, customer_phone, customer_company, notes, total_monthly, total_yearly)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO estimates (id, reference_number, customer_name, customer_email, customer_phone, customer_company, notes, total_monthly, total_yearly)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
-        data.partner_id,
         data.reference_number,
         data.customer_name,
         data.customer_email,

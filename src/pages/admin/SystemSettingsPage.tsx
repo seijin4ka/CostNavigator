@@ -1,22 +1,19 @@
 import { useState, useEffect } from "react";
 import { apiClient } from "../../api/client";
-import type { SystemSettings, UpdateSystemSettingsRequest, Partner } from "@shared/types";
+import type { SystemSettings, UpdateSystemSettingsRequest } from "@shared/types";
 import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
-import { Select } from "../../components/ui/Select";
 import { PasswordChangeCard } from "../../components/admin/PasswordChangeCard";
 
 export function SystemSettingsPage() {
   const [settings, setSettings] = useState<SystemSettings | null>(null);
-  const [partners, setPartners] = useState<Partner[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [formData, setFormData] = useState<UpdateSystemSettingsRequest>({
     brand_name: "",
-    primary_partner_slug: null,
     logo_url: "",
     primary_color: "",
     secondary_color: "",
@@ -30,15 +27,10 @@ export function SystemSettingsPage() {
   const loadData = async () => {
     try {
       setIsLoading(true);
-      const [settingsRes, partnersRes] = await Promise.all([
-        apiClient.get<SystemSettings>("/admin/system-settings"),
-        apiClient.get<Partner[]>("/admin/partners"),
-      ]);
+      const settingsRes = await apiClient.get<SystemSettings>("/admin/system-settings");
       setSettings(settingsRes.data);
-      setPartners(partnersRes.data);
       setFormData({
         brand_name: settingsRes.data.brand_name,
-        primary_partner_slug: settingsRes.data.primary_partner_slug,
         logo_url: settingsRes.data.logo_url || "",
         primary_color: settingsRes.data.primary_color,
         secondary_color: settingsRes.data.secondary_color,
@@ -62,7 +54,6 @@ export function SystemSettingsPage() {
       const res = await apiClient.put<SystemSettings>("/admin/system-settings", {
         ...formData,
         logo_url: formData.logo_url || null,
-        primary_partner_slug: formData.primary_partner_slug || null,
       });
       setSettings(res.data);
       setSuccess("システム設定を保存しました");
@@ -150,36 +141,6 @@ export function SystemSettingsPage() {
                     onChange={(e) => setFormData({ ...formData, footer_text: e.target.value })}
                     placeholder="例: Powered by Your Company"
                   />
-                </div>
-
-                {/* 区切り線 */}
-                <hr className="border-gray-200" />
-
-                {/* デフォルトパートナー設定 */}
-                <div className="space-y-4">
-                  <h2 className="text-lg font-semibold text-gray-900">デフォルトパートナー設定</h2>
-                  <p className="text-sm text-gray-500">
-                    トップページ（/）で表示するパートナーを選択してください。
-                    未設定の場合、トップページはセットアップページにリダイレクトされます。
-                  </p>
-
-                  <Select
-                    label="デフォルトパートナー"
-                    value={formData.primary_partner_slug || ""}
-                    onChange={(e) => {
-                      setFormData({
-                        ...formData,
-                        primary_partner_slug: e.target.value || null,
-                      });
-                    }}
-                  >
-                    <option value="">未設定</option>
-                    {partners.map((partner) => (
-                      <option key={partner.id} value={partner.slug}>
-                        {partner.name} ({partner.slug})
-                      </option>
-                    ))}
-                  </Select>
                 </div>
 
                 {/* プレビュー */}

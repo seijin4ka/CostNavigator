@@ -46,8 +46,10 @@ export class TierRepository {
     name: string;
     slug: string;
     base_price: number;
+    selling_price: number | null;
     usage_unit: string | null;
     usage_unit_price: number | null;
+    selling_usage_unit_price: number | null;
     usage_included: number | null;
     display_order: number;
     is_active: boolean;
@@ -55,16 +57,18 @@ export class TierRepository {
     const id = crypto.randomUUID();
     await executeD1Query(
       this.db,
-      `INSERT INTO product_tiers (id, product_id, name, slug, base_price, usage_unit, usage_unit_price, usage_included, display_order, is_active)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO product_tiers (id, product_id, name, slug, base_price, selling_price, usage_unit, usage_unit_price, selling_usage_unit_price, usage_included, display_order, is_active)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         data.product_id,
         data.name,
         data.slug,
         data.base_price,
+        data.selling_price,
         data.usage_unit,
         data.usage_unit_price,
+        data.selling_usage_unit_price,
         data.usage_included,
         data.display_order,
         data.is_active ? 1 : 0
@@ -81,8 +85,10 @@ export class TierRepository {
       name: string;
       slug: string;
       base_price: number;
+      selling_price: number | null;
       usage_unit: string | null;
       usage_unit_price: number | null;
+      selling_usage_unit_price: number | null;
       usage_included: number | null;
       display_order: number;
       is_active: boolean;
@@ -90,14 +96,16 @@ export class TierRepository {
   ): Promise<void> {
     await executeD1Query(
       this.db,
-      `UPDATE product_tiers SET name = ?, slug = ?, base_price = ?, usage_unit = ?, usage_unit_price = ?, usage_included = ?, display_order = ?, is_active = ?
+      `UPDATE product_tiers SET name = ?, slug = ?, base_price = ?, selling_price = ?, usage_unit = ?, usage_unit_price = ?, selling_usage_unit_price = ?, usage_included = ?, display_order = ?, is_active = ?
          WHERE id = ?`,
       [
         data.name,
         data.slug,
         data.base_price,
+        data.selling_price,
         data.usage_unit,
         data.usage_unit_price,
+        data.selling_usage_unit_price,
         data.usage_included,
         data.display_order,
         data.is_active ? 1 : 0,

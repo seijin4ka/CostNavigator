@@ -1,7 +1,7 @@
 import { useState, useEffect, type CSSProperties } from "react";
-import { useParams, useSearchParams, Link } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
 import { apiClient } from "../../api/client";
-import type { PartnerBranding, SystemSettings } from "@shared/types";
+import type { SystemSettings } from "@shared/types";
 import { formatCurrency, formatDate } from "../../lib/formatters";
 
 // --- SVGアイコン ---
@@ -116,7 +116,6 @@ interface EstimateResult {
   customer_name: string;
   customer_phone: string | null;
   customer_company: string | null;
-  partner_name: string;
   status: string;
   total_monthly: number;
   total_yearly: number;
@@ -139,33 +138,13 @@ const statusConfig: Record<string, { label: string; className: string }> = {
 };
 
 export function EstimateResultPage() {
-  const { partnerSlug } = useParams<{ partnerSlug: string }>();
   const [searchParams] = useSearchParams();
   const ref = searchParams.get("ref");
   const [systemSettings, setSystemSettings] = useState<SystemSettings | null>(null);
-  const [partner, setPartner] = useState<PartnerBranding | null>(null);
   const [estimate, setEstimate] = useState<EstimateResult | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [isDownloading, setIsDownloading] = useState(false);
-
-  // partnerSlug がない場合、system_settings から primary_partner_slug を取得
-  useEffect(() => {
-    if (!partnerSlug) {
-      const fetchSettings = async () => {
-        try {
-          const res = await apiClient.get<SystemSettings>("/public/system-settings");
-          setSystemSettings(res.data);
-        } catch (err) {
-          console.error("システム設定の読み込みエラー:", err);
-        }
-      };
-      fetchSettings();
-    }
-  }, [partnerSlug]);
-
-  const slug = partnerSlug || systemSettings?.primary_partner_slug;
-  const newEstimatePath = partnerSlug ? `/estimate/${partnerSlug}` : "/";
 
   useEffect(() => {
     if (!ref) {
@@ -173,15 +152,14 @@ export function EstimateResultPage() {
       setIsLoading(false);
       return;
     }
-    if (!slug) return;
 
     const fetchData = async () => {
       try {
-        const [partnerRes, estimateRes] = await Promise.all([
-          apiClient.get<PartnerBranding>(`/public/${slug}`),
+        const [settingsRes, estimateRes] = await Promise.all([
+          apiClient.get<SystemSettings>("/public/system-settings"),
           apiClient.get<EstimateResult>(`/public/estimates/${ref}`),
         ]);
-        setPartner(partnerRes.data);
+        setSystemSettings(settingsRes.data);
         setEstimate(estimateRes.data);
       } catch (err) {
         console.error("見積もり結果の読み込みエラー:", err);
@@ -191,15 +169,18 @@ export function EstimateResultPage() {
       }
     };
     fetchData();
-  }, [slug, ref]);
+  }, [ref]);
 
   // PDF生成（遅延読み込み）
   const handleDownloadPdf = async () => {
-    if (!estimate || !partner) return;
+    if (!estimate || !systemSettings) return;
     setIsDownloading(true);
     try {
       const { generateEstimatePdf } = await import("../../lib/pdf-generator");
-      await generateEstimatePdf(estimate, partner);
+      await generateEstimatePdf(estimate, {
+        name: systemSettings.brand_name,
+        primary_color: systemSettings.primary_color,
+      });
     } catch (err) {
       console.error("PDF生成エラー:", err);
       alert("PDF生成に失敗しました。ブラウザを更新して再試行してください。");
@@ -208,8 +189,10 @@ export function EstimateResultPage() {
     }
   };
 
-  const primaryColor = partner?.primary_color ?? "#F6821F";
-  const secondaryColor = partner?.secondary_color ?? "#1B1B1B";
+  const primaryColor = systemSettings?.primary_color ?? "#F6821F";
+  const secondaryColor = systemSettings?.secondary_color ?? "#1B1B1B";
+  const brandName = systemSettings?.brand_name ?? "CostNavigator";
+  const logoUrl = systemSettings?.logo_url;
 
   // --- ローディング ---
   if (isLoading) {
@@ -227,7 +210,7 @@ export function EstimateResultPage() {
   }
 
   // --- エラー ---
-  if (error || !estimate || !partner) {
+  if (error || !estimate || !systemSettings) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center max-w-md mx-auto px-6">
@@ -264,12 +247,12 @@ export function EstimateResultPage() {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 sm:h-[72px]">
             <div className="flex items-center gap-3 sm:gap-4">
-              {partner.logo_url && (
-                <img src={partner.logo_url} alt={partner.name} className="h-7 sm:h-8 object-contain" />
+              {logoUrl && (
+                <img src={logoUrl} alt={brandName} className="h-7 sm:h-8 object-contain" />
               )}
               <div>
                 <h1 className="text-base sm:text-lg font-bold text-white tracking-tight font-display">
-                  {partner.name}
+                  {brandName}
                 </h1>
                 <p className="text-[11px] sm:text-xs text-white/50 tracking-wide">
                   Cloudflare サービス見積もり
@@ -403,7 +386,7 @@ export function EstimateResultPage() {
               </span>
             </div>
             <p className="font-semibold text-slate-800 cn-price">{formatDate(estimate.created_at)}</p>
-            <p className="text-sm text-slate-500 mt-0.5">{partner.name}</p>
+            <p className="text-sm text-slate-500 mt-0.5">{brandName}</p>
           </div>
 
           {/* 月額合計 */}
@@ -528,7 +511,7 @@ export function EstimateResultPage() {
             </button>
 
             <Link
-              to={newEstimatePath}
+              to="/"
               className="flex items-center gap-4 p-4 rounded-lg border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all text-left group"
             >
               <div

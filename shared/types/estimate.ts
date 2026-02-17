@@ -7,7 +7,6 @@ export type EstimateStatus = z.infer<typeof EstimateStatus>;
 // 見積もり
 export interface Estimate {
   id: string;
-  partner_id: string;
   reference_number: string;
   customer_name: string;
   customer_email: string;
@@ -64,14 +63,12 @@ export type UpdateEstimateStatusRequest = z.infer<typeof UpdateEstimateStatusSch
 
 // 見積もり詳細（明細付き）
 export interface EstimateWithItems extends Estimate {
-  partner_name: string;
   items: EstimateItem[];
 }
 
 // 見積もり履歴（管理画面用）
 export interface EstimateHistory {
   id: string;
-  partner_name: string;
   reference_number: string;
   customer_name: string;
   customer_email: string;

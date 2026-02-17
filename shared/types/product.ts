@@ -58,8 +58,10 @@ export interface ProductTier {
   name: string;
   slug: string;
   base_price: number;
+  selling_price: number | null;
   usage_unit: string | null;
   usage_unit_price: number | null;
+  selling_usage_unit_price: number | null;
   usage_included: number | null;
   display_order: number;
   is_active: boolean;
@@ -77,11 +79,23 @@ export const TierSchema = z.object({
     .number()
     .min(0, "基本価格は0以上で入力してください")
     .max(9999999.99, "基本価格は999万9999.99以下で入力してください"),
+  selling_price: z
+    .number()
+    .min(0, "販売価格は0以上で入力してください")
+    .max(9999999.99, "販売価格は999万9999.99以下で入力してください")
+    .nullable()
+    .optional(),
   usage_unit: z.string().nullable().optional(),
   usage_unit_price: z
     .number()
     .min(0)
     .max(9999999.99, "従量単価は999万9999.99以下で入力してください")
+    .nullable()
+    .optional(),
+  selling_usage_unit_price: z
+    .number()
+    .min(0)
+    .max(9999999.99, "販売従量単価は999万9999.99以下で入力してください")
     .nullable()
     .optional(),
   usage_included: z

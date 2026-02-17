@@ -2,7 +2,6 @@
 export interface SystemSettings {
   id: string;
   brand_name: string;
-  primary_partner_slug: string | null;
   logo_url: string | null;
   primary_color: string;
   secondary_color: string;
@@ -19,7 +18,6 @@ export interface SystemSettingsInternal extends SystemSettings {
 // システム設定更新リクエスト
 export interface UpdateSystemSettingsRequest {
   brand_name?: string;
-  primary_partner_slug?: string | null;
   logo_url?: string | null;
   primary_color?: string;
   secondary_color?: string;

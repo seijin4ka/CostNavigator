@@ -39,8 +39,10 @@ export function ProductsPage() {
     name: "",
     slug: "",
     base_price: 0,
+    selling_price: null,
     usage_unit: null,
     usage_unit_price: null,
+    selling_usage_unit_price: null,
     usage_included: null,
     display_order: 0,
     is_active: true,
@@ -103,8 +105,10 @@ export function ProductsPage() {
         name: tier.name,
         slug: tier.slug,
         base_price: tier.base_price,
+        selling_price: tier.selling_price,
         usage_unit: tier.usage_unit,
         usage_unit_price: tier.usage_unit_price,
+        selling_usage_unit_price: tier.selling_usage_unit_price,
         usage_included: tier.usage_included,
         display_order: tier.display_order,
         is_active: !!tier.is_active,
@@ -116,8 +120,10 @@ export function ProductsPage() {
         name: "",
         slug: "",
         base_price: 0,
+        selling_price: null,
         usage_unit: null,
         usage_unit_price: null,
+        selling_usage_unit_price: null,
         usage_included: null,
         display_order: 0,
         is_active: true,
@@ -262,6 +268,7 @@ export function ProductsPage() {
                             <tr className="text-left text-xs text-gray-500">
                               <th className="pb-2">ティア名</th>
                               <th className="pb-2">基本価格</th>
+                              <th className="pb-2">販売価格</th>
                               <th className="pb-2">従量単位</th>
                               <th className="pb-2">単価</th>
                               <th className="pb-2">含有量</th>
@@ -273,6 +280,7 @@ export function ProductsPage() {
                               <tr key={tier.id}>
                                 <td className="py-2">{tier.name}</td>
                                 <td className="py-2">${tier.base_price}/月</td>
+                                <td className="py-2">{tier.selling_price != null ? <span className="text-orange-600 font-medium">${tier.selling_price}/月</span> : <span className="text-gray-400">-</span>}</td>
                                 <td className="py-2">{tier.usage_unit || "-"}</td>
                                 <td className="py-2">{tier.usage_unit_price != null ? `$${tier.usage_unit_price}` : "-"}</td>
                                 <td className="py-2">{tier.usage_included != null ? tier.usage_included.toLocaleString() : "-"}</td>
@@ -376,22 +384,42 @@ export function ProductsPage() {
               pattern="^[a-z0-9-]+$"
             />
           </div>
-          <Input
-            label="基本価格（月額USD）"
-            type="number"
-            step="0.01"
-            min="0"
-            value={tierForm.base_price}
-            onChange={(e) => setTierForm((prev) => ({ ...prev, base_price: parseFloat(e.target.value) || 0 }))}
-            required
-          />
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              label="基本価格（月額USD）"
+              type="number"
+              step="0.01"
+              min="0"
+              value={tierForm.base_price}
+              onChange={(e) => setTierForm((prev) => ({ ...prev, base_price: parseFloat(e.target.value) || 0 }))}
+              required
+            />
+            <Input
+              label="販売価格（月額USD）"
+              type="number"
+              step="0.01"
+              min="0"
+              value={tierForm.selling_price ?? ""}
+              onChange={(e) => setTierForm((prev) => ({ ...prev, selling_price: e.target.value ? parseFloat(e.target.value) : null }))}
+              placeholder="未設定時は基本価格を使用"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
             <Input
               label="従量単位"
               value={tierForm.usage_unit ?? ""}
               onChange={(e) => setTierForm((prev) => ({ ...prev, usage_unit: e.target.value || null }))}
               placeholder="例: requests"
             />
+            <Input
+              label="含有量"
+              type="number"
+              min="0"
+              value={tierForm.usage_included ?? ""}
+              onChange={(e) => setTierForm((prev) => ({ ...prev, usage_included: e.target.value ? parseFloat(e.target.value) : null }))}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
             <Input
               label="従量単価（USD）"
               type="number"
@@ -401,11 +429,13 @@ export function ProductsPage() {
               onChange={(e) => setTierForm((prev) => ({ ...prev, usage_unit_price: e.target.value ? parseFloat(e.target.value) : null }))}
             />
             <Input
-              label="含有量"
+              label="販売従量単価（USD）"
               type="number"
+              step="0.001"
               min="0"
-              value={tierForm.usage_included ?? ""}
-              onChange={(e) => setTierForm((prev) => ({ ...prev, usage_included: e.target.value ? parseFloat(e.target.value) : null }))}
+              value={tierForm.selling_usage_unit_price ?? ""}
+              onChange={(e) => setTierForm((prev) => ({ ...prev, selling_usage_unit_price: e.target.value ? parseFloat(e.target.value) : null }))}
+              placeholder="未設定時は従量単価を使用"
             />
           </div>
           <Input

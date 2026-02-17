@@ -18,10 +18,9 @@ dashboard.get("/stats", async (c) => {
       db.prepare("SELECT COUNT(*) as count FROM estimates").first<{ count: number }>(),
       db
         .prepare(`
-          SELECT e.reference_number, e.customer_name, e.customer_company, e.total_monthly, e.status, e.created_at, p.name as partner_name
-          FROM estimates e
-          JOIN partners p ON e.partner_id = p.id
-          ORDER BY e.created_at DESC
+          SELECT reference_number, customer_name, customer_company, total_monthly, status, created_at
+          FROM estimates
+          ORDER BY created_at DESC
           LIMIT 5
         `)
         .all(),
