@@ -12,6 +12,52 @@ const estimates = new Hono<{ Bindings: Env }>();
 // 認証ミドルウェア適用
 estimates.use("*", authMiddleware);
 
+// CSVエクスポート（全見積もり）
+estimates.get("/csv", async (c) => {
+  const repo = new EstimateRepository(c.env.DB);
+  const all = await repo.findAll();
+
+  const STATUS_LABELS: Record<string, string> = {
+    draft: "下書き",
+    sent: "送信済み",
+    accepted: "承認済み",
+    expired: "期限切れ",
+  };
+
+  // BOM + ヘッダー行
+  const header = "参照番号,お客様名,会社名,メールアドレス,電話番号,月額合計,年額合計,ステータス,作成日";
+  const rows = all.map((e) => {
+    return [
+      e.reference_number,
+      csvEscape(e.customer_name),
+      csvEscape(e.customer_company ?? ""),
+      e.customer_email,
+      e.customer_phone ?? "",
+      e.total_monthly,
+      e.total_yearly,
+      STATUS_LABELS[e.status] ?? e.status,
+      e.created_at,
+    ].join(",");
+  });
+
+  const csv = "\uFEFF" + header + "\n" + rows.join("\n");
+
+  return new Response(csv, {
+    headers: {
+      "Content-Type": "text/csv; charset=utf-8",
+      "Content-Disposition": `attachment; filename="estimates-${new Date().toISOString().slice(0, 10)}.csv"`,
+    },
+  });
+});
+
+// CSV用エスケープ（ダブルクォート、カンマ、改行を含む場合に囲む）
+function csvEscape(value: string): string {
+  if (value.includes(",") || value.includes('"') || value.includes("\n")) {
+    return '"' + value.replace(/"/g, '""') + '"';
+  }
+  return value;
+}
+
 // 見積もり一覧（管理者用 - 全情報表示、ページネーション対応）
 estimates.get("/", async (c) => {
   const repo = new EstimateRepository(c.env.DB);

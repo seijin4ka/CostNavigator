@@ -121,9 +121,33 @@ export function EstimatesPage() {
     );
   }
 
+  // CSVエクスポート
+  const handleExportCsv = async () => {
+    try {
+      const res = await fetch("/api/admin/estimates/csv", {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token") ?? ""}` },
+      });
+      if (!res.ok) throw new Error("CSVエクスポートに失敗しました");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `estimates-${new Date().toISOString().slice(0, 10)}.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "CSVエクスポートに失敗しました");
+    }
+  };
+
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">見積もり一覧</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">見積もり一覧</h1>
+        <Button variant="secondary" size="sm" onClick={handleExportCsv}>
+          CSVエクスポート
+        </Button>
+      </div>
 
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-600 mb-4">
