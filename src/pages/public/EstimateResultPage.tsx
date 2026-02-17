@@ -3,6 +3,7 @@ import { useSearchParams, Link } from "react-router-dom";
 import { apiClient } from "../../api/client";
 import type { SystemSettings } from "@shared/types";
 import { formatCurrency, formatDate } from "../../lib/formatters";
+import { isLightColor } from "../../lib/color-utils";
 
 // --- SVGアイコン ---
 interface IconProps { className?: string; style?: CSSProperties }
@@ -190,8 +191,8 @@ export function EstimateResultPage() {
   };
 
   const primaryColor = systemSettings?.primary_color ?? "#F6821F";
-  const secondaryColor = systemSettings?.secondary_color ?? "#1B1B1B";
-  const brandName = systemSettings?.brand_name ?? "CostNavigator";
+  const secondaryColor = systemSettings?.secondary_color ?? "#FFFFFF";
+  const brandName = systemSettings?.brand_name ?? "Accelia";
   const logoUrl = systemSettings?.logo_url;
 
   // --- ローディング ---
@@ -237,13 +238,18 @@ export function EstimateResultPage() {
       style={{ "--cn-accent": primaryColor, "--cn-accent-dark": secondaryColor } as CSSProperties}
     >
       {/* === ヘッダー === */}
-      <header className="relative overflow-hidden" style={{ backgroundColor: secondaryColor }}>
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='6' height='6' viewBox='0 0 6 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5 0h1L0 6V5zM6 5v1H5z' fill='%23ffffff' fill-opacity='0.04'/%3E%3C/svg%3E")`,
-          }}
-        />
+      <header
+        className={`relative overflow-hidden ${isLightColor(secondaryColor) ? "border-b border-slate-200" : ""}`}
+        style={{ backgroundColor: secondaryColor }}
+      >
+        {!isLightColor(secondaryColor) && (
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg width='6' height='6' viewBox='0 0 6 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5 0h1L0 6V5zM6 5v1H5z' fill='%23ffffff' fill-opacity='0.04'/%3E%3C/svg%3E")`,
+            }}
+          />
+        )}
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 sm:h-[72px]">
             <div className="flex items-center gap-3 sm:gap-4">
@@ -251,15 +257,15 @@ export function EstimateResultPage() {
                 <img src={logoUrl} alt={brandName} className="h-7 sm:h-8 object-contain" />
               )}
               <div>
-                <h1 className="text-base sm:text-lg font-bold text-white tracking-tight font-display">
+                <h1 className={`text-base sm:text-lg font-bold tracking-tight font-display ${isLightColor(secondaryColor) ? "text-slate-900" : "text-white"}`}>
                   {brandName}
                 </h1>
-                <p className="text-[11px] sm:text-xs text-white/50 tracking-wide">
+                <p className={`text-[11px] sm:text-xs tracking-wide ${isLightColor(secondaryColor) ? "text-slate-400" : "text-white/50"}`}>
                   Cloudflare サービス見積もり
                 </p>
               </div>
             </div>
-            <div className="hidden sm:flex items-center gap-2 text-white/60 text-xs">
+            <div className={`hidden sm:flex items-center gap-2 text-xs ${isLightColor(secondaryColor) ? "text-slate-400" : "text-white/60"}`}>
               <ShieldIcon className="w-4 h-4" />
               <span className="font-display">Cloudflare 認定パートナー</span>
             </div>

@@ -101,9 +101,16 @@ export class SystemSettingsRepository {
 
       await executeD1Query(
         this.db,
-        `INSERT INTO system_settings (id, brand_name, footer_text, jwt_secret)
-           VALUES (?, ?, ?, ?)`,
-        ["default", "CostNavigator", "Powered by CostNavigator", jwtSecret],
+        `INSERT INTO system_settings (id, brand_name, logo_url, secondary_color, footer_text, jwt_secret)
+           VALUES (?, ?, ?, ?, ?, ?)`,
+        [
+          "default",
+          "Accelia",
+          "https://www.accelia.net/wp/wp-content/themes/accelia/assets/image/logo.png",
+          "#FFFFFF",
+          "Powered by Accelia, Inc.",
+          jwtSecret,
+        ],
         "作成",
         "システム設定"
       );

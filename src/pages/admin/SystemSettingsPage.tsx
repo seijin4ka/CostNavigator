@@ -162,7 +162,7 @@ export function SystemSettingsPage() {
                           </div>
                           <div>
                             <div className="font-semibold text-gray-900 text-sm">{formData.brand_name}</div>
-                            <div className="text-xs text-gray-500">{formData.footer_text || "Powered by CostNavigator"}</div>
+                            <div className="text-xs text-gray-500">{formData.footer_text || "Powered by Accelia, Inc."}</div>
                           </div>
                           <div className="ml-auto flex items-center gap-3">
                             <div className="flex items-center gap-1.5">

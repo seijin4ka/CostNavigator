@@ -147,7 +147,7 @@ export async function generateEstimatePdf(
         </View>
 
         <Text style={styles.footer}>
-          Powered by CostNavigator | Generated on {formatDate(new Date().toISOString())}
+          Powered by {branding.name} | Generated on {formatDate(new Date().toISOString())}
         </Text>
       </Page>
     </Document>

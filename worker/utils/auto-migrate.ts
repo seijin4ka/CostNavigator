@@ -382,6 +382,20 @@ CREATE INDEX IF NOT EXISTS idx_estimates_reference ON estimates(reference_number
 CREATE INDEX IF NOT EXISTS idx_estimates_status ON estimates(status);
     `.trim(),
   },
+  {
+    version: 18,
+    name: "0018_update_default_branding",
+    sql: `
+-- デフォルトブランディングをAcceliaに変更、ヘッダー背景を白系に変更
+UPDATE system_settings
+SET brand_name = 'Accelia',
+    logo_url = 'https://www.accelia.net/wp/wp-content/themes/accelia/assets/image/logo.png',
+    secondary_color = '#FFFFFF',
+    footer_text = 'Powered by Accelia, Inc.',
+    updated_at = datetime('now')
+WHERE id = 'default'
+    `.trim(),
+  },
 ];
 
 // 現在のスキーマバージョンを取得

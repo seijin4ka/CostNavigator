@@ -9,6 +9,7 @@ import type { SystemSettings } from "@shared/types";
 import { USAGE_UNIT_LABELS } from "@shared/constants";
 import { formatCurrency, formatNumber } from "../../lib/formatters";
 
+import { isLightColor } from "../../lib/color-utils";
 import { EstimateHeader } from "../../components/public/EstimateHeader";
 import { EstimateHero } from "../../components/public/EstimateHero";
 import { EstimateFooter } from "../../components/public/EstimateFooter";
@@ -97,7 +98,7 @@ export function EstimatePage() {
   };
 
   const primaryColor = systemSettings?.primary_color ?? "#F6821F";
-  const secondaryColor = systemSettings?.secondary_color ?? "#1B1B1B";
+  const secondaryColor = systemSettings?.secondary_color ?? "#FFFFFF";
 
   // ブランディング情報をヘッダー用に変換
   const branding = systemSettings ? {
@@ -308,7 +309,7 @@ export function EstimatePage() {
             <div className="sticky top-6">
               <div className="bg-white rounded-xl border border-slate-200 shadow-lg shadow-slate-200/50 overflow-hidden">
                 {/* サマリーヘッダー */}
-                <div className="px-5 py-4" style={{ backgroundColor: secondaryColor }}>
+                <div className="px-5 py-4" style={{ backgroundColor: isLightColor(secondaryColor) ? primaryColor : secondaryColor }}>
                   <div className="flex items-center justify-between">
                     <h3 className="text-sm font-semibold text-white font-display tracking-wide">見積もりサマリー</h3>
                     <span className="text-xs text-white/50 font-display">
