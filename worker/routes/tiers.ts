@@ -26,8 +26,10 @@ tiers.post("/", async (c) => {
   const repo = new TierRepository(c.env.DB);
   const id = await repo.create({
     ...data,
+    selling_price: data.selling_price ?? null,
     usage_unit: data.usage_unit ?? null,
     usage_unit_price: data.usage_unit_price ?? null,
+    selling_usage_unit_price: data.selling_usage_unit_price ?? null,
     usage_included: data.usage_included ?? null,
   });
   const tier = await repo.findById(id);
@@ -45,8 +47,10 @@ tiers.put("/:id", async (c) => {
 
   await repo.update(c.req.param("id"), {
     ...data,
+    selling_price: data.selling_price ?? null,
     usage_unit: data.usage_unit ?? null,
     usage_unit_price: data.usage_unit_price ?? null,
+    selling_usage_unit_price: data.selling_usage_unit_price ?? null,
     usage_included: data.usage_included ?? null,
   });
   const updated = await repo.findById(c.req.param("id"));
