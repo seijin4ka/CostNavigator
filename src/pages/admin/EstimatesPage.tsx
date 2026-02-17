@@ -7,7 +7,7 @@ import { Select } from "../../components/ui/Select";
 import { Modal } from "../../components/ui/Modal";
 import { Table } from "../../components/ui/Table";
 import { formatCurrency, formatDate } from "../../lib/formatters";
-import { DEFAULT_PAGE_LIMIT } from "@shared/constants";
+import { DEFAULT_PAGE_LIMIT, STORAGE_KEYS } from "@shared/constants";
 
 const STATUS_LABELS: Record<string, string> = {
   draft: "下書き",
@@ -125,7 +125,7 @@ export function EstimatesPage() {
   const handleExportCsv = async () => {
     try {
       const res = await fetch("/api/admin/estimates/csv", {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token") ?? ""}` },
+        headers: { Authorization: `Bearer ${localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN) ?? ""}` },
       });
       if (!res.ok) throw new Error("CSVエクスポートに失敗しました");
       const blob = await res.blob();
