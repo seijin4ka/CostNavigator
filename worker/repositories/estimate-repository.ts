@@ -16,6 +16,29 @@ export class EstimateRepository {
     return result.results;
   }
 
+  // 全見積もり + 明細を一括取得（CSVエクスポート用）
+  async findAllWithItems(): Promise<EstimateWithItems[]> {
+    const estimates = await this.findAll();
+    if (estimates.length === 0) return [];
+
+    const items = await this.db
+      .prepare("SELECT * FROM estimate_items ORDER BY estimate_id, id")
+      .all<EstimateItem>();
+
+    // estimate_id でグルーピング
+    const itemsByEstimate = new Map<string, EstimateItem[]>();
+    for (const item of items.results) {
+      const list = itemsByEstimate.get(item.estimate_id) ?? [];
+      list.push(item);
+      itemsByEstimate.set(item.estimate_id, list);
+    }
+
+    return estimates.map((e) => ({
+      ...e,
+      items: itemsByEstimate.get(e.id) ?? [],
+    }));
+  }
+
   // ページネーション付き見積もり一覧取得
   async findAllPaginated(
     page: number,

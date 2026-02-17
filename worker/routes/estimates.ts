@@ -12,10 +12,10 @@ const estimates = new Hono<{ Bindings: Env }>();
 // 認証ミドルウェア適用
 estimates.use("*", authMiddleware);
 
-// CSVエクスポート（全見積もり）
+// CSVエクスポート（全見積もり + 明細行）
 estimates.get("/csv", async (c) => {
   const repo = new EstimateRepository(c.env.DB);
-  const all = await repo.findAll();
+  const all = await repo.findAllWithItems();
 
   const STATUS_LABELS: Record<string, string> = {
     draft: "下書き",
@@ -25,20 +25,47 @@ estimates.get("/csv", async (c) => {
   };
 
   // BOM + ヘッダー行
-  const header = "参照番号,お客様名,会社名,メールアドレス,電話番号,月額合計,年額合計,ステータス,作成日";
-  const rows = all.map((e) => {
-    return [
-      e.reference_number,
-      csvEscape(e.customer_name),
-      csvEscape(e.customer_company ?? ""),
-      e.customer_email,
-      e.customer_phone ?? "",
-      e.total_monthly,
-      e.total_yearly,
-      STATUS_LABELS[e.status] ?? e.status,
-      e.created_at,
-    ].join(",");
-  });
+  const header = "参照番号,お客様名,会社名,メールアドレス,電話番号,ステータス,作成日,サービス名,プラン名,数量,従量数,基本価格,販売価格,月額合計,年額合計";
+  const rows: string[] = [];
+
+  for (const e of all) {
+    if (e.items.length === 0) {
+      // 明細なしの見積もり（ヘッダー情報のみ）
+      rows.push([
+        e.reference_number,
+        csvEscape(e.customer_name),
+        csvEscape(e.customer_company ?? ""),
+        e.customer_email,
+        e.customer_phone ?? "",
+        STATUS_LABELS[e.status] ?? e.status,
+        e.created_at,
+        "", "", "", "", "", "",
+        e.total_monthly,
+        e.total_yearly,
+      ].join(","));
+    } else {
+      // 明細ごとに1行出力
+      for (const item of e.items) {
+        rows.push([
+          e.reference_number,
+          csvEscape(e.customer_name),
+          csvEscape(e.customer_company ?? ""),
+          e.customer_email,
+          e.customer_phone ?? "",
+          STATUS_LABELS[e.status] ?? e.status,
+          e.created_at,
+          csvEscape(item.product_name),
+          csvEscape(item.tier_name ?? ""),
+          item.quantity,
+          item.usage_quantity ?? "",
+          item.base_price,
+          item.final_price,
+          e.total_monthly,
+          e.total_yearly,
+        ].join(","));
+      }
+    }
+  }
 
   const csv = "\uFEFF" + header + "\n" + rows.join("\n");
 
