@@ -412,6 +412,15 @@ ALTER TABLE system_settings ADD COLUMN currency TEXT NOT NULL DEFAULT 'JPY'
 ALTER TABLE system_settings ADD COLUMN exchange_rate REAL NOT NULL DEFAULT 150.0
     `.trim(),
   },
+  {
+    version: 21,
+    name: "0021_add_markup_to_system_settings",
+    sql: `
+-- グローバルマークアップ設定を追加（デフォルト: 有効、20%）
+ALTER TABLE system_settings ADD COLUMN markup_enabled INTEGER NOT NULL DEFAULT 1;
+ALTER TABLE system_settings ADD COLUMN default_markup_percentage REAL NOT NULL DEFAULT 20.0
+    `.trim(),
+  },
 ];
 
 // 現在のスキーマバージョンを取得

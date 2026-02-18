@@ -53,6 +53,8 @@ export class SystemSettingsRepository {
     footer_text?: string;
     currency?: string;
     exchange_rate?: number;
+    markup_enabled?: boolean;
+    default_markup_percentage?: number;
   }): Promise<void> {
     const fields: string[] = [];
     const values: (string | number | null)[] = [];
@@ -84,6 +86,14 @@ export class SystemSettingsRepository {
     if (data.exchange_rate !== undefined) {
       fields.push("exchange_rate = ?");
       values.push(data.exchange_rate);
+    }
+    if (data.markup_enabled !== undefined) {
+      fields.push("markup_enabled = ?");
+      values.push(data.markup_enabled ? 1 : 0);
+    }
+    if (data.default_markup_percentage !== undefined) {
+      fields.push("default_markup_percentage = ?");
+      values.push(data.default_markup_percentage);
     }
 
     if (fields.length === 0) return;

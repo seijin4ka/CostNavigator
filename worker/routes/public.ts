@@ -13,13 +13,15 @@ publicRoutes.get("/system-settings", async (c) => {
   const service = new SystemSettingsService(c.env.DB);
   const settings = await service.getSettings();
 
-  // 公開情報のみ返却
+  // 公開情報のみ返却（通貨・為替レートは表示に必要）
   return success(c, {
     brand_name: settings.brand_name,
     logo_url: settings.logo_url,
     primary_color: settings.primary_color,
     secondary_color: settings.secondary_color,
     footer_text: settings.footer_text,
+    currency: settings.currency,
+    exchange_rate: settings.exchange_rate,
   });
 });
 

@@ -1,6 +1,7 @@
 import { ProductRepository } from "../repositories/product-repository";
 import { TierRepository } from "../repositories/tier-repository";
 import { EstimateRepository } from "../repositories/estimate-repository";
+import { SystemSettingsRepository } from "../repositories/system-settings-repository";
 import type {
   ProductWithTiers,
   ProductTier,
@@ -26,12 +27,14 @@ export class EstimateService {
   private productRepo: ProductRepository;
   private tierRepo: TierRepository;
   private estimateRepo: EstimateRepository;
+  private settingsRepo: SystemSettingsRepository;
   private cache: KVCache;
 
   constructor(db: D1Database, kvNamespace?: KVNamespace) {
     this.productRepo = new ProductRepository(db);
     this.tierRepo = new TierRepository(db);
     this.estimateRepo = new EstimateRepository(db);
+    this.settingsRepo = new SystemSettingsRepository(db);
     this.cache = kvNamespace ? new KVCache(kvNamespace) : this.createNullCache();
   }
 
@@ -44,11 +47,29 @@ export class EstimateService {
     );
   }
 
+  // マークアップ設定を取得
+  private async getMarkupSettings(): Promise<{ enabled: boolean; percentage: number }> {
+    const settings = await this.settingsRepo.get();
+    return {
+      enabled: !!(settings?.markup_enabled),
+      percentage: settings?.default_markup_percentage ?? 20,
+    };
+  }
+
+  // マークアップを適用した価格を計算
+  private applyMarkup(basePrice: number, markupEnabled: boolean, markupPercentage: number): number {
+    if (!markupEnabled) return basePrice;
+    return Math.round(basePrice * (1 + markupPercentage / 100) * 100) / 100;
+  }
+
   // 製品カタログの構築（内部メソッド）
   private async buildProducts(): Promise<ProductWithSellingPrices[]> {
-    const products = await this.productRepo.findAllWithTiers();
+    const [products, markup] = await Promise.all([
+      this.productRepo.findAllWithTiers(),
+      this.getMarkupSettings(),
+    ]);
 
-    // 有効な製品のみ、selling_price > base_price のフォールバックで価格を返す
+    // 有効な製品のみ、selling_price優先・未設定時はマークアップ適用で価格を返す
     const result: ProductWithSellingPrices[] = [];
     for (const product of products) {
       if (!product.is_active) continue;
@@ -57,10 +78,20 @@ export class EstimateService {
       for (const tier of product.tiers) {
         if (!tier.is_active) continue;
 
+        // selling_priceが設定されている場合はそれを優先、未設定時はbase_priceにマークアップを適用
+        const finalPrice = tier.selling_price
+          ?? this.applyMarkup(tier.base_price, markup.enabled, markup.percentage);
+
+        // 従量単価も同様
+        const finalUsageUnitPrice = tier.selling_usage_unit_price
+          ?? (tier.usage_unit_price != null
+            ? this.applyMarkup(tier.usage_unit_price, markup.enabled, markup.percentage)
+            : null);
+
         tiersWithPrice.push({
           ...tier,
-          final_price: tier.selling_price ?? tier.base_price,
-          final_usage_unit_price: tier.selling_usage_unit_price ?? tier.usage_unit_price,
+          final_price: finalPrice,
+          final_usage_unit_price: finalUsageUnitPrice,
         });
       }
 
@@ -80,9 +111,10 @@ export class EstimateService {
     const productIds = [...new Set(request.items.map(item => item.product_id))];
     const tierIds = [...new Set(request.items.map(item => item.tier_id).filter((id): id is string => id != null))];
 
-    const [productMap, tierMap] = await Promise.all([
+    const [productMap, tierMap, markup] = await Promise.all([
       this.productRepo.findByIds(productIds),
       this.tierRepo.findByIds(tierIds),
+      this.getMarkupSettings(),
     ]);
 
     let totalMonthly = 0;
@@ -112,13 +144,18 @@ export class EstimateService {
         throw new Error(`ティアID ${item.tier_id} が見つかりません`);
       }
 
-      // 販売価格を使用（未設定時は基本価格にフォールバック）
-      const unitPrice = tier ? (tier.selling_price ?? tier.base_price) : 0;
+      // 販売価格を使用（selling_price優先、未設定時はbase_priceにマークアップ適用）
+      const unitPrice = tier
+        ? (tier.selling_price ?? this.applyMarkup(tier.base_price, markup.enabled, markup.percentage))
+        : 0;
 
-      // 従量料金の計算（販売従量単価を使用）
+      // 従量料金の計算（selling_usage_unit_price優先、未設定時はマークアップ適用）
       let usagePrice = 0;
       if (tier && item.usage_quantity) {
-        const usageUnitPrice = tier.selling_usage_unit_price ?? tier.usage_unit_price;
+        const usageUnitPrice = tier.selling_usage_unit_price
+          ?? (tier.usage_unit_price != null
+            ? this.applyMarkup(tier.usage_unit_price, markup.enabled, markup.percentage)
+            : null);
         if (usageUnitPrice != null) {
           const billableUsage = Math.max(0, item.usage_quantity - (tier.usage_included ?? 0));
           usagePrice = billableUsage * usageUnitPrice;

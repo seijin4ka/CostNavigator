@@ -1,6 +1,6 @@
 import { useState, useEffect, type FormEvent } from "react";
 import { apiClient } from "../../api/client";
-import type { ProductWithTiers, ProductCategory, ProductInput, TierInput } from "@shared/types";
+import type { ProductWithTiers, ProductCategory, ProductInput, TierInput, SystemSettings } from "@shared/types";
 import { formatCurrency } from "../../lib/formatters";
 import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
@@ -26,6 +26,12 @@ export function ProductsPage() {
   const [selectedProductId, setSelectedProductId] = useState<string>("");
   const [error, setError] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<{ type: "product" | "tier"; id: string; message: string } | null>(null);
+
+  // マークアップ設定
+  const [markupEnabled, setMarkupEnabled] = useState(true);
+  const [markupPercentage, setMarkupPercentage] = useState(20);
+  const [isSavingMarkup, setIsSavingMarkup] = useState(false);
+  const [markupSuccess, setMarkupSuccess] = useState("");
 
   const [productForm, setProductForm] = useState<ProductInput>({
     category_id: "",
@@ -53,12 +59,15 @@ export function ProductsPage() {
   // データ取得
   const fetchData = async () => {
     try {
-      const [productsRes, categoriesRes] = await Promise.all([
+      const [productsRes, categoriesRes, settingsRes] = await Promise.all([
         apiClient.get<ProductWithTiers[]>("/admin/products"),
         apiClient.get<ProductCategory[]>("/admin/categories"),
+        apiClient.get<SystemSettings>("/admin/system-settings"),
       ]);
       setProducts(productsRes.data);
       setCategories(categoriesRes.data);
+      setMarkupEnabled(!!settingsRes.data.markup_enabled);
+      setMarkupPercentage(settingsRes.data.default_markup_percentage);
     } catch {
       setError("データの取得に失敗しました");
     } finally {
@@ -213,6 +222,24 @@ export function ProductsPage() {
     }
   };
 
+  // マークアップ設定保存
+  const handleSaveMarkup = async () => {
+    setIsSavingMarkup(true);
+    setMarkupSuccess("");
+    try {
+      await apiClient.put("/admin/system-settings", {
+        markup_enabled: markupEnabled,
+        default_markup_percentage: markupPercentage,
+      });
+      setMarkupSuccess("マークアップ設定を保存しました");
+      setTimeout(() => setMarkupSuccess(""), 3000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "マークアップ設定の保存に失敗しました");
+    } finally {
+      setIsSavingMarkup(false);
+    }
+  };
+
   if (isLoading) {
     return <div className="flex justify-center py-12"><div className="animate-spin h-8 w-8 border-4 border-orange-500 border-t-transparent rounded-full" /></div>;
   }
@@ -235,6 +262,50 @@ export function ProductsPage() {
           {error}
         </div>
       )}
+
+      {/* グローバルマークアップ設定 */}
+      <Card>
+        <div className="p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <h3 className="text-sm font-semibold text-gray-900">グローバルマークアップ</h3>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={markupEnabled}
+                  onChange={(e) => setMarkupEnabled(e.target.checked)}
+                  className="rounded"
+                />
+                <span className="text-sm text-gray-600">{markupEnabled ? "有効" : "無効"}</span>
+              </label>
+              {markupEnabled && (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.1"
+                    value={markupPercentage}
+                    onChange={(e) => setMarkupPercentage(parseFloat(e.target.value) || 0)}
+                    className="w-20 px-2 py-1 border border-gray-300 rounded text-sm text-center"
+                  />
+                  <span className="text-sm text-gray-500">%</span>
+                </div>
+              )}
+              <Button size="sm" onClick={handleSaveMarkup} disabled={isSavingMarkup}>
+                {isSavingMarkup ? "保存中..." : "保存"}
+              </Button>
+              {markupSuccess && (
+                <span className="text-sm text-green-600">{markupSuccess}</span>
+              )}
+            </div>
+          </div>
+          <p className="mt-2 text-xs text-gray-500">
+            販売価格が未設定のティアに対して、基本価格に上記マークアップ率を上乗せした価格で販売します。
+            個別に販売価格が設定されているティアにはマークアップは適用されません。
+          </p>
+        </div>
+      </Card>
 
       <div className="space-y-6">
         {groupedProducts.map(({ category, products: catProducts }) => (

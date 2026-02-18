@@ -10,6 +10,8 @@ export interface SystemSettings {
   footer_text: string;
   currency: string;
   exchange_rate: number;
+  markup_enabled: number;
+  default_markup_percentage: number;
   created_at: string;
   updated_at: string;
 }
@@ -28,6 +30,8 @@ export const UpdateSystemSettingsSchema = z.object({
   footer_text: z.string().max(500).optional(),
   currency: z.enum(["USD", "JPY"]).optional(),
   exchange_rate: z.number().min(0.01).max(99999).optional(),
+  markup_enabled: z.boolean().optional(),
+  default_markup_percentage: z.number().min(0).max(100).optional(),
 });
 
 // システム設定更新リクエスト型（スキーマから推論）
