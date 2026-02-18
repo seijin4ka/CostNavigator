@@ -8,6 +8,7 @@ export interface SystemSettings {
   primary_color: string;
   secondary_color: string;
   footer_text: string;
+  currency: string;
   created_at: string;
   updated_at: string;
 }
@@ -24,6 +25,7 @@ export const UpdateSystemSettingsSchema = z.object({
   primary_color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "有効なカラーコードを入力してください").optional(),
   secondary_color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "有効なカラーコードを入力してください").optional(),
   footer_text: z.string().max(500).optional(),
+  currency: z.enum(["USD", "JPY"]).optional(),
 });
 
 // システム設定更新リクエスト型（スキーマから推論）

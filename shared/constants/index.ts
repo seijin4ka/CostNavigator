@@ -1,9 +1,11 @@
 // 通貨フォーマット設定
-export const CURRENCY = {
-  code: "USD",
-  symbol: "$",
-  locale: "en-US",
+export const CURRENCY_CONFIG = {
+  USD: { code: "USD", symbol: "$", locale: "en-US", fractionDigits: 2 },
+  JPY: { code: "JPY", symbol: "\u00a5", locale: "ja-JP", fractionDigits: 0 },
 } as const;
+
+// デフォルト通貨
+export const DEFAULT_CURRENCY = "JPY" as const;
 
 // ページネーションデフォルト値
 export const PAGINATION = {

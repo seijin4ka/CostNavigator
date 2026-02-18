@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import { apiClient } from "../../api/client";
 import type { SystemSettings, UpdateSystemSettingsRequest } from "@shared/types";
+import { setCurrency } from "../../lib/formatters";
 import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
+import { Select } from "../../components/ui/Select";
 import { PasswordChangeCard } from "../../components/admin/PasswordChangeCard";
 
 export function SystemSettingsPage() {
@@ -18,6 +20,7 @@ export function SystemSettingsPage() {
     primary_color: "",
     secondary_color: "",
     footer_text: "",
+    currency: "JPY",
   });
 
   useEffect(() => {
@@ -35,7 +38,9 @@ export function SystemSettingsPage() {
         primary_color: settingsRes.data.primary_color,
         secondary_color: settingsRes.data.secondary_color,
         footer_text: settingsRes.data.footer_text,
+        currency: settingsRes.data.currency as "USD" | "JPY",
       });
+      setCurrency(settingsRes.data.currency);
     } catch (err) {
       console.error("システム設定の読み込みエラー:", err);
       setError("システム設定の読み込みに失敗しました");
@@ -56,6 +61,7 @@ export function SystemSettingsPage() {
         logo_url: formData.logo_url || null,
       });
       setSettings(res.data);
+      setCurrency(res.data.currency);
       setSuccess("システム設定を保存しました");
       setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
@@ -140,6 +146,16 @@ export function SystemSettingsPage() {
                     value={formData.footer_text}
                     onChange={(e) => setFormData({ ...formData, footer_text: e.target.value })}
                     placeholder="例: Powered by Your Company"
+                  />
+
+                  <Select
+                    label="通貨"
+                    value={formData.currency}
+                    onChange={(e) => setFormData({ ...formData, currency: e.target.value as "USD" | "JPY" })}
+                    options={[
+                      { value: "JPY", label: "JPY（日本円）" },
+                      { value: "USD", label: "USD（米ドル）" },
+                    ]}
                   />
                 </div>
 

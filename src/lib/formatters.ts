@@ -1,12 +1,23 @@
-import { CURRENCY } from "@shared/constants";
+import { CURRENCY_CONFIG, DEFAULT_CURRENCY } from "@shared/constants";
+
+// 現在の通貨設定（モジュールレベル変数）
+let currentCurrency: keyof typeof CURRENCY_CONFIG = DEFAULT_CURRENCY;
+
+// 通貨を設定する
+export function setCurrency(code: string): void {
+  if (code in CURRENCY_CONFIG) {
+    currentCurrency = code as keyof typeof CURRENCY_CONFIG;
+  }
+}
 
 // 通貨フォーマット
 export function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat(CURRENCY.locale, {
+  const config = CURRENCY_CONFIG[currentCurrency];
+  return new Intl.NumberFormat(config.locale, {
     style: "currency",
-    currency: CURRENCY.code,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    currency: config.code,
+    minimumFractionDigits: config.fractionDigits,
+    maximumFractionDigits: config.fractionDigits,
   }).format(amount);
 }
 

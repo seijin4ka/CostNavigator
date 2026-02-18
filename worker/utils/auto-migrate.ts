@@ -396,6 +396,14 @@ SET brand_name = 'Accelia',
 WHERE id = 'default'
     `.trim(),
   },
+  {
+    version: 19,
+    name: "0019_add_currency_to_system_settings",
+    sql: `
+-- system_settingsテーブルに通貨カラムを追加（デフォルト: JPY）
+ALTER TABLE system_settings ADD COLUMN currency TEXT NOT NULL DEFAULT 'JPY'
+    `.trim(),
+  },
 ];
 
 // 現在のスキーマバージョンを取得

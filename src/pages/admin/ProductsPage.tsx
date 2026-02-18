@@ -1,6 +1,7 @@
 import { useState, useEffect, type FormEvent } from "react";
 import { apiClient } from "../../api/client";
 import type { ProductWithTiers, ProductCategory, ProductInput, TierInput } from "@shared/types";
+import { formatCurrency } from "../../lib/formatters";
 import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
@@ -284,10 +285,10 @@ export function ProductsPage() {
                             {product.tiers.map((tier) => (
                               <tr key={tier.id}>
                                 <td className="py-2">{tier.name}</td>
-                                <td className="py-2">${tier.base_price}/月</td>
-                                <td className="py-2">{tier.selling_price != null ? <span className="text-orange-600 font-medium">${tier.selling_price}/月</span> : <span className="text-gray-400">-</span>}</td>
+                                <td className="py-2">{formatCurrency(tier.base_price)}/月</td>
+                                <td className="py-2">{tier.selling_price != null ? <span className="text-orange-600 font-medium">{formatCurrency(tier.selling_price)}/月</span> : <span className="text-gray-400">-</span>}</td>
                                 <td className="py-2">{tier.usage_unit || "-"}</td>
-                                <td className="py-2">{tier.usage_unit_price != null ? `$${tier.usage_unit_price}` : "-"}</td>
+                                <td className="py-2">{tier.usage_unit_price != null ? formatCurrency(tier.usage_unit_price) : "-"}</td>
                                 <td className="py-2">{tier.usage_included != null ? tier.usage_included.toLocaleString() : "-"}</td>
                                 <td className="py-2 text-right">
                                   <Button variant="ghost" size="sm" onClick={() => openTierModal(product.id, tier)}>

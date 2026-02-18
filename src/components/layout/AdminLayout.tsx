@@ -1,5 +1,9 @@
+import { useEffect } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
+import { apiClient } from "../../api/client";
+import type { SystemSettings } from "@shared/types";
+import { setCurrency } from "../../lib/formatters";
 
 // SVGアイコンコンポーネント
 function DashboardIcon() {
@@ -55,6 +59,19 @@ const navItems = [
 export function AdminLayout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+
+  // システム設定から通貨を取得して設定
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const res = await apiClient.get<SystemSettings>("/admin/system-settings");
+        setCurrency(res.data.currency);
+      } catch {
+        // 通貨設定取得失敗時はデフォルト（JPY）のまま
+      }
+    };
+    fetchSettings();
+  }, []);
 
   const handleLogout = () => {
     logout();

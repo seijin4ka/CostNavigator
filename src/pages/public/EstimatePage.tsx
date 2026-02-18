@@ -7,7 +7,7 @@ import {
 } from "../../hooks/useEstimateBuilder";
 import type { SystemSettings } from "@shared/types";
 import { USAGE_UNIT_LABELS } from "@shared/constants";
-import { formatCurrency, formatNumber } from "../../lib/formatters";
+import { formatCurrency, formatNumber, setCurrency } from "../../lib/formatters";
 
 import { isLightColor } from "../../lib/color-utils";
 import { EstimateHeader } from "../../components/public/EstimateHeader";
@@ -47,6 +47,7 @@ export function EstimatePage() {
           apiClient.get<PublicProduct[]>("/public/products"),
         ]);
         setSystemSettings(settingsRes.data);
+        setCurrency(settingsRes.data.currency);
         setProducts(productsRes.data);
 
         const categories = [...new Set(productsRes.data.map((p) => p.category_name))];
@@ -259,7 +260,7 @@ export function EstimatePage() {
 
                             <div className="mb-3">
                               <span className="cn-price text-xl font-bold" style={{ color: primaryColor }}>
-                                {tier.price === 0 ? "Free" : formatCurrency(tier.price)}
+                                {tier.price === 0 ? "無料" : formatCurrency(tier.price)}
                               </span>
                               {tier.price > 0 && <span className="text-xs text-slate-400 ml-1">/月</span>}
                             </div>

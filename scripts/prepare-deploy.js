@@ -275,6 +275,7 @@ CREATE TABLE IF NOT EXISTS system_settings (
   secondary_color TEXT DEFAULT '#1B1B1B',
   footer_text TEXT DEFAULT 'Powered by CostNavigator',
   jwt_secret TEXT,
+  currency TEXT NOT NULL DEFAULT 'JPY',
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -309,6 +310,7 @@ INSERT OR IGNORE INTO schema_migrations VALUES (15, '0015_update_default_markup_
 INSERT OR IGNORE INTO schema_migrations VALUES (16, '0016_add_password_changed_at_to_users', datetime('now'));
 INSERT OR IGNORE INTO schema_migrations VALUES (17, '0017_remove_partners_add_selling_price', datetime('now'));
 INSERT OR IGNORE INTO schema_migrations VALUES (18, '0018_update_default_branding', datetime('now'));
+INSERT OR IGNORE INTO schema_migrations VALUES (19, '0019_add_currency_to_system_settings', datetime('now'));
 `.trim();
 
       // 一時ファイルに書き出し

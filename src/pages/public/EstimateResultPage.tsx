@@ -2,7 +2,7 @@ import { useState, useEffect, type CSSProperties } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { apiClient } from "../../api/client";
 import type { SystemSettings } from "@shared/types";
-import { formatCurrency, formatDate } from "../../lib/formatters";
+import { formatCurrency, formatDate, setCurrency } from "../../lib/formatters";
 import { isLightColor } from "../../lib/color-utils";
 
 // --- SVGアイコン ---
@@ -162,6 +162,7 @@ export function EstimateResultPage() {
           apiClient.get<EstimateResult>(`/public/estimates/${ref}`),
         ]);
         setSystemSettings(settingsRes.data);
+        setCurrency(settingsRes.data.currency);
         setEstimate(estimateRes.data);
       } catch (err) {
         console.error("見積もり結果の読み込みエラー:", err);

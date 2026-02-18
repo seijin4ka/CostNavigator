@@ -51,6 +51,7 @@ export class SystemSettingsRepository {
     primary_color?: string;
     secondary_color?: string;
     footer_text?: string;
+    currency?: string;
   }): Promise<void> {
     const fields: string[] = [];
     const values: (string | null)[] = [];
@@ -74,6 +75,10 @@ export class SystemSettingsRepository {
     if (data.footer_text !== undefined) {
       fields.push("footer_text = ?");
       values.push(data.footer_text);
+    }
+    if (data.currency !== undefined) {
+      fields.push("currency = ?");
+      values.push(data.currency);
     }
 
     if (fields.length === 0) return;
