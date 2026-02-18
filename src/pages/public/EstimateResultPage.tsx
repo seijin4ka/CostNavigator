@@ -146,6 +146,7 @@ export function EstimateResultPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [isDownloading, setIsDownloading] = useState(false);
+  const [pdfError, setPdfError] = useState("");
 
   useEffect(() => {
     if (!ref) {
@@ -176,6 +177,7 @@ export function EstimateResultPage() {
   const handleDownloadPdf = async () => {
     if (!estimate || !systemSettings) return;
     setIsDownloading(true);
+    setPdfError("");
     try {
       const { generateEstimatePdf } = await import("../../lib/pdf-generator");
       await generateEstimatePdf(estimate, {
@@ -184,7 +186,7 @@ export function EstimateResultPage() {
       });
     } catch (err) {
       console.error("PDF生成エラー:", err);
-      alert("PDF生成に失敗しました。ブラウザを更新して再試行してください。");
+      setPdfError("PDF生成に失敗しました。ブラウザを更新して再試行してください。");
     } finally {
       setIsDownloading(false);
     }
@@ -347,6 +349,13 @@ export function EstimateResultPage() {
             )}
           </button>
         </div>
+
+        {/* PDFエラー表示 */}
+        {pdfError && (
+          <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-600 animate-cn-fade-up">
+            {pdfError}
+          </div>
+        )}
 
         {/* 情報カード */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">

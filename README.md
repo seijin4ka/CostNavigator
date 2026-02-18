@@ -1,24 +1,20 @@
 # CostNavigator
 
-Cloudflare MSSPパートナー向けの予算見積もりサービス。パートナー企業が自社ブランドでCloudflareソリューションの見積もりを提供できます。
+Cloudflareパートナー向けのソリューション予算見積もりサービス。Cloudflareサービスの見積もりを自社ブランドで顧客に提供できます。
 
 **提供元**: Cloudflare公認パートナー [アクセリア株式会社（Accelia, Inc.）](https://accelia.net)
 
-CostNavigatorは、MSSPパートナー企業がCloudflareサービスを再販する際に、各社のブランドで顧客向け見積もりを提供できるプラットフォームです。
+CostNavigatorは、Cloudflareパートナー企業がCloudflareサービスの見積もりを自社ブランドで顧客に提供するためのWebアプリケーションです。単一のCloudflare Worker上にAPI（Hono）とSPA（React）をまとめてデプロイする構成です。
 
 ## 主な機能
 
-### パートナー向け機能
-- **カスタムブランディング**: ロゴ、カラー、フッターテキストをカスタマイズ
-- **独自ドメイン対応**: パートナー独自のドメインで提供可能
-- **マークアップ管理**: 製品・ティア別に柔軟なマークアップ設定（パーセンテージ/固定額）
-- **見積もり履歴**: 顧客からの見積もり依頼を一元管理
+- **ブランディング設定**: ロゴ、カラー、フッターテキストをカスタマイズ
+- **製品・カテゴリ管理**: Cloudflare製品のカテゴリ分類と詳細設定
+- **ティア価格管理**: 製品ごとに複数ティアの基本価格・販売価格を設定
+- **見積もり管理**: 顧客からの見積もり依頼を一元管理
 - **PDF出力**: プロフェッショナルな見積書PDFを自動生成
-
-### エンドユーザー（顧客）向け機能
 - **シンプルな見積もりフォーム**: 製品を選択して数量を入力するだけ
 - **リアルタイム価格計算**: ティア価格を考慮した自動計算
-- **見積書PDF**: その場で見積書をダウンロード
 - **参照番号**: 見積もりごとにユニークな参照番号を発行
 
 ## デプロイ方法（ワンクリック）
@@ -54,7 +50,7 @@ https://your-worker-name.workers.dev/admin/login
 - Email: `admin@costnavigator.dev`
 - Password: `admin1234`
 
-⚠️ **初回ログイン後、必ずパスワードを変更してください**
+**初回ログイン後、必ずパスワードを変更してください。**
 
 ## 使い方
 
@@ -65,41 +61,23 @@ https://your-worker-name.workers.dev/admin/login
 - ロゴURL
 - プライマリカラー / セカンダリカラー
 - フッターテキスト
-- デフォルトパートナー（トップページに表示するパートナー）
 
-### 2. パートナー情報の登録
-
-管理画面 > **パートナー管理** で、自社パートナー情報を登録:
-- パートナー名
-- スラッグ（URLに使用、例: `demo`）
-- ブランドカラー
-- デフォルトマークアップ（全製品に適用される基本マークアップ、推奨値: 20%）
-
-### 3. 製品・カテゴリの設定
+### 2. 製品・カテゴリの設定
 
 管理画面 > **カテゴリ管理** / **製品管理** で:
 - 製品カテゴリを作成（例: セキュリティサービス、パフォーマンス最適化）
 - 製品を登録（製品名、基本価格、ティア価格）
 - サンプルデータが初期登録済みなので、すぐに試せます
 
-### 4. マークアップの調整
+### 3. 販売価格の設定
 
-管理画面 > **パートナー管理** > パートナーを選択 > **マークアップ設定** で:
-- 製品別のマークアップを設定
-- ティア別の細かいマークアップも可能
-- 設定しない場合は、パートナーのデフォルトマークアップ（推奨値: 20%）が適用されます
+管理画面 > **製品管理** > 製品を選択 > **ティア設定** で:
+- 各ティアの基本価格（仕入れ値）と販売価格を設定
+- 販売価格を設定しない場合は、基本価格がそのまま適用されます
 
-### 5. 見積もりページの共有
+### 4. 見積もりの確認
 
-顧客に以下のURLを共有:
-```
-https://your-worker-name.workers.dev/estimate/your-partner-slug
-```
-
-または、独自ドメインを設定して:
-```
-https://estimate.yourcompany.com/
-```
+管理画面 > **見積もり一覧** で、顧客が作成した見積もりを確認できます。
 
 ## カスタムドメインの設定
 
@@ -109,25 +87,6 @@ https://estimate.yourcompany.com/
 2. **Custom Domains** タブ > **Add Custom Domain**
 3. ドメイン名を入力（例: `estimate.yourcompany.com`）
 4. DNSレコードが自動的に設定されます
-
-## パートナー独自サイトとしてのデプロイ
-
-### なぜ独自サイトが必要か？
-
-複数のパートナーを同一インスタンスで管理すると、顧客が異なるパートナーのURLにアクセスすることで、**原価（基本価格）を比較できてしまいます**。
-
-パートナーごとに独自のサイトとしてデプロイすることで:
-- 原価漏洩を防止
-- パートナー独自のブランディング
-- セキュリティとプライバシーの向上
-
-### 独自サイトの設定方法
-
-1. **このリポジトリをFork**（または新規デプロイ）
-2. **システム設定**で、自社のブランド情報を設定
-3. **パートナー管理**で、自社パートナー情報を1件のみ登録
-4. **システム設定**で、デフォルトパートナーに自社パートナーを設定
-5. トップページ（`/`）が自動的に自社の見積もりページになります
 
 ## 技術仕様
 
@@ -258,10 +217,9 @@ CostNavigator/
 
 | メソッド | パス | 説明 |
 |----------|------|------|
-| GET | `/api/public/:partnerSlug/products` | パートナーの製品一覧（マークアップ適用済み） |
-| GET | `/api/public/:partnerSlug/partner-info` | パートナー情報（ブランディング） |
-| POST | `/api/public/:partnerSlug/estimates` | 見積もり作成 |
-| GET | `/api/public/:partnerSlug/estimates/:ref` | 見積もり詳細取得 |
+| GET | `/api/public/products` | 製品一覧（販売価格適用済み） |
+| POST | `/api/public/estimates` | 見積もり作成 |
+| GET | `/api/public/estimates/:ref` | 見積もり詳細取得 |
 | GET | `/api/public/system-settings` | システム設定（ブランディング情報） |
 
 #### 認証API
@@ -279,8 +237,7 @@ CostNavigator/
 |----------|------|------|
 | GET/POST/PUT/DELETE | `/api/admin/categories` | カテゴリ管理 |
 | GET/POST/PUT/DELETE | `/api/admin/products` | 製品管理 |
-| GET/POST/PUT/DELETE | `/api/admin/partners` | パートナー管理 |
-| GET/POST/PUT/DELETE | `/api/admin/partners/:id/markup` | マークアップ管理 |
+| GET/POST/PUT/DELETE | `/api/admin/product-tiers` | ティア価格管理 |
 | GET | `/api/admin/estimates` | 見積もり一覧 |
 | GET | `/api/admin/dashboard/stats` | ダッシュボード統計 |
 | GET/PUT | `/api/admin/system-settings` | システム設定 |
@@ -298,11 +255,9 @@ Cloudflare D1（SQLite）を使用。マイグレーションは初回アクセ�
 
 **テーブル一覧**:
 - `users` - 管理者ユーザー
-- `partners` - パートナー情報
 - `product_categories` - 製品カテゴリ
 - `products` - 製品マスタ
-- `product_tiers` - ティア価格
-- `markup_rules` - マークアップルール
+- `product_tiers` - ティア価格（基本価格・販売価格）
 - `estimates` - 見積もり
 - `estimate_items` - 見積もり明細
 - `system_settings` - システム設定
@@ -330,17 +285,20 @@ npm run db:migrate:remote -- migrations/XXXX.sql  # 本番
 npm run db:migrate:all                             # 全マイグレーション実行
 ```
 
-### マークアップの仕組み
+### 販売価格モデル
 
-マークアップは3段階のカスケードで解決されます:
+製品の価格は `product_tiers` テーブルで管理されます。各ティアは基本価格（仕入れ値）と販売価格を持ちます:
 
-1. **パートナー + 製品 + ティア** の個別マークアップ（最優先）
-2. **パートナー + 製品** のマークアップ
-3. **パートナーのデフォルトマークアップ**（全製品に適用）
+- `base_price` - 基本価格（Cloudflare定価、管理画面でのみ表示）
+- `selling_price` - 販売価格（設定しない場合は `base_price` がそのまま適用）
+- `usage_unit_price` / `selling_usage_unit_price` - 従量課金の単価（同様のフォールバック）
 
-マークアップタイプ:
-- `percentage`: パーセンテージ（例: 20% → 1.2倍）
-- `fixed`: 固定額（例: ¥1000 → 基本価格 + ¥1000）
+販売価格の解決ルール:
+```
+最終価格 = selling_price が設定されている場合は selling_price、未設定の場合は base_price
+```
+
+公開APIでは最終価格（`final_price`）のみ返却し、`base_price` は返却しません。これにより、仕入れ値が顧客に露出することを防ぎます。
 
 ### 既知の制限事項
 
@@ -350,4 +308,4 @@ npm run db:migrate:all                             # 全マイグレーション
 
 ---
 
-**Deploy to Cloudflare Workers で、今すぐ始めましょう！**
+**Deploy to Cloudflare Workers で、今すぐ始めましょう!**

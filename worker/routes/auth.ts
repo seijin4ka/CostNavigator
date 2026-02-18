@@ -148,7 +148,6 @@ authRoutes.post("/setup", async (c) => {
         message: "セットアップが完了しました。管理画面にログインしてください。",
         credentials: {
           email,
-          password
         }
       });
     } catch (userCreateError) {

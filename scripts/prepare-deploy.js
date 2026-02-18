@@ -153,6 +153,7 @@ try {
       // マイグレーションSQLファイルを作成
       const migrationSQL = `
 -- CostNavigator 初期化スクリプト（自動生成）
+-- 現行スキーマの最終状態を反映（マイグレーション0001-0018適用済み相当）
 
 -- schema_migrationsテーブル作成
 CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -169,31 +170,23 @@ CREATE TABLE IF NOT EXISTS users (
   name TEXT NOT NULL,
   role TEXT NOT NULL DEFAULT 'admin' CHECK (role IN ('super_admin', 'admin')),
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
-  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+  updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+  is_locked INTEGER NOT NULL DEFAULT 0,
+  failed_login_attempts INTEGER NOT NULL DEFAULT 0,
+  locked_until TEXT,
+  reset_token TEXT,
+  reset_token_expires TEXT,
+  password_changed_at TEXT
 );
 CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_users_is_locked ON users(is_locked);
+CREATE INDEX IF NOT EXISTS idx_users_locked_until ON users(locked_until);
+CREATE INDEX IF NOT EXISTS idx_users_reset_token ON users(reset_token) WHERE reset_token IS NOT NULL;
 INSERT OR IGNORE INTO schema_migrations VALUES (1, '0001_create_users', datetime('now'));
-
--- 0002: partnersテーブル
-CREATE TABLE IF NOT EXISTS partners (
-  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16))),
-  name TEXT NOT NULL,
-  slug TEXT NOT NULL UNIQUE,
-  logo_url TEXT,
-  primary_color TEXT NOT NULL DEFAULT '#F6821F',
-  secondary_color TEXT NOT NULL DEFAULT '#1B1B1B',
-  default_markup_type TEXT NOT NULL DEFAULT 'percentage' CHECK (default_markup_type IN ('percentage', 'fixed')),
-  default_markup_value REAL NOT NULL DEFAULT 20,
-  is_active INTEGER NOT NULL DEFAULT 1,
-  created_at TEXT NOT NULL DEFAULT (datetime('now')),
-  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-);
-CREATE UNIQUE INDEX IF NOT EXISTS idx_partners_slug ON partners(slug);
-INSERT OR IGNORE INTO schema_migrations VALUES (2, '0002_create_partners', datetime('now'));
 
 -- 0003: product_categoriesテーブル
 CREATE TABLE IF NOT EXISTS product_categories (
-  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16))),
+  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
   name TEXT NOT NULL,
   slug TEXT NOT NULL UNIQUE,
   display_order INTEGER NOT NULL DEFAULT 0,
@@ -204,7 +197,7 @@ INSERT OR IGNORE INTO schema_migrations VALUES (3, '0003_create_product_categori
 
 -- 0004: productsテーブル
 CREATE TABLE IF NOT EXISTS products (
-  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16))),
+  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
   category_id TEXT NOT NULL REFERENCES product_categories(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   slug TEXT NOT NULL UNIQUE,
@@ -220,7 +213,7 @@ INSERT OR IGNORE INTO schema_migrations VALUES (4, '0004_create_products', datet
 
 -- 0005: product_tiersテーブル
 CREATE TABLE IF NOT EXISTS product_tiers (
-  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16))),
+  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
   product_id TEXT NOT NULL REFERENCES products(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   slug TEXT NOT NULL,
@@ -228,6 +221,8 @@ CREATE TABLE IF NOT EXISTS product_tiers (
   usage_unit TEXT,
   usage_unit_price REAL,
   usage_included REAL,
+  selling_price REAL,
+  selling_usage_unit_price REAL,
   display_order INTEGER NOT NULL DEFAULT 0,
   is_active INTEGER NOT NULL DEFAULT 1,
   UNIQUE(product_id, slug)
@@ -235,26 +230,9 @@ CREATE TABLE IF NOT EXISTS product_tiers (
 CREATE INDEX IF NOT EXISTS idx_product_tiers_product ON product_tiers(product_id);
 INSERT OR IGNORE INTO schema_migrations VALUES (5, '0005_create_product_tiers', datetime('now'));
 
--- 0006: markup_rulesテーブル
-CREATE TABLE IF NOT EXISTS markup_rules (
-  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16))),
-  partner_id TEXT NOT NULL REFERENCES partners(id) ON DELETE CASCADE,
-  product_id TEXT REFERENCES products(id) ON DELETE CASCADE,
-  tier_id TEXT REFERENCES product_tiers(id) ON DELETE CASCADE,
-  markup_type TEXT NOT NULL DEFAULT 'percentage' CHECK (markup_type IN ('percentage', 'fixed')),
-  markup_value REAL NOT NULL DEFAULT 0,
-  created_at TEXT NOT NULL DEFAULT (datetime('now')),
-  updated_at TEXT NOT NULL DEFAULT (datetime('now')),
-  UNIQUE(partner_id, product_id, tier_id)
-);
-CREATE INDEX IF NOT EXISTS idx_markup_rules_partner ON markup_rules(partner_id);
-CREATE INDEX IF NOT EXISTS idx_markup_rules_product ON markup_rules(product_id);
-INSERT OR IGNORE INTO schema_migrations VALUES (6, '0006_create_markup_rules', datetime('now'));
-
 -- 0007: estimatesテーブル
 CREATE TABLE IF NOT EXISTS estimates (
-  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16))),
-  partner_id TEXT NOT NULL REFERENCES partners(id) ON DELETE CASCADE,
+  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
   reference_number TEXT NOT NULL UNIQUE,
   customer_name TEXT NOT NULL,
   customer_email TEXT NOT NULL,
@@ -267,14 +245,13 @@ CREATE TABLE IF NOT EXISTS estimates (
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
-CREATE INDEX IF NOT EXISTS idx_estimates_partner ON estimates(partner_id);
 CREATE INDEX IF NOT EXISTS idx_estimates_reference ON estimates(reference_number);
 CREATE INDEX IF NOT EXISTS idx_estimates_status ON estimates(status);
 INSERT OR IGNORE INTO schema_migrations VALUES (7, '0007_create_estimates', datetime('now'));
 
 -- 0008: estimate_itemsテーブル
 CREATE TABLE IF NOT EXISTS estimate_items (
-  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16))),
+  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
   estimate_id TEXT NOT NULL REFERENCES estimates(id) ON DELETE CASCADE,
   product_id TEXT NOT NULL,
   product_name TEXT NOT NULL,
@@ -289,25 +266,23 @@ CREATE TABLE IF NOT EXISTS estimate_items (
 CREATE INDEX IF NOT EXISTS idx_estimate_items_estimate ON estimate_items(estimate_id);
 INSERT OR IGNORE INTO schema_migrations VALUES (8, '0008_create_estimate_items', datetime('now'));
 
--- 0010: customer_phoneカラム追加
-ALTER TABLE estimates ADD COLUMN customer_phone TEXT;
-INSERT OR IGNORE INTO schema_migrations VALUES (10, '0010_add_customer_phone', datetime('now'));
-
 -- 0011: system_settingsテーブル
 CREATE TABLE IF NOT EXISTS system_settings (
   id TEXT PRIMARY KEY DEFAULT 'default',
   brand_name TEXT NOT NULL DEFAULT 'CostNavigator',
-  primary_partner_slug TEXT,
   logo_url TEXT,
   primary_color TEXT DEFAULT '#F6821F',
   secondary_color TEXT DEFAULT '#1B1B1B',
   footer_text TEXT DEFAULT 'Powered by CostNavigator',
+  jwt_secret TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
-  updated_at TEXT NOT NULL DEFAULT (datetime('now')),
-  FOREIGN KEY (primary_partner_slug) REFERENCES partners(slug) ON DELETE SET NULL
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 INSERT OR IGNORE INTO system_settings (id, brand_name, footer_text)
 VALUES ('default', 'CostNavigator', 'Powered by CostNavigator');
+UPDATE system_settings
+SET jwt_secret = lower(hex(randomblob(32)))
+WHERE id = 'default' AND jwt_secret IS NULL;
 INSERT OR IGNORE INTO schema_migrations VALUES (11, '0011_system_settings', datetime('now'));
 
 -- 0012: refresh_tokensテーブル
@@ -325,20 +300,15 @@ CREATE INDEX IF NOT EXISTS idx_refresh_tokens_token ON refresh_tokens(token);
 CREATE INDEX IF NOT EXISTS idx_refresh_tokens_expires_at ON refresh_tokens(expires_at);
 INSERT OR IGNORE INTO schema_migrations VALUES (12, '0012_create_refresh_tokens', datetime('now'));
 
--- 0013: JWT_SECRET追加
-ALTER TABLE system_settings ADD COLUMN jwt_secret TEXT;
-UPDATE system_settings
-SET jwt_secret = lower(hex(randomblob(32)))
-WHERE id = 'default' AND jwt_secret IS NULL;
+-- マイグレーション履歴を記録（中間バージョンも記録して整合性を保持）
+INSERT OR IGNORE INTO schema_migrations VALUES (2, '0002_create_partners', datetime('now'));
+INSERT OR IGNORE INTO schema_migrations VALUES (6, '0006_create_markup_rules', datetime('now'));
+INSERT OR IGNORE INTO schema_migrations VALUES (10, '0010_add_customer_phone', datetime('now'));
 INSERT OR IGNORE INTO schema_migrations VALUES (13, '0013_add_jwt_secret_to_system_settings', datetime('now'));
-
--- 0015: デフォルトマークアップ更新（20%に統一）
-UPDATE partners
-SET default_markup_value = 20,
-    updated_at = datetime('now')
-WHERE default_markup_type = 'percentage' AND default_markup_value < 20;
--- 注: SQLiteではDEFAULT値を変更できないため、新規パートナーは管理画面でデフォルト20%を適用
 INSERT OR IGNORE INTO schema_migrations VALUES (15, '0015_update_default_markup_to_20', datetime('now'));
+INSERT OR IGNORE INTO schema_migrations VALUES (16, '0016_add_password_changed_at_to_users', datetime('now'));
+INSERT OR IGNORE INTO schema_migrations VALUES (17, '0017_remove_partners_add_selling_price', datetime('now'));
+INSERT OR IGNORE INTO schema_migrations VALUES (18, '0018_update_default_branding', datetime('now'));
 `.trim();
 
       // 一時ファイルに書き出し

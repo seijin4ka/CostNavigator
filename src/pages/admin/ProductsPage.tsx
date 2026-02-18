@@ -24,6 +24,7 @@ export function ProductsPage() {
   const [editingTierId, setEditingTierId] = useState<string | null>(null);
   const [selectedProductId, setSelectedProductId] = useState<string>("");
   const [error, setError] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<{ type: "product" | "tier"; id: string; message: string } | null>(null);
 
   const [productForm, setProductForm] = useState<ProductInput>({
     category_id: "",
@@ -185,25 +186,29 @@ export function ProductsPage() {
     }
   };
 
-  // 製品削除
-  const handleDeleteProduct = async (id: string) => {
-    if (!confirm("この製品を削除しますか？関連するティアも削除されます。")) return;
-    try {
-      await apiClient.delete(`/admin/products/${id}`);
-      fetchData();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "削除に失敗しました");
-    }
+  // 削除確認モーダルを開く
+  const confirmDeleteProduct = (id: string) => {
+    setDeleteTarget({ type: "product", id, message: "この製品を削除しますか？関連するティアも削除されます。" });
   };
 
-  // ティア削除
-  const handleDeleteTier = async (id: string) => {
-    if (!confirm("このティアを削除しますか？")) return;
+  const confirmDeleteTier = (id: string) => {
+    setDeleteTarget({ type: "tier", id, message: "このティアを削除しますか？" });
+  };
+
+  // 削除実行
+  const executeDelete = async () => {
+    if (!deleteTarget) return;
     try {
-      await apiClient.delete(`/admin/product-tiers/${id}`);
+      if (deleteTarget.type === "product") {
+        await apiClient.delete(`/admin/products/${deleteTarget.id}`);
+      } else {
+        await apiClient.delete(`/admin/product-tiers/${deleteTarget.id}`);
+      }
       fetchData();
     } catch (err) {
       setError(err instanceof Error ? err.message : "削除に失敗しました");
+    } finally {
+      setDeleteTarget(null);
     }
   };
 
@@ -254,7 +259,7 @@ export function ProductsPage() {
                         <Button variant="ghost" size="sm" onClick={() => openProductModal(product)}>
                           編集
                         </Button>
-                        <Button variant="danger" size="sm" onClick={() => handleDeleteProduct(product.id)}>
+                        <Button variant="danger" size="sm" onClick={() => confirmDeleteProduct(product.id)}>
                           削除
                         </Button>
                       </div>
@@ -288,7 +293,7 @@ export function ProductsPage() {
                                   <Button variant="ghost" size="sm" onClick={() => openTierModal(product.id, tier)}>
                                     編集
                                   </Button>
-                                  <Button variant="danger" size="sm" onClick={() => handleDeleteTier(tier.id)}>
+                                  <Button variant="danger" size="sm" onClick={() => confirmDeleteTier(tier.id)}>
                                     削除
                                   </Button>
                                 </td>
@@ -460,6 +465,24 @@ export function ProductsPage() {
             <Button type="submit">{editingTierId ? "更新" : "作成"}</Button>
           </div>
         </form>
+      </Modal>
+
+      {/* 削除確認モーダル */}
+      <Modal
+        isOpen={deleteTarget !== null}
+        onClose={() => setDeleteTarget(null)}
+        title="削除確認"
+        size="sm"
+      >
+        <p className="text-sm text-gray-700 mb-6">{deleteTarget?.message}</p>
+        <div className="flex justify-end gap-2">
+          <Button variant="secondary" onClick={() => setDeleteTarget(null)}>
+            キャンセル
+          </Button>
+          <Button variant="danger" onClick={executeDelete}>
+            削除
+          </Button>
+        </div>
       </Modal>
     </div>
   );

@@ -14,6 +14,7 @@ export function CategoriesPage() {
   const [editingCategory, setEditingCategory] = useState<ProductCategory | null>(null);
   const [form, setForm] = useState<CategoryInput>({ name: "", slug: "", display_order: 0 });
   const [error, setError] = useState("");
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
   // カテゴリ一覧を取得
   const fetchCategories = async () => {
@@ -71,13 +72,15 @@ export function CategoriesPage() {
   };
 
   // カテゴリ削除
-  const handleDelete = async (id: string) => {
-    if (!confirm("このカテゴリを削除しますか？関連する製品も削除されます。")) return;
+  const executeDelete = async () => {
+    if (!deleteTargetId) return;
     try {
-      await apiClient.delete(`/admin/categories/${id}`);
+      await apiClient.delete(`/admin/categories/${deleteTargetId}`);
       fetchCategories();
     } catch (err) {
       setError(err instanceof Error ? err.message : "削除に失敗しました");
+    } finally {
+      setDeleteTargetId(null);
     }
   };
 
@@ -111,7 +114,7 @@ export function CategoriesPage() {
                   <Button variant="ghost" size="sm" onClick={() => openModal(row)}>
                     編集
                   </Button>
-                  <Button variant="danger" size="sm" onClick={() => handleDelete(row.id)}>
+                  <Button variant="danger" size="sm" onClick={() => setDeleteTargetId(row.id)}>
                     削除
                   </Button>
                 </div>
@@ -159,6 +162,24 @@ export function CategoriesPage() {
             </Button>
           </div>
         </form>
+      </Modal>
+
+      {/* 削除確認モーダル */}
+      <Modal
+        isOpen={deleteTargetId !== null}
+        onClose={() => setDeleteTargetId(null)}
+        title="削除確認"
+        size="sm"
+      >
+        <p className="text-sm text-gray-700 mb-6">このカテゴリを削除しますか？関連する製品も削除されます。</p>
+        <div className="flex justify-end gap-2">
+          <Button variant="secondary" onClick={() => setDeleteTargetId(null)}>
+            キャンセル
+          </Button>
+          <Button variant="danger" onClick={executeDelete}>
+            削除
+          </Button>
+        </div>
       </Modal>
     </div>
   );

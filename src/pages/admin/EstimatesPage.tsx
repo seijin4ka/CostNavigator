@@ -7,7 +7,7 @@ import { Select } from "../../components/ui/Select";
 import { Modal } from "../../components/ui/Modal";
 import { Table } from "../../components/ui/Table";
 import { formatCurrency, formatDate } from "../../lib/formatters";
-import { DEFAULT_PAGE_LIMIT, STORAGE_KEYS } from "@shared/constants";
+import { DEFAULT_PAGE_LIMIT } from "@shared/constants";
 
 const STATUS_LABELS: Record<string, string> = {
   draft: "下書き",
@@ -29,6 +29,7 @@ export function EstimatesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [error, setError] = useState("");
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
@@ -95,10 +96,10 @@ export function EstimatesPage() {
   };
 
   // 見積もり削除
-  const handleDelete = async (id: string) => {
-    if (!confirm("この見積もりを削除しますか？")) return;
+  const executeDelete = async () => {
+    if (!deleteTargetId) return;
     try {
-      await apiClient.delete(`/admin/estimates/${id}`);
+      await apiClient.delete(`/admin/estimates/${deleteTargetId}`);
       // 削除後、現在のページが空になった場合は前のページへ
       const newTotal = total - 1;
       const newTotalPages = Math.ceil(newTotal / DEFAULT_PAGE_LIMIT);
@@ -110,6 +111,8 @@ export function EstimatesPage() {
       } else {
         setError("削除に失敗しました");
       }
+    } finally {
+      setDeleteTargetId(null);
     }
   };
 
@@ -124,8 +127,9 @@ export function EstimatesPage() {
   // CSVエクスポート
   const handleExportCsv = async () => {
     try {
+      const token = apiClient.getToken();
       const res = await fetch("/api/admin/estimates/csv", {
-        headers: { Authorization: `Bearer ${localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN) ?? ""}` },
+        headers: { Authorization: `Bearer ${token ?? ""}` },
       });
       if (!res.ok) throw new Error("CSVエクスポートに失敗しました");
       const blob = await res.blob();
@@ -208,7 +212,7 @@ export function EstimatesPage() {
                   <Button variant="ghost" size="sm" onClick={() => showDetail(row.id)}>
                     詳細
                   </Button>
-                  <Button variant="danger" size="sm" onClick={() => handleDelete(row.id)}>
+                  <Button variant="danger" size="sm" onClick={() => setDeleteTargetId(row.id)}>
                     削除
                   </Button>
                 </div>
@@ -351,6 +355,24 @@ export function EstimatesPage() {
             </div>
           </div>
         )}
+      </Modal>
+
+      {/* 削除確認モーダル */}
+      <Modal
+        isOpen={deleteTargetId !== null}
+        onClose={() => setDeleteTargetId(null)}
+        title="削除確認"
+        size="sm"
+      >
+        <p className="text-sm text-gray-700 mb-6">この見積もりを削除しますか？</p>
+        <div className="flex justify-end gap-2">
+          <Button variant="secondary" onClick={() => setDeleteTargetId(null)}>
+            キャンセル
+          </Button>
+          <Button variant="danger" onClick={executeDelete}>
+            削除
+          </Button>
+        </div>
       </Modal>
     </div>
   );

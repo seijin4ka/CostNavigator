@@ -1,9 +1,10 @@
 import { Hono } from "hono";
 import type { Env } from "../env";
 import { authMiddleware } from "../middleware/auth";
-import { success, error } from "../utils/response";
+import { success } from "../utils/response";
+import { validateBody } from "../utils/validation";
 import { SystemSettingsService } from "../services/system-settings-service";
-import type { UpdateSystemSettingsRequest } from "../../shared/types";
+import { UpdateSystemSettingsSchema } from "../../shared/types";
 
 const systemSettingsRoutes = new Hono<{ Bindings: Env }>();
 
@@ -19,14 +20,12 @@ systemSettingsRoutes.get("/", async (c) => {
 
 // システム設定更新
 systemSettingsRoutes.put("/", async (c) => {
-  try {
-    const body = await c.req.json<UpdateSystemSettingsRequest>();
-    const service = new SystemSettingsService(c.env.DB);
-    const settings = await service.updateSettings(body);
-    return success(c, settings);
-  } catch (err) {
-    return error(c, "UPDATE_FAILED", (err as Error).message, 400);
-  }
+  const body = await validateBody(c, UpdateSystemSettingsSchema);
+  if (!body) return c.res;
+
+  const service = new SystemSettingsService(c.env.DB);
+  const settings = await service.updateSettings(body);
+  return success(c, settings);
 });
 
 export default systemSettingsRoutes;
