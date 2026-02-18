@@ -404,6 +404,14 @@ WHERE id = 'default'
 ALTER TABLE system_settings ADD COLUMN currency TEXT NOT NULL DEFAULT 'JPY'
     `.trim(),
   },
+  {
+    version: 20,
+    name: "0020_add_exchange_rate_to_system_settings",
+    sql: `
+-- system_settingsテーブルに為替レートカラムを追加（USD→JPY、デフォルト: 150.0）
+ALTER TABLE system_settings ADD COLUMN exchange_rate REAL NOT NULL DEFAULT 150.0
+    `.trim(),
+  },
 ];
 
 // 現在のスキーマバージョンを取得

@@ -52,9 +52,10 @@ export class SystemSettingsRepository {
     secondary_color?: string;
     footer_text?: string;
     currency?: string;
+    exchange_rate?: number;
   }): Promise<void> {
     const fields: string[] = [];
-    const values: (string | null)[] = [];
+    const values: (string | number | null)[] = [];
 
     if (data.brand_name !== undefined) {
       fields.push("brand_name = ?");
@@ -79,6 +80,10 @@ export class SystemSettingsRepository {
     if (data.currency !== undefined) {
       fields.push("currency = ?");
       values.push(data.currency);
+    }
+    if (data.exchange_rate !== undefined) {
+      fields.push("exchange_rate = ?");
+      values.push(data.exchange_rate);
     }
 
     if (fields.length === 0) return;

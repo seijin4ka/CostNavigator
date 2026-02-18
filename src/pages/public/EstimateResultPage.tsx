@@ -162,7 +162,7 @@ export function EstimateResultPage() {
           apiClient.get<EstimateResult>(`/public/estimates/${ref}`),
         ]);
         setSystemSettings(settingsRes.data);
-        setCurrency(settingsRes.data.currency);
+        setCurrency(settingsRes.data.currency, settingsRes.data.exchange_rate);
         setEstimate(estimateRes.data);
       } catch (err) {
         console.error("見積もり結果の読み込みエラー:", err);

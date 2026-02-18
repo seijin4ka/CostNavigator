@@ -65,7 +65,7 @@ export function AdminLayout() {
     const fetchSettings = async () => {
       try {
         const res = await apiClient.get<SystemSettings>("/admin/system-settings");
-        setCurrency(res.data.currency);
+        setCurrency(res.data.currency, res.data.exchange_rate);
       } catch {
         // 通貨設定取得失敗時はデフォルト（JPY）のまま
       }

@@ -21,6 +21,7 @@ export function SystemSettingsPage() {
     secondary_color: "",
     footer_text: "",
     currency: "JPY",
+    exchange_rate: 150.0,
   });
 
   useEffect(() => {
@@ -39,8 +40,9 @@ export function SystemSettingsPage() {
         secondary_color: settingsRes.data.secondary_color,
         footer_text: settingsRes.data.footer_text,
         currency: settingsRes.data.currency as "USD" | "JPY",
+        exchange_rate: settingsRes.data.exchange_rate,
       });
-      setCurrency(settingsRes.data.currency);
+      setCurrency(settingsRes.data.currency, settingsRes.data.exchange_rate);
     } catch (err) {
       console.error("システム設定の読み込みエラー:", err);
       setError("システム設定の読み込みに失敗しました");
@@ -61,7 +63,7 @@ export function SystemSettingsPage() {
         logo_url: formData.logo_url || null,
       });
       setSettings(res.data);
-      setCurrency(res.data.currency);
+      setCurrency(res.data.currency, res.data.exchange_rate);
       setSuccess("システム設定を保存しました");
       setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
@@ -149,7 +151,7 @@ export function SystemSettingsPage() {
                   />
 
                   <Select
-                    label="通貨"
+                    label="表示通貨"
                     value={formData.currency}
                     onChange={(e) => setFormData({ ...formData, currency: e.target.value as "USD" | "JPY" })}
                     options={[
@@ -157,6 +159,23 @@ export function SystemSettingsPage() {
                       { value: "USD", label: "USD（米ドル）" },
                     ]}
                   />
+
+                  {formData.currency === "JPY" && (
+                    <div>
+                      <Input
+                        label="為替レート（1 USD = ? JPY）"
+                        type="number"
+                        step="0.01"
+                        min="0.01"
+                        value={formData.exchange_rate ?? 150}
+                        onChange={(e) => setFormData({ ...formData, exchange_rate: parseFloat(e.target.value) || 150 })}
+                        placeholder="例: 150.00"
+                      />
+                      <p className="mt-1 text-xs text-gray-500">
+                        製品価格はUSDで登録されています。表示時にこのレートで日本円に自動換算されます。
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 {/* プレビュー */}

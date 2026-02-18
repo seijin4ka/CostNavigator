@@ -47,7 +47,7 @@ export function EstimatePage() {
           apiClient.get<PublicProduct[]>("/public/products"),
         ]);
         setSystemSettings(settingsRes.data);
-        setCurrency(settingsRes.data.currency);
+        setCurrency(settingsRes.data.currency, settingsRes.data.exchange_rate);
         setProducts(productsRes.data);
 
         const categories = [...new Set(productsRes.data.map((p) => p.category_name))];
