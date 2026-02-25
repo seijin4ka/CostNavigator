@@ -32,11 +32,11 @@ estimates.get("/csv", async (c) => {
     if (e.items.length === 0) {
       // 明細なしの見積もり（ヘッダー情報のみ）
       rows.push([
-        e.reference_number,
+        csvEscape(e.reference_number),
         csvEscape(e.customer_name),
         csvEscape(e.customer_company ?? ""),
-        e.customer_email,
-        e.customer_phone ?? "",
+        csvEscape(e.customer_email),
+        csvEscape(e.customer_phone ?? ""),
         STATUS_LABELS[e.status] ?? e.status,
         e.created_at,
         "", "", "", "", "", "",
@@ -47,11 +47,11 @@ estimates.get("/csv", async (c) => {
       // 明細ごとに1行出力
       for (const item of e.items) {
         rows.push([
-          e.reference_number,
+          csvEscape(e.reference_number),
           csvEscape(e.customer_name),
           csvEscape(e.customer_company ?? ""),
-          e.customer_email,
-          e.customer_phone ?? "",
+          csvEscape(e.customer_email),
+          csvEscape(e.customer_phone ?? ""),
           STATUS_LABELS[e.status] ?? e.status,
           e.created_at,
           csvEscape(item.product_name),
@@ -77,8 +77,12 @@ estimates.get("/csv", async (c) => {
   });
 });
 
-// CSV用エスケープ（ダブルクォート、カンマ、改行を含む場合に囲む）
+// CSV用エスケープ（ダブルクォート、カンマ、改行、および数式インジェクション文字を含む場合に囲む）
 function csvEscape(value: string): string {
+  // CSVインジェクション防止: =, +, -, @ で始まる値をシングルクォートでプレフィックス
+  if (value.startsWith("=") || value.startsWith("+") || value.startsWith("-") || value.startsWith("@")) {
+    return "'" + value;
+  }
   if (value.includes(",") || value.includes('"') || value.includes("\n")) {
     return '"' + value.replace(/"/g, '""') + '"';
   }
@@ -93,8 +97,11 @@ estimates.get("/", async (c) => {
   const pageParam = c.req.query("page");
   const limitParam = c.req.query("limit");
 
-  const page = pageParam ? Math.max(1, parseInt(pageParam, 10)) : 1;
-  const limit = limitParam ? Math.max(1, Math.min(100, parseInt(limitParam, 10))) : DEFAULT_PAGE_LIMIT;
+  const rawPage = parseInt(pageParam ?? "", 10);
+  const page = !isNaN(rawPage) && rawPage > 0 ? rawPage : 1;
+
+  const rawLimit = parseInt(limitParam ?? "", 10);
+  const limit = !isNaN(rawLimit) && rawLimit > 0 ? Math.min(rawLimit, 100) : DEFAULT_PAGE_LIMIT;
 
   const result = await repo.findAllPaginated(page, limit);
   return success(c, result);

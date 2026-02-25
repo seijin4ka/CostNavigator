@@ -37,11 +37,11 @@ export interface EstimateItem {
 
 // 見積もり作成リクエスト（公開API用）
 export const CreateEstimateSchema = z.object({
-  customer_name: z.string().min(1, "お名前は必須です"),
-  customer_email: z.string().email("有効なメールアドレスを入力してください"),
-  customer_phone: z.string().nullable().optional(),
-  customer_company: z.string().nullable().optional(),
-  notes: z.string().nullable().optional(),
+  customer_name: z.string().min(1, "お名前は必須です").max(100, "お名前は100文字以内で入力してください"),
+  customer_email: z.string().email("有効なメールアドレスを入力してください").max(255, "メールアドレスは255文字以内で入力してください"),
+  customer_phone: z.string().max(50, "電話番号は50文字以内で入力してください").nullable().optional(),
+  customer_company: z.string().max(200, "会社名は200文字以内で入力してください").nullable().optional(),
+  notes: z.string().max(2000, "備考は2000文字以内で入力してください").nullable().optional(),
   items: z
     .array(
       z.object({
@@ -51,7 +51,8 @@ export const CreateEstimateSchema = z.object({
         usage_quantity: z.number().min(0).max(1000000000, "従量は10億以下で入力してください").nullable().optional(),
       })
     )
-    .min(1, "1つ以上の製品を選択してください"),
+    .min(1, "1つ以上の製品を選択してください")
+    .max(50, "50個以下のアイテムを選択してください"),
 });
 export type CreateEstimateRequest = z.infer<typeof CreateEstimateSchema>;
 
