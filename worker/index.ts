@@ -25,8 +25,8 @@ app.use("*", async (c, next) => {
   c.header(
     "Content-Security-Policy",
     "default-src 'self'; " +
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " + // React開発モードとViteに必要
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " + // TailwindとGoogle Fontsに必要
+    "script-src 'self' 'unsafe-inline'; " +
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
     "font-src 'self' https://fonts.gstatic.com; " +
     "img-src 'self' data: https:; " +
     "connect-src 'self'; " +
@@ -43,6 +43,9 @@ app.use("*", async (c, next) => {
 
   // Referrer-Policy (リファラー情報の制御)
   c.header("Referrer-Policy", "strict-origin-when-cross-origin");
+
+  // Strict-Transport-Security (HTTPS強制)
+  c.header("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
 
   // Permissions-Policy (不要な機能の無効化)
   c.header("Permissions-Policy", "geolocation=(), microphone=(), camera=()");

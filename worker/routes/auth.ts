@@ -78,22 +78,16 @@ authRoutes.post("/refresh", rateLimit(10, 60000), async (c) => {
 // セットアップ状態確認
 authRoutes.get("/setup-status", async (c) => {
   try {
-    console.log("🔍 /api/auth/setup-status - 開始");
-    console.log("📊 D1バインディング状態:", c.env.DB ? "有効" : "無効");
-
     const userRepo = new (await import("../repositories/user-repository")).UserRepository(c.env.DB);
 
     const userCount = await userRepo.count();
     const isSetupComplete = userCount > 0;
 
-    console.log(`✅ /api/auth/setup-status - 完了 (userCount: ${userCount}, isSetupComplete: ${isSetupComplete})`);
-
     return success(c, {
       isSetupComplete,
-      userCount,
     });
   } catch (error) {
-    console.error("❌ /api/auth/setup-status エラー:", error);
+    console.error("/api/auth/setup-status エラー:", error);
     throw error;
   }
 });
@@ -102,18 +96,15 @@ authRoutes.get("/setup-status", async (c) => {
 authRoutes.post("/setup", async (c) => {
   try {
     // リクエストボディから email と password を取得（オプショナル）
-    console.log("📝 セットアップリクエスト受信");
     const data = await validateBody(c, SetupSchema);
     if (!data) return c.res;
 
     // 1. データベースマイグレーションを自動実行
     try {
-      console.log("🔄 データベースマイグレーション開始");
       await autoMigrate(c.env.DB);
-      console.log("✅ マイグレーション完了");
     } catch (migrateError) {
-      console.error("❌ マイグレーションエラー:", migrateError);
-      throw new Error(`マイグレーション失敗: ${migrateError}`);
+      console.error("マイグレーションエラー:", migrateError);
+      throw new Error("マイグレーションに失敗しました");
     }
 
     // 2. 初期管理者ユーザーを作成（存在しない場合のみ）
@@ -121,9 +112,7 @@ authRoutes.post("/setup", async (c) => {
       const userRepo = new (await import("../repositories/user-repository")).UserRepository(c.env.DB);
 
       // 既にユーザーが存在する場合はメッセージを変更
-      console.log("👤 既存ユーザー数チェック中");
       const userCount = await userRepo.count();
-      console.log(`✅ 既存ユーザー数: ${userCount}`);
 
       if (userCount > 0) {
         return success(c, {
@@ -136,13 +125,9 @@ authRoutes.post("/setup", async (c) => {
       const email = data.email || "admin@costnavigator.dev";
       const password = data.password || "admin1234";
 
-      console.log("🔐 パスワードハッシュ化中");
       const passwordHash = await (await import("../utils/password")).hashPassword(password);
-      console.log("✅ パスワードハッシュ化完了");
 
-      console.log("👤 ユーザー作成中");
       await userRepo.create(email, passwordHash, "管理者", "super_admin");
-      console.log("✅ ユーザー作成完了");
 
       return success(c, {
         message: "セットアップが完了しました。管理画面にログインしてください。",
@@ -151,12 +136,12 @@ authRoutes.post("/setup", async (c) => {
         }
       });
     } catch (userCreateError) {
-      console.error("❌ ユーザー作成エラー:", userCreateError);
-      throw new Error(`ユーザー作成失敗: ${userCreateError}`);
+      console.error("ユーザー作成エラー:", userCreateError);
+      throw new Error("ユーザー作成に失敗しました");
     }
   } catch (setupError) {
-    console.error("❌ セットアップエラー:", setupError);
-    return error(c, "SETUP_FAILED", `セットアップに失敗しました: ${setupError}`, 500);
+    console.error("セットアップエラー:", setupError);
+    return error(c, "SETUP_FAILED", "セットアップに失敗しました", 500);
   }
 });
 

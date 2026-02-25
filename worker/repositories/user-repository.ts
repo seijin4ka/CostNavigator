@@ -54,11 +54,38 @@ export class UserRepository {
     );
   }
 
+  // ログイン失敗回数をインクリメント
+  async incrementFailedAttempts(userId: string): Promise<void> {
+    await executeD1Query(
+      this.db,
+      `UPDATE users SET failed_login_attempts = failed_login_attempts + 1, updated_at = datetime('now') WHERE id = ?`,
+      [userId]
+    );
+  }
+
+  // アカウントをロック
+  async lockAccount(userId: string, lockedUntil: string): Promise<void> {
+    await executeD1Query(
+      this.db,
+      `UPDATE users SET is_locked = 1, locked_until = ?, updated_at = datetime('now') WHERE id = ?`,
+      [lockedUntil, userId]
+    );
+  }
+
+  // ログイン失敗回数をリセット
+  async resetFailedAttempts(userId: string): Promise<void> {
+    await executeD1Query(
+      this.db,
+      `UPDATE users SET failed_login_attempts = 0, updated_at = datetime('now') WHERE id = ?`,
+      [userId]
+    );
+  }
+
   // ユーザー情報の更新
   async update(userId: string, data: Partial<User>): Promise<void> {
     // 可動フィールドの動的SQL生成
     const updates: string[] = [];
-    const values: any[] = [];
+    const values: (string | number | null)[] = [];
 
     if (data.email !== undefined) {
       updates.push("email = ?");

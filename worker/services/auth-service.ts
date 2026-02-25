@@ -17,8 +17,41 @@ export class AuthService {
     const user = await this.userRepo.findByEmail(email);
     if (!user) return null;
 
+    // アカウントロックをチェック
+    if (user.is_locked) {
+      // ロック期限が過ぎているかチェック
+      if (user.locked_until) {
+        const now = new Date();
+        const lockedUntil = new Date(user.locked_until);
+        if (now < lockedUntil) {
+          return null; // まだロック中
+        }
+        // ロック期限が過ぎた場合はアカウント解除
+        await this.userRepo.unlockAccount(user.id);
+      } else {
+        return null; // 無期限ロック
+      }
+    }
+
     const isValid = await verifyPassword(password, user.password_hash);
-    if (!isValid) return null;
+    if (!isValid) {
+      // パスワード検証失敗時に失敗回数をインクリメント
+      await this.userRepo.incrementFailedAttempts(user.id);
+
+      // 失敗回数が5回以上になった場合はアカウントをロック（30分間）
+      const currentFailedAttempts = (user.failed_login_attempts || 0) + 1;
+      if (currentFailedAttempts >= 5) {
+        const lockedUntil = new Date(Date.now() + 30 * 60 * 1000).toISOString();
+        await this.userRepo.lockAccount(user.id, lockedUntil);
+      }
+
+      return null;
+    }
+
+    // ログイン成功時は失敗回数をリセット
+    if (user.failed_login_attempts && user.failed_login_attempts > 0) {
+      await this.userRepo.resetFailedAttempts(user.id);
+    }
 
     // 既存のリフレッシュトークンを無効化（ユーザーごとに1つのみ有効）
     await this.revokeAllRefreshTokens(user.id);
