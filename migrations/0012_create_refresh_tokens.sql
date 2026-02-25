@@ -10,10 +10,10 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
 );
 
 -- ユーザーIDでの検索を高速化
-CREATE INDEX idx_refresh_tokens_user_id ON refresh_tokens(user_id);
+CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user_id ON refresh_tokens(user_id);
 
 -- トークンでの検索を高速化（UNIQUE制約があるため厳密には不要だが明示的に作成）
-CREATE INDEX idx_refresh_tokens_token ON refresh_tokens(token);
+CREATE INDEX IF NOT EXISTS idx_refresh_tokens_token ON refresh_tokens(token);
 
 -- 期限切れトークンの削除を高速化
-CREATE INDEX idx_refresh_tokens_expires_at ON refresh_tokens(expires_at);
+CREATE INDEX IF NOT EXISTS idx_refresh_tokens_expires_at ON refresh_tokens(expires_at);

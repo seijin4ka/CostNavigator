@@ -304,6 +304,7 @@ SET jwt_secret = lower(hex(randomblob(32)))
 WHERE id = 'default' AND jwt_secret IS NULL;
     `.trim(),
   },
+  // バージョン14は欠番（旧パートナー機能削除時に番号をスキップ）
   {
     version: 15,
     name: "0015_update_default_markup_to_20",
