@@ -56,7 +56,7 @@ export function PasswordChangeCard() {
 
   return (
     <Card>
-      <div className="p-6 space-y-4">
+      <div className="space-y-4">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">パスワード変更</h2>
         {passwordChangeSuccess && (
           <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded">

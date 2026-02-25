@@ -8,20 +8,7 @@ import { Modal } from "../../components/ui/Modal";
 import { Table } from "../../components/ui/Table";
 import { formatCurrency, formatDate } from "../../lib/formatters";
 import { DEFAULT_PAGE_LIMIT } from "@shared/constants";
-
-const STATUS_LABELS: Record<string, string> = {
-  draft: "下書き",
-  sent: "送信済み",
-  accepted: "承認済み",
-  expired: "期限切れ",
-};
-
-const STATUS_COLORS: Record<string, string> = {
-  draft: "bg-gray-100 text-gray-600",
-  sent: "bg-blue-100 text-blue-700",
-  accepted: "bg-green-100 text-green-700",
-  expired: "bg-red-100 text-red-600",
-};
+import { ESTIMATE_STATUS_LABELS, ESTIMATE_STATUS_COLORS } from "../../lib/estimate-status";
 
 export function EstimatesPage() {
   const [estimates, setEstimates] = useState<Estimate[]>([]);
@@ -119,7 +106,11 @@ export function EstimatesPage() {
   if (isLoading) {
     return (
       <div className="flex justify-center py-12">
-        <div className="animate-spin h-8 w-8 border-4 border-orange-500 border-t-transparent rounded-full" />
+        <div
+          role="status"
+          aria-label="読み込み中"
+          className="animate-spin h-8 w-8 border-4 border-orange-500 border-t-transparent rounded-full"
+        />
       </div>
     );
   }
@@ -194,8 +185,8 @@ export function EstimatesPage() {
             {
               header: "状態",
               accessor: (row) => (
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${STATUS_COLORS[row.status] ?? ""}`}>
-                  {STATUS_LABELS[row.status] ?? row.status}
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${ESTIMATE_STATUS_COLORS[row.status] ?? ""}`}>
+                  {ESTIMATE_STATUS_LABELS[row.status] ?? row.status}
                 </span>
               ),
             },

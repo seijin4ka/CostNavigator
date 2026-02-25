@@ -42,19 +42,19 @@ export function useEstimateBuilder() {
   // アイテム追加
   const addItem = useCallback(
     (product: PublicProduct, tier: PublicTier) => {
-      // 同じ製品・ティアの組み合わせが存在する場合は数量を増やす
-      const existingIndex = items.findIndex(
-        (i) => i.product_id === product.id && i.tier_id === tier.id
-      );
-
-      if (existingIndex >= 0) {
-        setItems((prev) =>
-          prev.map((item, i) =>
-            i === existingIndex ? { ...item, quantity: item.quantity + 1 } : item
-          )
+      setItems((prev) => {
+        // 同じ製品・ティアの組み合わせが存在する場合は数量を増やす
+        const existingIndex = prev.findIndex(
+          (i) => i.product_id === product.id && i.tier_id === tier.id
         );
-      } else {
-        setItems((prev) => [
+
+        if (existingIndex >= 0) {
+          return prev.map((item, i) =>
+            i === existingIndex ? { ...item, quantity: item.quantity + 1 } : item
+          );
+        }
+
+        return [
           ...prev,
           {
             product_id: product.id,
@@ -68,10 +68,10 @@ export function useEstimateBuilder() {
             usage_unit_price: tier.usage_unit_price,
             usage_included: tier.usage_included,
           },
-        ]);
-      }
+        ];
+      });
     },
-    [items]
+    []
   );
 
   // アイテム削除

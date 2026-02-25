@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { apiClient } from "../../api/client";
 import { Card } from "../../components/ui/Card";
 import { formatCurrency, formatDate } from "../../lib/formatters";
+import { ESTIMATE_STATUS_LABELS, ESTIMATE_STATUS_COLORS } from "../../lib/estimate-status";
 
 interface DashboardStats {
   products_count: number;
@@ -18,20 +19,6 @@ interface DashboardStats {
     created_at: string;
   }[];
 }
-
-const statusLabels: Record<string, string> = {
-  draft: "下書き",
-  sent: "送信済み",
-  accepted: "承認済み",
-  expired: "期限切れ",
-};
-
-const statusColors: Record<string, string> = {
-  draft: "bg-gray-100 text-gray-600",
-  sent: "bg-blue-100 text-blue-700",
-  accepted: "bg-green-100 text-green-700",
-  expired: "bg-red-100 text-red-600",
-};
 
 export function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -55,7 +42,11 @@ export function DashboardPage() {
   if (isLoading) {
     return (
       <div className="flex justify-center py-12">
-        <div className="animate-spin h-8 w-8 border-4 border-orange-500 border-t-transparent rounded-full" />
+        <div
+          role="status"
+          aria-label="読み込み中"
+          className="animate-spin h-8 w-8 border-4 border-orange-500 border-t-transparent rounded-full"
+        />
       </div>
     );
   }
@@ -131,8 +122,8 @@ export function DashboardPage() {
                   </td>
                   <td className="py-3 px-2 text-right font-medium">{formatCurrency(est.total_monthly)}</td>
                   <td className="py-3 px-2">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[est.status] ?? ""}`}>
-                      {statusLabels[est.status] ?? est.status}
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${ESTIMATE_STATUS_COLORS[est.status] ?? ""}`}>
+                      {ESTIMATE_STATUS_LABELS[est.status] ?? est.status}
                     </span>
                   </td>
                   <td className="py-3 px-2 text-gray-500 text-xs">{formatDate(est.created_at)}</td>
