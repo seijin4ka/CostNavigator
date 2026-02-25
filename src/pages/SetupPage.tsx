@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { apiClient } from "../api/client";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
@@ -6,10 +7,10 @@ import { Card } from "../components/ui/Card";
 
 interface SetupStatusResponse {
   isSetupComplete: boolean;
-  userCount: number;
 }
 
 export function SetupPage() {
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [isSettingUp, setIsSettingUp] = useState(false);
   const [error, setError] = useState("");
@@ -23,7 +24,7 @@ export function SetupPage() {
   // セットアップ状態を確認
   useEffect(() => {
     checkSetupStatus();
-  }, []);
+  }, [navigate]);
 
   const checkSetupStatus = async () => {
     try {
@@ -31,7 +32,7 @@ export function SetupPage() {
 
       if (res.data.isSetupComplete) {
         // セットアップ済みの場合、ログインページへ
-        window.location.href = "/admin/login";
+        navigate("/admin/login");
       }
     } catch (err) {
       console.error("セットアップ状態確認エラー:", err);
@@ -77,13 +78,13 @@ export function SetupPage() {
 
       // 3秒後にログイン画面へ遷移
       setTimeout(() => {
-        window.location.href = "/admin/login";
+        navigate("/admin/login");
       }, 3000);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "セットアップに失敗しました";
       if (errorMessage.includes("既に完了しています")) {
         // 既にセットアップ済みの場合、ログイン画面へ
-        window.location.href = "/admin/login";
+        navigate("/admin/login");
       } else {
         setError(errorMessage);
       }

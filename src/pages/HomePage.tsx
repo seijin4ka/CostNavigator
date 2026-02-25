@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { EstimatePage } from "./public/EstimatePage";
 
 export function HomePage() {
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -13,7 +15,7 @@ export function HomePage() {
 
         if (setupData.success && !setupData.data.isSetupComplete) {
           // 未セットアップの場合、セットアップページへ
-          window.location.href = "/setup";
+          navigate("/setup");
           return;
         }
       } catch (error) {
@@ -25,7 +27,7 @@ export function HomePage() {
     };
 
     initialize();
-  }, []);
+  }, [navigate]);
 
   if (isLoading) {
     return (
