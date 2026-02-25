@@ -59,11 +59,22 @@ tiers.put("/:id", async (c) => {
 
 // ティア削除
 tiers.delete("/:id", async (c) => {
+  const tierId = c.req.param("id");
   const repo = new TierRepository(c.env.DB);
-  const existing = await repo.findById(c.req.param("id"));
+  const existing = await repo.findById(tierId);
   if (!existing) return error(c, "NOT_FOUND", "ティアが見つかりません", 404);
 
-  await repo.delete(c.req.param("id"));
+  // 見積もりで使用されているかチェック
+  const usageCount = await c.env.DB
+    .prepare("SELECT COUNT(*) as count FROM estimate_items WHERE tier_id = ?")
+    .bind(tierId)
+    .first<{ count: number }>();
+
+  if (usageCount && usageCount.count > 0) {
+    return error(c, "TIER_IN_USE", "このティアは見積もりで使用されているため削除できません", 409);
+  }
+
+  await repo.delete(tierId);
   return success(c, { message: "ティアを削除しました" });
 });
 

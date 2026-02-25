@@ -125,10 +125,10 @@ export class SystemSettingsRepository {
            VALUES (?, ?, ?, ?, ?, ?)`,
         [
           "default",
-          "Accelia",
-          "https://www.accelia.net/wp/wp-content/themes/accelia/assets/image/logo.png",
+          "CostNavigator",
+          "",
           "#FFFFFF",
-          "Powered by Accelia, Inc.",
+          "Powered by CostNavigator",
           jwtSecret,
         ],
         "作成",
