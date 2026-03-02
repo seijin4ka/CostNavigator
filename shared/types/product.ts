@@ -15,10 +15,11 @@ export interface ProductCategory {
 
 // カテゴリ作成・更新スキーマ
 export const CategorySchema = z.object({
-  name: z.string().min(1, "カテゴリ名は必須です"),
+  name: z.string().min(1, "カテゴリ名は必須です").max(100, "カテゴリ名は100文字以内で入力してください"),
   slug: z
     .string()
     .min(1, "スラッグは必須です")
+    .max(100, "スラッグは100文字以内で入力してください")
     .regex(/^[a-z0-9-]+$/, "スラッグは英小文字、数字、ハイフンのみ使用可能です"),
   display_order: z.number().int().min(0).default(0),
 });
@@ -40,12 +41,13 @@ export interface Product {
 // 製品作成・更新スキーマ
 export const ProductSchema = z.object({
   category_id: z.string().min(1, "カテゴリは必須です"),
-  name: z.string().min(1, "製品名は必須です"),
+  name: z.string().min(1, "製品名は必須です").max(200, "製品名は200文字以内で入力してください"),
   slug: z
     .string()
     .min(1, "スラッグは必須です")
+    .max(100, "スラッグは100文字以内で入力してください")
     .regex(/^[a-z0-9-]+$/, "スラッグは英小文字、数字、ハイフンのみ使用可能です"),
-  description: z.string().default(""),
+  description: z.string().max(2000, "説明は2000文字以内で入力してください").default(""),
   pricing_model: PricingModel.default("tier"),
   is_active: z.boolean().default(true),
 });
@@ -70,10 +72,11 @@ export interface ProductTier {
 // ティア作成・更新スキーマ
 export const TierSchema = z.object({
   product_id: z.string().min(1, "製品IDは必須です"),
-  name: z.string().min(1, "ティア名は必須です"),
+  name: z.string().min(1, "ティア名は必須です").max(100, "ティア名は100文字以内で入力してください"),
   slug: z
     .string()
     .min(1, "スラッグは必須です")
+    .max(100, "スラッグは100文字以内で入力してください")
     .regex(/^[a-z0-9-]+$/, "スラッグは英小文字、数字、ハイフンのみ使用可能です"),
   base_price: z
     .number()
@@ -85,7 +88,7 @@ export const TierSchema = z.object({
     .max(9999999.99, "販売価格は999万9999.99以下で入力してください")
     .nullable()
     .optional(),
-  usage_unit: z.string().nullable().optional(),
+  usage_unit: z.string().max(50, "従量単位は50文字以内で入力してください").nullable().optional(),
   usage_unit_price: z
     .number()
     .min(0)

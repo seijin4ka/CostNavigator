@@ -190,8 +190,8 @@ export class EstimateService {
         customer_phone: request.customer_phone ?? null,
         customer_company: request.customer_company ?? null,
         notes: request.notes ?? null,
-        total_monthly: totalMonthly,
-        total_yearly: totalMonthly * 12,
+        total_monthly: Math.round(totalMonthly * 100) / 100,
+        total_yearly: Math.round(totalMonthly * 12 * 100) / 100,
       });
 
       // 明細保存
