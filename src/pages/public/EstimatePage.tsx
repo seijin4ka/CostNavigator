@@ -408,7 +408,7 @@ export function EstimatePage() {
                       {/* 合計セクション */}
                       <div className="mt-4 pt-4 border-t border-slate-200">
                         <div className="flex items-baseline justify-between">
-                          <span className="text-sm text-slate-500">見積もり月額（消費税込）</span>
+                          <span className="text-sm text-slate-500">見積もり月額（税抜）</span>
                           <span
                             className="cn-price text-2xl font-bold font-display"
                             style={{ color: primaryColor }}

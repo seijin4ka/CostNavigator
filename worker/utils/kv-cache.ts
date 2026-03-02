@@ -131,6 +131,17 @@ export class KVCache {
 
     return value;
   }
+
+  // キャッシュなしのNullCache（開発環境などKVが設定されていない場合用）
+  static createNull(): KVCache {
+    return new KVCache({
+      get: async () => null,
+      put: async () => void 0,
+      delete: async () => void 0,
+      list: async () => ({ keys: [] }),
+      getWithMetadata: async () => ({ value: null, metadata: null, cacheStatus: null }),
+    } as unknown as KVNamespace);
+  }
 }
 
 // キャッシュキー生成ヘルパー

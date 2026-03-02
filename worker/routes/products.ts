@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import type { Env } from "../env";
 import { ProductRepository } from "../repositories/product-repository";
+import { CategoryRepository } from "../repositories/category-repository";
 import { authMiddleware } from "../middleware/auth";
 import { validateBody } from "../utils/validation";
 import { success, error } from "../utils/response";
@@ -31,6 +32,11 @@ products.post("/", async (c) => {
   const data = await validateBody(c, ProductSchema);
   if (!data) return c.res;
 
+  // カテゴリIDの存在チェック
+  const categoryRepo = new CategoryRepository(c.env.DB);
+  const category = await categoryRepo.findById(data.category_id);
+  if (!category) return error(c, "NOT_FOUND", "指定されたカテゴリが見つかりません", 404);
+
   const repo = new ProductRepository(c.env.DB);
   const id = await repo.create(data);
   const product = await repo.findById(id);
@@ -45,6 +51,13 @@ products.put("/:id", async (c) => {
   const repo = new ProductRepository(c.env.DB);
   const existing = await repo.findById(c.req.param("id"));
   if (!existing) return error(c, "NOT_FOUND", "製品が見つかりません", 404);
+
+  // カテゴリを変更する場合は存在チェック
+  if (data.category_id !== existing.category_id) {
+    const categoryRepo = new CategoryRepository(c.env.DB);
+    const category = await categoryRepo.findById(data.category_id);
+    if (!category) return error(c, "NOT_FOUND", "指定されたカテゴリが見つかりません", 404);
+  }
 
   await repo.update(c.req.param("id"), data);
   const updated = await repo.findById(c.req.param("id"));

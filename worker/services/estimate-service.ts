@@ -10,7 +10,7 @@ import type {
 } from "../../shared/types";
 import { ESTIMATE_REF_PREFIX, RETRY } from "../../shared/constants";
 import { KVCache, CacheKeys, PRODUCT_CACHE_TTL, CacheTags } from "../utils/kv-cache";
-import { NotFoundError } from "../errors/app-error";
+import { NotFoundError, ValidationError } from "../errors/app-error";
 
 // 販売価格適用済みティア
 export interface TierWithSellingPrice extends ProductTier {
@@ -36,7 +36,7 @@ export class EstimateService {
     this.tierRepo = new TierRepository(db);
     this.estimateRepo = new EstimateRepository(db);
     this.settingsRepo = new SystemSettingsRepository(db);
-    this.cache = kvNamespace ? new KVCache(kvNamespace) : this.createNullCache();
+    this.cache = kvNamespace ? new KVCache(kvNamespace) : KVCache.createNull();
   }
 
   // 製品カタログ取得（selling_price優先、キャッシュ利用）
@@ -139,10 +139,20 @@ export class EstimateService {
         throw new NotFoundError("製品", item.product_id);
       }
 
+      // 非アクティブな製品は見積もりに追加不可
+      if (!product.is_active) {
+        throw new ValidationError(`製品「${product.name}」は現在利用できません`);
+      }
+
       const tier = item.tier_id ? tierMap.get(item.tier_id) ?? null : null;
       // ティアIDが指定されているのにティアが見つからない場合はエラー
       if (item.tier_id && !tier) {
         throw new NotFoundError("ティア", item.tier_id);
+      }
+
+      // 非アクティブなティアは見積もりに追加不可
+      if (tier && !tier.is_active) {
+        throw new ValidationError(`プラン「${tier.name}」は現在利用できません`);
       }
 
       // 販売価格を使用（selling_price優先、未設定時はbase_priceにマークアップ適用）
@@ -282,14 +292,4 @@ export class EstimateService {
     throw new Error(`参照番号の生成に${maxAttempts}回失敗しました`);
   }
 
-  // キャッシュなしのNullCache（開発環境などKVが設定されていない場合用）
-  private createNullCache(): KVCache {
-    return new KVCache({
-      get: async () => null,
-      put: async () => void 0,
-      delete: async () => void 0,
-      list: async () => ({ keys: [] }),
-      getWithMetadata: async () => ({ value: null, metadata: null, cacheStatus: null }),
-    } as unknown as KVNamespace);
-  }
 }

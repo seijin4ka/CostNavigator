@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import type { Env } from "../env";
 import { TierRepository } from "../repositories/tier-repository";
+import { ProductRepository } from "../repositories/product-repository";
 import { authMiddleware } from "../middleware/auth";
 import { validateBody } from "../utils/validation";
 import { success, error } from "../utils/response";
@@ -22,6 +23,11 @@ tiers.get("/product/:productId", async (c) => {
 tiers.post("/", async (c) => {
   const data = await validateBody(c, TierSchema);
   if (!data) return c.res;
+
+  // 指定された製品IDの存在チェック
+  const productRepo = new ProductRepository(c.env.DB);
+  const product = await productRepo.findById(data.product_id);
+  if (!product) return error(c, "NOT_FOUND", "指定された製品が見つかりません", 404);
 
   const repo = new TierRepository(c.env.DB);
   const id = await repo.create({

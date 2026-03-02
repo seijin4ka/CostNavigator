@@ -9,7 +9,7 @@ export class SystemSettingsService {
 
   constructor(db: D1Database, kvNamespace?: KVNamespace) {
     this.settingsRepo = new SystemSettingsRepository(db);
-    this.cache = kvNamespace ? new KVCache(kvNamespace) : this.createNullCache();
+    this.cache = kvNamespace ? new KVCache(kvNamespace) : KVCache.createNull();
   }
 
   // システム設定を取得（キャッシュ利用）
@@ -38,14 +38,4 @@ export class SystemSettingsService {
     return await this.getSettings();
   }
 
-  // キャッシュなしのNullCache（開発環境などKVが設定されていない場合用）
-  private createNullCache(): KVCache {
-    return new KVCache({
-      get: async () => null,
-      put: async () => void 0,
-      delete: async () => void 0,
-      list: async () => ({ keys: [] }),
-      getWithMetadata: async () => ({ value: null, metadata: null, cacheStatus: null }),
-    } as unknown as KVNamespace);
-  }
 }
