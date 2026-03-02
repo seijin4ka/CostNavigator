@@ -5,11 +5,11 @@ import { executeD1First, executeD1Query } from "../utils/d1-helper";
 export class SystemSettingsRepository {
   constructor(private db: D1Database) {}
 
-  // システム設定を取得（常にIDは'default'）
+  // システム設定を取得（常にIDは'default'、jwt_secretは除外）
   async get(): Promise<SystemSettings | null> {
     return await executeD1First<SystemSettings>(
       this.db,
-      "SELECT * FROM system_settings WHERE id = ?",
+      "SELECT id, brand_name, logo_url, primary_color, secondary_color, footer_text, currency, exchange_rate, markup_enabled, default_markup_percentage, created_at, updated_at FROM system_settings WHERE id = ?",
       ["default"]
     );
   }

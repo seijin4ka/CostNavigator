@@ -422,6 +422,15 @@ ALTER TABLE system_settings ADD COLUMN markup_enabled INTEGER NOT NULL DEFAULT 1
 ALTER TABLE system_settings ADD COLUMN default_markup_percentage REAL NOT NULL DEFAULT 20.0
     `.trim(),
   },
+  {
+    version: 22,
+    name: "0022_add_estimates_created_at_index",
+    sql: `
+-- estimates テーブルの created_at にインデックスを追加
+-- ページネーションの ORDER BY created_at DESC を高速化
+CREATE INDEX IF NOT EXISTS idx_estimates_created_at ON estimates(created_at)
+    `.trim(),
+  },
 ];
 
 // 現在のスキーマバージョンを取得
@@ -478,13 +487,13 @@ async function runMigration(
         const result = await db.prepare(statement).run();
 
         if (!result.success) {
-          console.error(`   ❌ ステートメント ${i + 1} が失敗しました:`, result);
+          console.error(`   [ERROR] ステートメント ${i + 1} が失敗しました:`, result);
           throw new Error(`ステートメント ${i + 1} の実行に失敗しました`);
         }
 
-        console.log(`   ✅ ステートメント ${i + 1}/${statements.length} 完了 (changes: ${result.meta?.changes || 0})`);
+        console.log(`   [OK] ステートメント ${i + 1}/${statements.length} 完了 (changes: ${result.meta?.changes || 0})`);
       } catch (stmtError) {
-        console.error(`   ❌ ステートメント ${i + 1} でエラーが発生:`, stmtError);
+        console.error(`   [ERROR] ステートメント ${i + 1} でエラーが発生:`, stmtError);
         if (stmtError instanceof Error) {
           console.error(`      エラーメッセージ: ${stmtError.message}`);
         }
@@ -493,7 +502,7 @@ async function runMigration(
     }
 
     // マイグレーション履歴を記録
-    console.log(`   📝 マイグレーション履歴を記録中...`);
+    console.log(`   マイグレーション履歴を記録中...`);
     await db
       .prepare(
         "INSERT INTO schema_migrations (version, name, executed_at) VALUES (?, ?, datetime('now'))"
@@ -501,9 +510,9 @@ async function runMigration(
       .bind(migration.version, migration.name)
       .run();
 
-    console.log(`✅ マイグレーション完了: ${migration.name}`);
+    console.log(`[OK] マイグレーション完了: ${migration.name}`);
   } catch (error) {
-    console.error(`❌ マイグレーション失敗: ${migration.name}:`, error);
+    console.error(`[ERROR] マイグレーション失敗: ${migration.name}:`, error);
     if (error instanceof Error) {
       console.error(`   エラーメッセージ: ${error.message}`);
       console.error(`   スタックトレース: ${error.stack}`);
