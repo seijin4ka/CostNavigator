@@ -1,4 +1,4 @@
-import { type FormEvent, type CSSProperties, useEffect, useId } from "react";
+import { type FormEvent, type CSSProperties, useEffect, useId, useMemo } from "react";
 import { formatCurrency } from "../../lib/formatters";
 import { StepIndicator } from "./StepIndicator";
 import { CloseIcon, ArrowRightIcon } from "./Icons";
@@ -43,6 +43,14 @@ export function CustomerInfoModal({
   isSubmitting,
 }: CustomerInfoModalProps) {
   const titleId = useId();
+  const baseId = useId();
+  const fieldIds = useMemo(() => ({
+    name: `${baseId}-name`,
+    company: `${baseId}-company`,
+    email: `${baseId}-email`,
+    phone: `${baseId}-phone`,
+    notes: `${baseId}-notes`,
+  }), [baseId]);
 
   // Escapeキーで閉じる + body scroll lock
   useEffect(() => {
@@ -136,10 +144,11 @@ export function CustomerInfoModal({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-slate-600 tracking-wide uppercase font-display">
+              <label htmlFor={fieldIds.name} className="block text-xs font-semibold text-slate-600 tracking-wide uppercase font-display">
                 お名前 <span className="text-red-400">*</span>
               </label>
               <input
+                id={fieldIds.name}
                 type="text"
                 value={customerForm.customer_name}
                 onChange={(e) => onCustomerFormChange({ ...customerForm, customer_name: e.target.value })}
@@ -151,10 +160,11 @@ export function CustomerInfoModal({
             </div>
 
             <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-slate-600 tracking-wide uppercase font-display">
+              <label htmlFor={fieldIds.company} className="block text-xs font-semibold text-slate-600 tracking-wide uppercase font-display">
                 会社名 <span className="text-slate-300">(任意)</span>
               </label>
               <input
+                id={fieldIds.company}
                 type="text"
                 value={customerForm.customer_company}
                 onChange={(e) => onCustomerFormChange({ ...customerForm, customer_company: e.target.value })}
@@ -167,10 +177,11 @@ export function CustomerInfoModal({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-slate-600 tracking-wide uppercase font-display">
+              <label htmlFor={fieldIds.email} className="block text-xs font-semibold text-slate-600 tracking-wide uppercase font-display">
                 メールアドレス <span className="text-red-400">*</span>
               </label>
               <input
+                id={fieldIds.email}
                 type="email"
                 value={customerForm.customer_email}
                 onChange={(e) => onCustomerFormChange({ ...customerForm, customer_email: e.target.value })}
@@ -182,10 +193,11 @@ export function CustomerInfoModal({
             </div>
 
             <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-slate-600 tracking-wide uppercase font-display">
+              <label htmlFor={fieldIds.phone} className="block text-xs font-semibold text-slate-600 tracking-wide uppercase font-display">
                 電話番号 <span className="text-slate-300">(任意)</span>
               </label>
               <input
+                id={fieldIds.phone}
                 type="tel"
                 value={customerForm.customer_phone}
                 onChange={(e) => onCustomerFormChange({ ...customerForm, customer_phone: e.target.value })}
@@ -197,10 +209,11 @@ export function CustomerInfoModal({
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-slate-600 tracking-wide uppercase font-display">
+            <label htmlFor={fieldIds.notes} className="block text-xs font-semibold text-slate-600 tracking-wide uppercase font-display">
               備考 <span className="text-slate-300">(任意)</span>
             </label>
             <textarea
+              id={fieldIds.notes}
               className="w-full px-4 py-2.5 rounded-lg border border-slate-200 text-sm text-slate-800 placeholder-slate-300 focus:outline-none focus:ring-2 focus:border-transparent transition-shadow resize-none font-body"
               style={{ "--tw-ring-color": `${primaryColor}33` } as CSSProperties}
               rows={2}

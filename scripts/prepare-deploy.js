@@ -370,6 +370,10 @@ INSERT OR IGNORE INTO schema_migrations VALUES (18, '0018_update_default_brandin
 INSERT OR IGNORE INTO schema_migrations VALUES (19, '0019_add_currency_to_system_settings', datetime('now'));
 INSERT OR IGNORE INTO schema_migrations VALUES (20, '0020_add_exchange_rate_to_system_settings', datetime('now'));
 INSERT OR IGNORE INTO schema_migrations VALUES (21, '0021_add_markup_to_system_settings', datetime('now'));
+
+-- 0022: estimatesテーブルの created_at インデックス
+CREATE INDEX IF NOT EXISTS idx_estimates_created_at ON estimates(created_at);
+INSERT OR IGNORE INTO schema_migrations VALUES (22, '0022_add_estimates_created_at_index', datetime('now'));
 `.trim();
 
       fs.writeFileSync(tempMigrationFile, migrationSQL);

@@ -3,9 +3,9 @@ import { useSearchParams, Link } from "react-router-dom";
 import { apiClient } from "../../api/client";
 import type { SystemSettings } from "@shared/types";
 import { formatCurrency, formatDate, setCurrency } from "../../lib/formatters";
-import { isLightColor } from "../../lib/color-utils";
+import { EstimateHeader } from "../../components/public/EstimateHeader";
+import { StepIndicator } from "../../components/public/StepIndicator";
 import {
-  ShieldIcon,
   DownloadIcon,
   DocumentIcon,
   CalendarIcon,
@@ -13,39 +13,7 @@ import {
   CurrencyIcon,
   PlusIcon,
   CheckCircleIcon,
-  CheckIcon,
 } from "../../components/public/Icons";
-
-// ステップインジケーター（結果ページ用 - ステップ3完了状態）
-function StepIndicator({ primaryColor }: { primaryColor: string }) {
-  const steps = [
-    { num: 1, label: "サービス選択" },
-    { num: 2, label: "お客様情報入力" },
-    { num: 3, label: "見積もり完了" },
-  ];
-  return (
-    <div className="flex items-center justify-center gap-0">
-      {steps.map((step, i) => (
-        <div key={step.num} className="flex items-center">
-          <div className="flex items-center gap-2">
-            <div
-              className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold font-display text-white"
-              style={{ backgroundColor: primaryColor }}
-            >
-              <CheckIcon className="w-3.5 h-3.5" />
-            </div>
-            <span className="text-xs font-medium hidden sm:inline text-slate-700">
-              {step.label}
-            </span>
-          </div>
-          {i < steps.length - 1 && (
-            <div className="w-8 sm:w-12 h-px mx-2 sm:mx-3" style={{ backgroundColor: primaryColor }} />
-          )}
-        </div>
-      ))}
-    </div>
-  );
-}
 
 // 見積もり結果型（公開API）
 interface EstimateResult {
@@ -177,44 +145,11 @@ export function EstimateResultPage() {
       style={{ "--cn-accent": primaryColor, "--cn-accent-dark": secondaryColor } as CSSProperties}
     >
       {/* === ヘッダー === */}
-      <header
-        className={`relative overflow-hidden ${isLightColor(secondaryColor) ? "border-b border-slate-200" : ""}`}
-        style={{ backgroundColor: secondaryColor }}
-      >
-        {!isLightColor(secondaryColor) && (
-          <div
-            className="absolute inset-0"
-            style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg width='6' height='6' viewBox='0 0 6 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5 0h1L0 6V5zM6 5v1H5z' fill='%23ffffff' fill-opacity='0.04'/%3E%3C/svg%3E")`,
-            }}
-          />
-        )}
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 sm:h-[72px]">
-            <div className="flex items-center gap-3 sm:gap-4">
-              {logoUrl && (
-                <img src={logoUrl} alt={brandName} className="h-7 sm:h-8 object-contain" />
-              )}
-              <div>
-                <h1 className={`text-base sm:text-lg font-bold tracking-tight font-display ${isLightColor(secondaryColor) ? "text-slate-900" : "text-white"}`}>
-                  {brandName}
-                </h1>
-                <p className={`text-[11px] sm:text-xs tracking-wide ${isLightColor(secondaryColor) ? "text-slate-400" : "text-white/50"}`}>
-                  Cloudflare サービス見積もり
-                </p>
-              </div>
-            </div>
-            <div className={`hidden sm:flex items-center gap-2 text-xs ${isLightColor(secondaryColor) ? "text-slate-400" : "text-white/60"}`}>
-              <ShieldIcon className="w-4 h-4" />
-              <span className="font-display">Cloudflare 認定パートナー</span>
-            </div>
-          </div>
-        </div>
-        <div
-          className="h-[3px]"
-          style={{ background: `linear-gradient(90deg, ${primaryColor}, ${primaryColor}88, transparent)` }}
-        />
-      </header>
+      <EstimateHeader
+        branding={{ name: brandName, logo_url: logoUrl ?? null }}
+        primaryColor={primaryColor}
+        secondaryColor={secondaryColor}
+      />
 
       {/* === 完了バナー === */}
       <div
@@ -224,7 +159,7 @@ export function EstimateResultPage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* ステップインジケーター（全完了） */}
           <div className="mb-6 animate-cn-fade-up opacity-0">
-            <StepIndicator primaryColor={primaryColor} />
+            <StepIndicator currentStep={3} primaryColor={primaryColor} />
           </div>
 
           <div className="text-center animate-cn-fade-up opacity-0" style={{ animationDelay: "100ms" }}>
