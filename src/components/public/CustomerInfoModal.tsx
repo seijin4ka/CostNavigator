@@ -137,7 +137,7 @@ export function CustomerInfoModal({
         {/* フォーム */}
         <form onSubmit={onSubmit} className="px-6 py-5 space-y-4">
           {error && (
-            <div className="bg-red-50 border border-red-100 rounded-lg px-4 py-3 text-sm text-red-600 font-body">
+            <div role="alert" className="bg-red-50 border border-red-100 rounded-lg px-4 py-3 text-sm text-red-600 font-body">
               {error}
             </div>
           )}

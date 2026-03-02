@@ -22,7 +22,8 @@ export function EstimatePage() {
   const [systemSettings, setSystemSettings] = useState<SystemSettings | null>(null);
   const [products, setProducts] = useState<PublicProduct[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [loadError, setLoadError] = useState("");
+  const [submitError, setSubmitError] = useState("");
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("");
@@ -56,7 +57,7 @@ export function EstimatePage() {
         }
       } catch (err) {
         console.error("見積もりページの読み込みエラー:", err);
-        setError("ページの読み込みに失敗しました。");
+        setLoadError("ページの読み込みに失敗しました。");
       } finally {
         setIsLoading(false);
       }
@@ -73,7 +74,7 @@ export function EstimatePage() {
     if (builder.items.length === 0) return;
 
     setIsSubmitting(true);
-    setError("");
+    setSubmitError("");
     try {
       const res = await apiClient.post<{ reference_number: string }>(
         "/public/estimates",
@@ -92,7 +93,7 @@ export function EstimatePage() {
       );
       navigate(`/result?ref=${encodeURIComponent(res.data.reference_number)}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "見積もりの保存に失敗しました");
+      setSubmitError(err instanceof Error ? err.message : "見積もりの保存に失敗しました");
     } finally {
       setIsSubmitting(false);
     }
@@ -126,7 +127,7 @@ export function EstimatePage() {
   }
 
   // --- エラー ---
-  if (error && products.length === 0) {
+  if (loadError && products.length === 0) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center max-w-md mx-auto px-6">
@@ -136,7 +137,7 @@ export function EstimatePage() {
             </svg>
           </div>
           <h2 className="text-lg font-semibold text-slate-900 font-display">ページを表示できません</h2>
-          <p className="mt-2 text-sm text-slate-500 font-body">{error}</p>
+          <p className="mt-2 text-sm text-slate-500 font-body">{loadError}</p>
         </div>
       </div>
     );
@@ -470,7 +471,10 @@ export function EstimatePage() {
       {/* === 顧客情報モーダル === */}
       <CustomerInfoModal
         isOpen={isSubmitModalOpen}
-        onClose={() => setIsSubmitModalOpen(false)}
+        onClose={() => {
+          setIsSubmitModalOpen(false);
+          setSubmitError("");
+        }}
         onSubmit={handleSubmit}
         customerForm={customerForm}
         onCustomerFormChange={setCustomerForm}
@@ -478,12 +482,12 @@ export function EstimatePage() {
         totalMonthly={builder.totalMonthly}
         totalYearly={builder.totalYearly}
         primaryColor={primaryColor}
-        error={error}
+        error={submitError}
         isSubmitting={isSubmitting}
       />
 
       {/* === フッター === */}
-      <EstimateFooter footerText={systemSettings?.footer_text} />
+      <EstimateFooter />
 
       {/* モバイルフローティングバー用の余白 */}
       {builder.items.length > 0 && <div className="h-20 lg:hidden" />}
