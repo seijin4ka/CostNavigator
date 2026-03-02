@@ -56,7 +56,7 @@ export function DashboardPage() {
       <h1 className="text-2xl font-bold text-gray-900 mb-6">ダッシュボード</h1>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-600 mb-4">
+        <div role="alert" className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-600 mb-4">
           {error}
         </div>
       )}

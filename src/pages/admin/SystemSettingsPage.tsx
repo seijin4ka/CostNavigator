@@ -89,8 +89,8 @@ export function SystemSettingsPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-gray-500">読み込み中...</div>
+      <div className="flex justify-center py-12">
+        <div role="status" aria-label="読み込み中" className="animate-spin h-8 w-8 border-4 border-orange-500 border-t-transparent rounded-full" />
       </div>
     );
   }

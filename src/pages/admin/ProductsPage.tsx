@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, type FormEvent } from "react";
+import { useState, useEffect, useRef, useCallback, type FormEvent } from "react";
 import { apiClient } from "../../api/client";
 import type { ProductWithTiers, ProductCategory, ProductInput, TierInput, SystemSettings } from "@shared/types";
 import { formatCurrency } from "../../lib/formatters";
@@ -26,6 +26,9 @@ export function ProductsPage() {
   const [selectedProductId, setSelectedProductId] = useState<string>("");
   const [error, setError] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<{ type: "product" | "tier"; id: string; message: string } | null>(null);
+  const [isProductSaving, setIsProductSaving] = useState(false);
+  const [isTierSaving, setIsTierSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // マークアップ設定
   const [markupEnabled, setMarkupEnabled] = useState(true);
@@ -67,7 +70,7 @@ export function ProductsPage() {
   });
 
   // データ取得
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const [productsRes, categoriesRes, settingsRes] = await Promise.all([
         apiClient.get<ProductWithTiers[]>("/admin/products"),
@@ -83,11 +86,11 @@ export function ProductsPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData]);
 
   // 製品モーダルを開く
   const openProductModal = (product?: ProductWithTiers) => {
@@ -175,6 +178,7 @@ export function ProductsPage() {
   const handleProductSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
+    setIsProductSaving(true);
     try {
       if (editingProduct) {
         await apiClient.put(`/admin/products/${editingProduct.id}`, productForm);
@@ -185,6 +189,8 @@ export function ProductsPage() {
       fetchData();
     } catch (err) {
       setError(err instanceof Error ? err.message : "保存に失敗しました");
+    } finally {
+      setIsProductSaving(false);
     }
   };
 
@@ -192,6 +198,7 @@ export function ProductsPage() {
   const handleTierSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
+    setIsTierSaving(true);
     try {
       const data = { ...tierForm, product_id: selectedProductId };
       if (editingTierId) {
@@ -203,6 +210,8 @@ export function ProductsPage() {
       fetchData();
     } catch (err) {
       setError(err instanceof Error ? err.message : "保存に失敗しました");
+    } finally {
+      setIsTierSaving(false);
     }
   };
 
@@ -218,6 +227,7 @@ export function ProductsPage() {
   // 削除実行
   const executeDelete = async () => {
     if (!deleteTarget) return;
+    setIsDeleting(true);
     try {
       if (deleteTarget.type === "product") {
         await apiClient.delete(`/admin/products/${deleteTarget.id}`);
@@ -228,6 +238,7 @@ export function ProductsPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "削除に失敗しました");
     } finally {
+      setIsDeleting(false);
       setDeleteTarget(null);
     }
   };
@@ -271,7 +282,7 @@ export function ProductsPage() {
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-600 mb-4">
+        <div role="alert" className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-600 mb-4">
           {error}
         </div>
       )}
@@ -443,10 +454,12 @@ export function ProductsPage() {
             <span className="text-sm text-gray-700">有効</span>
           </label>
           <div className="flex justify-end gap-2 pt-2">
-            <Button variant="secondary" type="button" onClick={() => setIsProductModalOpen(false)}>
+            <Button variant="secondary" type="button" onClick={() => setIsProductModalOpen(false)} disabled={isProductSaving}>
               キャンセル
             </Button>
-            <Button type="submit">{editingProduct ? "更新" : "作成"}</Button>
+            <Button type="submit" isLoading={isProductSaving}>
+              {isProductSaving ? "保存中..." : editingProduct ? "更新" : "作成"}
+            </Button>
           </div>
         </form>
       </Modal>
@@ -544,10 +557,12 @@ export function ProductsPage() {
             <span className="text-sm text-gray-700">有効</span>
           </label>
           <div className="flex justify-end gap-2 pt-2">
-            <Button variant="secondary" type="button" onClick={() => setIsTierModalOpen(false)}>
+            <Button variant="secondary" type="button" onClick={() => setIsTierModalOpen(false)} disabled={isTierSaving}>
               キャンセル
             </Button>
-            <Button type="submit">{editingTierId ? "更新" : "作成"}</Button>
+            <Button type="submit" isLoading={isTierSaving}>
+              {isTierSaving ? "保存中..." : editingTierId ? "更新" : "作成"}
+            </Button>
           </div>
         </form>
       </Modal>
@@ -561,11 +576,11 @@ export function ProductsPage() {
       >
         <p className="text-sm text-gray-700 mb-6">{deleteTarget?.message}</p>
         <div className="flex justify-end gap-2">
-          <Button variant="secondary" onClick={() => setDeleteTarget(null)}>
+          <Button variant="secondary" onClick={() => setDeleteTarget(null)} disabled={isDeleting}>
             キャンセル
           </Button>
-          <Button variant="danger" onClick={executeDelete}>
-            削除
+          <Button variant="danger" onClick={executeDelete} isLoading={isDeleting}>
+            {isDeleting ? "削除中..." : "削除"}
           </Button>
         </div>
       </Modal>

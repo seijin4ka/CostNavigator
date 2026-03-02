@@ -1,5 +1,5 @@
-import { useEffect } from "react";
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { useEffect, useState, useCallback } from "react";
+import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { apiClient } from "../../api/client";
 import type { SystemSettings } from "@shared/types";
@@ -59,6 +59,8 @@ const navItems = [
 export function AdminLayout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // システム設定から通貨を取得して設定
   useEffect(() => {
@@ -73,54 +75,108 @@ export function AdminLayout() {
     fetchSettings();
   }, []);
 
-  const handleLogout = () => {
+  // ページ遷移時にモバイルメニューを閉じる
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [location.pathname]);
+
+  // モバイルメニュー表示時にbodyスクロールを無効化
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isMobileMenuOpen]);
+
+  const handleLogout = useCallback(() => {
     logout();
     navigate("/admin/login");
-  };
+  }, [logout, navigate]);
+
+  const sidebarContent = (
+    <>
+      <div className="px-6 py-5 border-b border-gray-700">
+        <h1 className="text-lg font-bold">CostNavigator</h1>
+        <p className="text-xs text-gray-400 mt-1">管理パネル</p>
+      </div>
+
+      <nav className="flex-1 px-3 py-4 space-y-1">
+        {navItems.map((item) => (
+          <NavLink
+            key={item.path}
+            to={item.path}
+            end={item.end}
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                isActive
+                  ? "bg-orange-500/20 text-orange-400"
+                  : "text-gray-300 hover:bg-gray-800 hover:text-white"
+              }`
+            }
+          >
+            <item.icon />
+            <span>{item.label}</span>
+          </NavLink>
+        ))}
+      </nav>
+
+      <div className="px-4 py-4 border-t border-gray-700">
+        <div className="text-sm text-gray-400 mb-2">{user?.name}</div>
+        <button
+          onClick={handleLogout}
+          className="w-full text-left text-sm text-gray-400 hover:text-white transition-colors"
+        >
+          ログアウト
+        </button>
+      </div>
+    </>
+  );
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      {/* サイドバー */}
-      <aside className="w-64 bg-gray-900 text-white flex flex-col flex-shrink-0">
-        <div className="px-6 py-5 border-b border-gray-700">
-          <h1 className="text-lg font-bold">CostNavigator</h1>
-          <p className="text-xs text-gray-400 mt-1">管理パネル</p>
-        </div>
+      {/* モバイルヘッダー */}
+      <div className="fixed top-0 left-0 right-0 z-30 bg-gray-900 text-white flex items-center justify-between px-4 h-14 md:hidden">
+        <h1 className="text-sm font-bold">CostNavigator</h1>
+        <button
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          aria-label={isMobileMenuOpen ? "メニューを閉じる" : "メニューを開く"}
+          className="p-2 rounded-lg hover:bg-gray-800 transition-colors"
+        >
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+            {isMobileMenuOpen ? (
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            ) : (
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            )}
+          </svg>
+        </button>
+      </div>
 
-        <nav className="flex-1 px-3 py-4 space-y-1">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              end={item.end}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
-                  isActive
-                    ? "bg-orange-500/20 text-orange-400"
-                    : "text-gray-300 hover:bg-gray-800 hover:text-white"
-                }`
-              }
-            >
-              <item.icon />
-              <span>{item.label}</span>
-            </NavLink>
-          ))}
-        </nav>
+      {/* モバイルオーバーレイ */}
+      {isMobileMenuOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 md:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+          aria-hidden="true"
+        />
+      )}
 
-        <div className="px-4 py-4 border-t border-gray-700">
-          <div className="text-sm text-gray-400 mb-2">{user?.name}</div>
-          <button
-            onClick={handleLogout}
-            className="w-full text-left text-sm text-gray-400 hover:text-white transition-colors"
-          >
-            ログアウト
-          </button>
-        </div>
+      {/* サイドバー: デスクトップは常時表示、モバイルはスライドイン */}
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-gray-900 text-white flex flex-col flex-shrink-0 transition-transform duration-200 ease-in-out md:static md:translate-x-0 ${
+          isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        {sidebarContent}
       </aside>
 
       {/* メインコンテンツ */}
-      <main className="flex-1 overflow-y-auto">
-        <div className="max-w-6xl mx-auto px-6 py-8">
+      <main className="flex-1 overflow-y-auto pt-14 md:pt-0">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
           <Outlet />
         </div>
       </main>

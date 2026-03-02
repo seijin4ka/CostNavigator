@@ -339,7 +339,7 @@ export function EstimatePage() {
                       <div className="space-y-3 max-h-[400px] overflow-y-auto cn-scrollbar pr-1">
                         {builder.items.map((item, index) => (
                           <div
-                            key={index}
+                            key={`${item.product_id}-${item.tier_id}`}
                             className="group rounded-lg border border-slate-100 p-3 hover:border-slate-200 transition-colors"
                           >
                             <div className="flex items-start justify-between mb-2">

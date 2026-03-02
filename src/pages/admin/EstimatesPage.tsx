@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { apiClient } from "../../api/client";
 import type { Estimate, EstimateWithItems } from "@shared/types";
 import { Card } from "../../components/ui/Card";
@@ -13,17 +13,19 @@ import { ESTIMATE_STATUS_LABELS, ESTIMATE_STATUS_COLORS } from "../../lib/estima
 export function EstimatesPage() {
   const [estimates, setEstimates] = useState<Estimate[]>([]);
   const [selectedEstimate, setSelectedEstimate] = useState<EstimateWithItems | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [isPageLoading, setIsPageLoading] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [error, setError] = useState("");
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
 
-  const fetchEstimates = async (page = 1) => {
+  const fetchEstimates = useCallback(async (page = 1) => {
     try {
-      setIsLoading(true);
+      setIsPageLoading(true);
       const res = await apiClient.get<{
         data: Estimate[];
         total: number;
@@ -42,13 +44,14 @@ export function EstimatesPage() {
         setError("見積もりの取得に失敗しました");
       }
     } finally {
-      setIsLoading(false);
+      setIsInitialLoading(false);
+      setIsPageLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchEstimates(1);
-  }, []);
+  }, [fetchEstimates]);
 
   // 見積もり詳細を表示
   const showDetail = async (id: string) => {
@@ -85,6 +88,7 @@ export function EstimatesPage() {
   // 見積もり削除
   const executeDelete = async () => {
     if (!deleteTargetId) return;
+    setIsDeleting(true);
     try {
       await apiClient.delete(`/admin/estimates/${deleteTargetId}`);
       // 削除後、現在のページが空になった場合は前のページへ
@@ -99,11 +103,12 @@ export function EstimatesPage() {
         setError("削除に失敗しました");
       }
     } finally {
+      setIsDeleting(false);
       setDeleteTargetId(null);
     }
   };
 
-  if (isLoading) {
+  if (isInitialLoading) {
     return (
       <div className="flex justify-center py-12">
         <div
@@ -145,12 +150,12 @@ export function EstimatesPage() {
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-600 mb-4">
+        <div role="alert" className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-600 mb-4">
           {error}
         </div>
       )}
 
-      <Card>
+      <Card className={isPageLoading ? "opacity-60 pointer-events-none" : ""}>
         <Table
           columns={[
             {
@@ -357,11 +362,11 @@ export function EstimatesPage() {
       >
         <p className="text-sm text-gray-700 mb-6">この見積もりを削除しますか？</p>
         <div className="flex justify-end gap-2">
-          <Button variant="secondary" onClick={() => setDeleteTargetId(null)}>
+          <Button variant="secondary" onClick={() => setDeleteTargetId(null)} disabled={isDeleting}>
             キャンセル
           </Button>
-          <Button variant="danger" onClick={executeDelete}>
-            削除
+          <Button variant="danger" onClick={executeDelete} isLoading={isDeleting}>
+            {isDeleting ? "削除中..." : "削除"}
           </Button>
         </div>
       </Modal>
