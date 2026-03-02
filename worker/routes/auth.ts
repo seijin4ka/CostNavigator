@@ -161,8 +161,8 @@ authRoutes.post("/sso/cloudflare-login", rateLimit(10, 60000), async (c) => {
     return error(c, "INVALID_TOKEN", "トークンが無効です", 401);
   }
 
-  // トークンからユーザー識別
-  const user = await service.getUser(verification.email);
+  // トークンからメールアドレスでユーザー識別
+  const user = await service.getUserByEmail(verification.email);
 
   if (!user) {
     return error(c, "USER_NOT_FOUND", "ユーザーが見つかりません", 404);
@@ -210,6 +210,9 @@ authRoutes.patch("/admin/change-password", rateLimit(5, 60000), authMiddleware, 
   // パスワードハッシュ化と更新
   const passwordHash = await hashPassword(data.newPassword);
   await service.updatePassword(userWithPassword.id, passwordHash);
+
+  // パスワード変更後は既存のリフレッシュトークンを全て無効化（セキュリティ強化）
+  await service.revokeAllUserRefreshTokens(userWithPassword.id);
 
   return success(c, {
     message: "パスワードを変更しました",

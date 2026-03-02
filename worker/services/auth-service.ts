@@ -74,9 +74,17 @@ export class AuthService {
     return { token, refreshToken, user: userWithoutPassword, passwordChangeRequired };
   }
 
-  // ユーザー情報取得
+  // ユーザー情報取得（IDで検索）
   async getUser(id: string): Promise<User | null> {
     return this.userRepo.findById(id);
+  }
+
+  // ユーザー情報取得（メールで検索、パスワードハッシュ除外）
+  async getUserByEmail(email: string): Promise<User | null> {
+    const user = await this.userRepo.findByEmail(email);
+    if (!user) return null;
+    const { password_hash: _, ...userWithoutPassword } = user;
+    return userWithoutPassword;
   }
 
   // パスワード変更日時を更新
@@ -194,7 +202,12 @@ export class AuthService {
       .run();
   }
 
-  // ユーザーのすべてのリフレッシュトークンを無効化
+  // ユーザーのすべてのリフレッシュトークンを無効化（パスワード変更時等に外部から呼び出し可能）
+  async revokeAllUserRefreshTokens(userId: string): Promise<void> {
+    return this.revokeAllRefreshTokens(userId);
+  }
+
+  // ユーザーのすべてのリフレッシュトークンを無効化（内部用）
   private async revokeAllRefreshTokens(userId: string): Promise<void> {
     await this.db
       .prepare("UPDATE refresh_tokens SET revoked = 1 WHERE user_id = ?")
