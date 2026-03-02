@@ -48,15 +48,17 @@ export function PasswordChangeCard() {
 
       if (res.data.message) {
         setPasswordChangeSuccess(res.data.message);
+        // フォームを即座にクリア
+        setPasswordFormData({
+          currentPassword: "",
+          newPassword: "",
+          confirmPassword: "",
+        });
+        // 成功メッセージを3秒後に自動非表示
         if (successTimerRef.current) {
           clearTimeout(successTimerRef.current);
         }
         successTimerRef.current = window.setTimeout(() => {
-          setPasswordFormData({
-            currentPassword: "",
-            newPassword: "",
-            confirmPassword: "",
-          });
           setPasswordChangeSuccess("");
         }, 3000);
       }

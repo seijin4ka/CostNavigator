@@ -19,6 +19,7 @@ export function EstimatesPage() {
   const [error, setError] = useState("");
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
@@ -122,6 +123,7 @@ export function EstimatesPage() {
 
   // CSVエクスポート
   const handleExportCsv = async () => {
+    setIsExporting(true);
     try {
       const token = apiClient.getToken();
       const res = await fetch("/api/admin/estimates/csv", {
@@ -137,6 +139,8 @@ export function EstimatesPage() {
       URL.revokeObjectURL(url);
     } catch (err) {
       setError(err instanceof Error ? err.message : "CSVエクスポートに失敗しました");
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -144,8 +148,8 @@ export function EstimatesPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-900">見積もり一覧</h1>
-        <Button variant="secondary" size="sm" onClick={handleExportCsv}>
-          CSVエクスポート
+        <Button variant="secondary" size="sm" onClick={handleExportCsv} isLoading={isExporting} disabled={isExporting}>
+          {isExporting ? "エクスポート中..." : "CSVエクスポート"}
         </Button>
       </div>
 
