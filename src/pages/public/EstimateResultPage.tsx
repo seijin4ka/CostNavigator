@@ -2,7 +2,7 @@ import { useState, useEffect, type CSSProperties } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { apiClient } from "../../api/client";
 import type { SystemSettings } from "@shared/types";
-import type { PublicPublicEstimateResult } from "../../lib/types";
+import type { PublicEstimateResult } from "../../lib/types";
 import { formatCurrency, formatDate, setCurrency } from "../../lib/formatters";
 import { EstimateHeader } from "../../components/public/EstimateHeader";
 import { StepIndicator } from "../../components/public/StepIndicator";
