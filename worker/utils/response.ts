@@ -38,7 +38,7 @@ export function paginated<T>(
       page,
       per_page: perPage,
       total,
-      total_pages: Math.ceil(total / perPage),
+      total_pages: perPage > 0 ? Math.ceil(total / perPage) : 0,
     },
   });
 }

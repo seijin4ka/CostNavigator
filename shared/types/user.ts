@@ -32,6 +32,9 @@ export const AdminPasswordChangeSchema = z.object({
   currentPassword: z.string().min(1, "現在のパスワードを入力してください"),
   newPassword: z.string().min(8, "新しいパスワードは8文字以上で入力してください"),
   confirmPassword: z.string({ required_error: "新しいパスワード確認を入力してください" }),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "新しいパスワードと確認用パスワードが一致しません",
+  path: ["confirmPassword"],
 });
 export type AdminPasswordChangeRequest = z.infer<typeof AdminPasswordChangeSchema>;
 
@@ -54,6 +57,9 @@ export const PasswordResetSchema = z.object({
   token: z.string().uuid("リセットトークンが無効です"),
   newPassword: z.string().min(8, "パスワードは8文字以上で入力してください"),
   confirmPassword: z.string({ required_error: "パスワード確認を入力してください" }),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "新しいパスワードと確認用パスワードが一致しません",
+  path: ["confirmPassword"],
 });
 export type PasswordResetRequest = z.infer<typeof PasswordResetSchema>;
 
@@ -74,6 +80,9 @@ export const AdminSettingsSchema = z.object({
   currentPassword: z.string().min(1, "現在のパスワードを入力してください"),
   newPassword: z.string().min(8, "新しいパスワードは8文字以上で入力してください"),
   confirmPassword: z.string({ required_error: "新しいパスワード確認を入力してください" }),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "新しいパスワードと確認用パスワードが一致しません",
+  path: ["confirmPassword"],
 });
 export type AdminSettingsRequest = z.infer<typeof AdminSettingsSchema>;
 
