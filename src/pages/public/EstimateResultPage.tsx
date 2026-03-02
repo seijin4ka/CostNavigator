@@ -24,7 +24,7 @@ const statusConfig: Record<string, { label: string; className: string }> = {
   expired: { label: "期限切れ", className: "bg-amber-50 text-amber-600" },
 };
 
-export function PublicEstimateResultPage() {
+export function EstimateResultPage() {
   const [searchParams] = useSearchParams();
   const ref = searchParams.get("ref");
   const [systemSettings, setSystemSettings] = useState<SystemSettings | null>(null);
