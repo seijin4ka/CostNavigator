@@ -24,7 +24,7 @@ export interface SystemSettingsInternal extends SystemSettings {
 // システム設定更新リクエストスキーマ
 export const UpdateSystemSettingsSchema = z.object({
   brand_name: z.string().min(1).max(100).optional(),
-  logo_url: z.string().url().nullable().optional(),
+  logo_url: z.string().url().or(z.literal("")).transform(v => v === "" ? null : v).nullable().optional(),
   primary_color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "有効なカラーコードを入力してください").optional(),
   secondary_color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "有効なカラーコードを入力してください").optional(),
   footer_text: z.string().max(500).optional(),
