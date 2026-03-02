@@ -110,12 +110,10 @@ export class ProductRepository {
   }
 
   async delete(id: string): Promise<void> {
-    await executeD1Query(
-      this.db,
-      "DELETE FROM products WHERE id = ?",
-      [id],
-      "削除",
-      "製品"
-    );
+    // ティアと製品をバッチで一括削除（ON DELETE CASCADEに依存せず明示的に削除）
+    await this.db.batch([
+      this.db.prepare("DELETE FROM product_tiers WHERE product_id = ?").bind(id),
+      this.db.prepare("DELETE FROM products WHERE id = ?").bind(id),
+    ]);
   }
 }

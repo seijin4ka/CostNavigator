@@ -75,8 +75,8 @@ authRoutes.post("/refresh", rateLimit(10, 60000), async (c) => {
   });
 });
 
-// セットアップ状態確認
-authRoutes.get("/setup-status", async (c) => {
+// セットアップ状態確認（レート制限: 10回/60秒）
+authRoutes.get("/setup-status", rateLimit(10, 60000), async (c) => {
   try {
     const userRepo = new (await import("../repositories/user-repository")).UserRepository(c.env.DB);
 
@@ -216,19 +216,36 @@ authRoutes.patch("/admin/change-password", rateLimit(5, 60000), authMiddleware, 
   });
 });
 
-// アカウントロック解除エンドポイント（認証必須）
+// アカウントロック解除エンドポイント（認証必須、super_admin権限が必要）
 authRoutes.post("/admin/unlock-account", authMiddleware, async (c) => {
   const payload = c.get("jwtPayload");
+
+  // super_admin権限チェック（自分自身のロック解除は不可 - ロックバイパス防止）
+  if (payload.role !== "super_admin") {
+    return error(c, "FORBIDDEN", "アカウントロック解除にはsuper_admin権限が必要です", 403);
+  }
+
+  const body = await c.req.json().catch(() => null);
+  const targetUserId = body?.user_id;
+  if (!targetUserId || typeof targetUserId !== "string") {
+    return error(c, "VALIDATION_ERROR", "ロック解除対象のuser_idを指定してください", 400);
+  }
+
+  // 自分自身のロック解除は不可（ロックバイパス防止）
+  if (targetUserId === payload.sub) {
+    return error(c, "FORBIDDEN", "自分自身のアカウントロックは解除できません", 403);
+  }
+
   const userRepo = new (await import("../repositories/user-repository")).UserRepository(c.env.DB);
 
-  // 現在のユーザー情報を取得
-  const user = await userRepo.findById(payload.sub);
-  if (!user) {
-    return error(c, "USER_NOT_FOUND", "ユーザーが見つかりません", 404);
+  // 対象ユーザーの存在確認
+  const targetUser = await userRepo.findById(targetUserId);
+  if (!targetUser) {
+    return error(c, "USER_NOT_FOUND", "対象ユーザーが見つかりません", 404);
   }
 
   // ロック解除実行
-  await userRepo.unlockAccount(user.id);
+  await userRepo.unlockAccount(targetUserId);
 
   return success(c, {
     message: "アカウントのロックを解除しました",

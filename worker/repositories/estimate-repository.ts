@@ -150,6 +150,84 @@ export class EstimateRepository {
     return id;
   }
 
+  // 見積もりと明細をバッチで一括作成（アトミック処理）
+  async createWithItems(
+    data: {
+      reference_number: string;
+      customer_name: string;
+      customer_email: string;
+      customer_phone: string | null;
+      customer_company: string | null;
+      notes: string | null;
+      total_monthly: number;
+      total_yearly: number;
+    },
+    items: {
+      product_id: string;
+      product_name: string;
+      tier_id: string | null;
+      tier_name: string | null;
+      quantity: number;
+      usage_quantity: number | null;
+      base_price: number;
+      markup_amount: number;
+      final_price: number;
+    }[]
+  ): Promise<string> {
+    const estimateId = crypto.randomUUID();
+
+    // D1のbatch()を使用してアトミックに実行（全ステートメントが単一トランザクションで実行される）
+    const statements: D1PreparedStatement[] = [];
+
+    // 見積もりヘッダー
+    statements.push(
+      this.db
+        .prepare(
+          `INSERT INTO estimates (id, reference_number, customer_name, customer_email, customer_phone, customer_company, notes, total_monthly, total_yearly)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        )
+        .bind(
+          estimateId,
+          data.reference_number,
+          data.customer_name,
+          data.customer_email,
+          data.customer_phone,
+          data.customer_company,
+          data.notes,
+          data.total_monthly,
+          data.total_yearly
+        )
+    );
+
+    // 見積もり明細
+    for (const item of items) {
+      const itemId = crypto.randomUUID();
+      statements.push(
+        this.db
+          .prepare(
+            `INSERT INTO estimate_items (id, estimate_id, product_id, product_name, tier_id, tier_name, quantity, usage_quantity, base_price, markup_amount, final_price)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+          )
+          .bind(
+            itemId,
+            estimateId,
+            item.product_id,
+            item.product_name,
+            item.tier_id,
+            item.tier_name,
+            item.quantity,
+            item.usage_quantity,
+            item.base_price,
+            item.markup_amount,
+            item.final_price
+          )
+      );
+    }
+
+    await this.db.batch(statements);
+    return estimateId;
+  }
+
   async createItem(
     estimateId: string,
     data: {
@@ -206,12 +284,10 @@ export class EstimateRepository {
   }
 
   async delete(id: string): Promise<void> {
-    await executeD1Query(
-      this.db,
-      "DELETE FROM estimates WHERE id = ?",
-      [id],
-      "削除",
-      "見積もり"
-    );
+    // 明細と見積もりをバッチで一括削除（ON DELETE CASCADEに依存せず明示的に削除）
+    await this.db.batch([
+      this.db.prepare("DELETE FROM estimate_items WHERE estimate_id = ?").bind(id),
+      this.db.prepare("DELETE FROM estimates WHERE id = ?").bind(id),
+    ]);
   }
 }

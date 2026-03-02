@@ -12,9 +12,25 @@ const estimates = new Hono<{ Bindings: Env }>();
 // 認証ミドルウェア適用
 estimates.use("*", authMiddleware);
 
-// CSVエクスポート（全見積もり + 明細行）
+// CSVエクスポート（全見積もり + 明細行、メモリ制限のため上限10000件）
 estimates.get("/csv", async (c) => {
   const repo = new EstimateRepository(c.env.DB);
+
+  // 見積もり件数をチェック（メモリ制限対策）
+  const totalCount = await repo.count();
+  if (totalCount > 10000) {
+    return c.json(
+      {
+        success: false,
+        error: {
+          code: "EXPORT_TOO_LARGE",
+          message: `見積もりが${totalCount}件あります。10000件以下の場合のみCSVエクスポートが可能です。`,
+        },
+      },
+      400
+    );
+  }
+
   const all = await repo.findAllWithItems();
 
   const STATUS_LABELS: Record<string, string> = {

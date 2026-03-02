@@ -52,8 +52,8 @@ publicRoutes.get("/products", async (c) => {
   return success(c, publicProducts);
 });
 
-// 見積もり参照番号で取得
-publicRoutes.get("/estimates/:ref", async (c) => {
+// 見積もり参照番号で取得（レート制限: 20回/60秒 - 列挙攻撃防止）
+publicRoutes.get("/estimates/:ref", rateLimit(20, 60000), async (c) => {
   const service = new EstimateService(c.env.DB);
   const estimate = await service.getEstimateByReference(c.req.param("ref"));
 

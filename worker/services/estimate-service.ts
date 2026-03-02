@@ -180,41 +180,48 @@ export class EstimateService {
       totalMonthly += finalPrice;
     }
 
-    // トランザクション処理（D1はネイティブトランザクションをサポートしていないため、手動でロールバック）
-    let estimateId: string | null = null;
+    // D1のbatch()を使用してアトミックに見積もりと明細を一括作成
+    const referenceNumber = this.generateReferenceNumber();
+    let estimateId: string;
 
     try {
-      // 見積もり保存（参照番号の衝突をリトライで対応）
-      estimateId = await this.createEstimateWithRetry({
-        customer_name: request.customer_name,
-        customer_email: request.customer_email,
-        customer_phone: request.customer_phone ?? null,
-        customer_company: request.customer_company ?? null,
-        notes: request.notes ?? null,
-        total_monthly: Math.round(totalMonthly * 100) / 100,
-        total_yearly: Math.round(totalMonthly * 12 * 100) / 100,
-      });
-
-      // 明細保存
-      for (const item of items) {
-        await this.estimateRepo.createItem(estimateId, item);
+      estimateId = await this.estimateRepo.createWithItems(
+        {
+          reference_number: referenceNumber,
+          customer_name: request.customer_name,
+          customer_email: request.customer_email,
+          customer_phone: request.customer_phone ?? null,
+          customer_company: request.customer_company ?? null,
+          notes: request.notes ?? null,
+          total_monthly: Math.round(totalMonthly * 100) / 100,
+          total_yearly: Math.round(totalMonthly * 12 * 100) / 100,
+        },
+        items
+      );
+    } catch (err) {
+      // UNIQUE制約違反（参照番号の衝突）の場合はリトライ
+      const error = err as Error;
+      if (error.message?.includes('UNIQUE')) {
+        estimateId = await this.createEstimateWithRetry(
+          {
+            customer_name: request.customer_name,
+            customer_email: request.customer_email,
+            customer_phone: request.customer_phone ?? null,
+            customer_company: request.customer_company ?? null,
+            notes: request.notes ?? null,
+            total_monthly: Math.round(totalMonthly * 100) / 100,
+            total_yearly: Math.round(totalMonthly * 12 * 100) / 100,
+          },
+          items
+        );
+      } else {
+        throw err;
       }
-
-      const estimate = await this.estimateRepo.findByIdWithItems(estimateId);
-      if (!estimate) throw new Error("見積もりの作成に失敗しました");
-      return estimate;
-    } catch (error) {
-      // エラー発生時、作成された見積もりを削除（不完全な見積もりを残さない）
-      if (estimateId) {
-        try {
-          await this.estimateRepo.delete(estimateId);
-          console.error("不完全な見積もりを削除しました:", estimateId);
-        } catch (deleteError) {
-          console.error("不完全な見積もりの削除に失敗しました:", deleteError);
-        }
-      }
-      throw error;
     }
+
+    const estimate = await this.estimateRepo.findByIdWithItems(estimateId);
+    if (!estimate) throw new Error("見積もりの作成に失敗しました");
+    return estimate;
   }
 
   // 参照番号で見積もり取得
@@ -236,18 +243,29 @@ export class EstimateService {
     return `${ESTIMATE_REF_PREFIX}-${timestamp}-${random}`;
   }
 
-  // 参照番号の衝突を避けるため、リトライ機能付きでestimateを作成
+  // 参照番号の衝突を避けるため、リトライ機能付きでestimateと明細をアトミックに作成
   private async createEstimateWithRetry(
     data: Omit<Parameters<typeof this.estimateRepo.create>[0], 'reference_number'>,
+    items: {
+      product_id: string;
+      product_name: string;
+      tier_id: string | null;
+      tier_name: string | null;
+      quantity: number;
+      usage_quantity: number | null;
+      base_price: number;
+      markup_amount: number;
+      final_price: number;
+    }[],
     maxAttempts = RETRY.MAX_ATTEMPTS
   ): Promise<string> {
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       const referenceNumber = this.generateReferenceNumber();
       try {
-        const estimateId = await this.estimateRepo.create({
-          ...data,
-          reference_number: referenceNumber,
-        });
+        const estimateId = await this.estimateRepo.createWithItems(
+          { ...data, reference_number: referenceNumber },
+          items
+        );
         return estimateId;
       } catch (err) {
         // UNIQUE制約違反の場合のみリトライ

@@ -17,6 +17,17 @@ const app = new Hono<{ Bindings: Env }>();
 // 初回リクエスト時に自動セットアップを実行
 app.use("*", autoSetupMiddleware);
 
+// D1の外部キー制約を有効化（カスケード削除を正しく動作させるため）
+app.use("/api/*", async (c, next) => {
+  try {
+    await c.env.DB.prepare("PRAGMA foreign_keys = ON").run();
+  } catch {
+    // PRAGMA失敗は致命的ではないのでログのみ
+    console.error("PRAGMA foreign_keys = ON の実行に失敗しました");
+  }
+  await next();
+});
+
 // セキュリティヘッダーミドルウェア
 app.use("*", async (c, next) => {
   await next();
