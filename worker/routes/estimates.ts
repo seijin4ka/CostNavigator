@@ -79,11 +79,12 @@ estimates.get("/csv", async (c) => {
 
 // CSV用エスケープ（ダブルクォート、カンマ、改行、および数式インジェクション文字を含む場合に囲む）
 function csvEscape(value: string): string {
-  // CSVインジェクション防止: =, +, -, @ で始まる値をシングルクォートでプレフィックス
-  if (value.startsWith("=") || value.startsWith("+") || value.startsWith("-") || value.startsWith("@")) {
-    return "'" + value;
+  // CSVインジェクション防止: =, +, -, @, タブ, CR で始まる値をシングルクォートでプレフィックス
+  if (/^[=+\-@\t\r]/.test(value)) {
+    value = "'" + value;
   }
-  if (value.includes(",") || value.includes('"') || value.includes("\n")) {
+  // ダブルクォート、カンマ、改行を含む場合は必ずダブルクォートで囲む
+  if (value.includes(",") || value.includes('"') || value.includes("\n") || value.includes("\r")) {
     return '"' + value.replace(/"/g, '""') + '"';
   }
   return value;

@@ -56,6 +56,9 @@ export class AuthService {
     // 既存のリフレッシュトークンを無効化（ユーザーごとに1つのみ有効）
     await this.revokeAllRefreshTokens(user.id);
 
+    // 期限切れ・失効済みトークンの定期クリーンアップ
+    await this.cleanupExpiredTokens();
+
     const token = await this.generateAccessToken(user);
     const refreshToken = await this.generateRefreshToken(user.id);
     const { password_hash: _, ...userWithoutPassword } = user;
@@ -197,6 +200,18 @@ export class AuthService {
       .prepare("UPDATE refresh_tokens SET revoked = 1 WHERE user_id = ?")
       .bind(userId)
       .run();
+  }
+
+  // 期限切れ・失効済みリフレッシュトークンの削除
+  private async cleanupExpiredTokens(): Promise<void> {
+    try {
+      await this.db
+        .prepare("DELETE FROM refresh_tokens WHERE revoked = 1 OR expires_at < datetime('now')")
+        .run();
+    } catch (err) {
+      // クリーンアップ失敗は致命的ではないのでログのみ
+      console.error("期限切れトークンのクリーンアップに失敗:", err);
+    }
   }
 
   // Cloudflare Accessトークン検証

@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import type { Env } from "../env";
 import { EstimateService } from "../services/estimate-service";
 import { SystemSettingsService } from "../services/system-settings-service";
+import { rateLimit } from "../middleware/rate-limit";
 import { validateBody } from "../utils/validation";
 import { success, error } from "../utils/response";
 import { CreateEstimateSchema } from "../../shared/types";
@@ -80,8 +81,8 @@ publicRoutes.get("/estimates/:ref", async (c) => {
   });
 });
 
-// 見積もり作成
-publicRoutes.post("/estimates", async (c) => {
+// 見積もり作成（レート制限: 10回/60秒）
+publicRoutes.post("/estimates", rateLimit(10, 60000), async (c) => {
   const data = await validateBody(c, CreateEstimateSchema);
   if (!data) return c.res;
 

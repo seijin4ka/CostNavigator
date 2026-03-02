@@ -50,6 +50,7 @@ export function rateLimit(maxRequests: number, windowMs: number) {
     // 制限を超えている場合は429エラーを返す
     if (entry.count > maxRequests) {
       const remainingSeconds = Math.ceil((entry.resetAt - now) / 1000);
+      c.header("Retry-After", String(remainingSeconds));
       return c.json(
         {
           success: false,

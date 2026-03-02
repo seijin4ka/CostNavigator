@@ -92,8 +92,8 @@ authRoutes.get("/setup-status", async (c) => {
   }
 });
 
-// 初期セットアップ（マイグレーション + 初期管理者作成）
-authRoutes.post("/setup", async (c) => {
+// 初期セットアップ（マイグレーション + 初期管理者作成）（レート制限: 3回/60秒）
+authRoutes.post("/setup", rateLimit(3, 60000), async (c) => {
   try {
     // リクエストボディから email と password を取得（オプショナル）
     const data = await validateBody(c, SetupSchema);
@@ -145,8 +145,8 @@ authRoutes.post("/setup", async (c) => {
   }
 });
 
-// Cloudflare Access（Zero Trust）SSOログインエンドポイント
-authRoutes.post("/sso/cloudflare-login", async (c) => {
+// Cloudflare Access（Zero Trust）SSOログインエンドポイント（レート制限: 10回/60秒）
+authRoutes.post("/sso/cloudflare-login", rateLimit(10, 60000), async (c) => {
   const { CF_Access_Token } = c.req.header();
 
   if (!CF_Access_Token) {
@@ -179,8 +179,8 @@ authRoutes.post("/sso/cloudflare-login", async (c) => {
   });
 });
 
-// パスワード変更エンドポイント（認証必須）
-authRoutes.patch("/admin/change-password", authMiddleware, async (c) => {
+// パスワード変更エンドポイント（認証必須、レート制限: 5回/60秒）
+authRoutes.patch("/admin/change-password", rateLimit(5, 60000), authMiddleware, async (c) => {
   const data = await validateBody(c, AdminPasswordChangeSchema);
   if (!data) return c.res;
 

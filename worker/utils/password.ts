@@ -71,9 +71,23 @@ export async function verifyPassword(password: string, storedHash: string): Prom
     KEY_LENGTH_BITS
   );
 
-  const computedHashHex = Array.from(new Uint8Array(derivedBits))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
+  const computedHash = new Uint8Array(derivedBits);
 
-  return computedHashHex === hashHex;
+  // 期待されるハッシュをバイト配列に変換
+  const expectedBytes = hashHex.match(/.{2}/g);
+  if (!expectedBytes || expectedBytes.length !== computedHash.length) return false;
+  const expectedHash = new Uint8Array(expectedBytes.map((byte) => parseInt(byte, 16)));
+
+  // 定数時間比較（タイミング攻撃対策）
+  return timingSafeEqual(computedHash, expectedHash);
+}
+
+// 定数時間比較（タイミングサイドチャネル攻撃を防止）
+function timingSafeEqual(a: Uint8Array, b: Uint8Array): boolean {
+  if (a.length !== b.length) return false;
+  let result = 0;
+  for (let i = 0; i < a.length; i++) {
+    result |= a[i] ^ b[i];
+  }
+  return result === 0;
 }
