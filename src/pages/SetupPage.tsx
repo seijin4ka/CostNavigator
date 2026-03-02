@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiClient } from "../api/client";
 import { Button } from "../components/ui/Button";
@@ -15,6 +15,16 @@ export function SetupPage() {
   const [isSettingUp, setIsSettingUp] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const redirectTimerRef = useRef<number | null>(null);
+
+  // クリーンアップ: アンマウント時にタイマーをクリア
+  useEffect(() => {
+    return () => {
+      if (redirectTimerRef.current) {
+        clearTimeout(redirectTimerRef.current);
+      }
+    };
+  }, []);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -77,7 +87,7 @@ export function SetupPage() {
       setSuccess(res.data.message);
 
       // 3秒後にログイン画面へ遷移
-      setTimeout(() => {
+      redirectTimerRef.current = window.setTimeout(() => {
         navigate("/admin/login");
       }, 3000);
     } catch (err) {
@@ -114,13 +124,13 @@ export function SetupPage() {
         <Card>
           <div className="p-6 space-y-4">
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+              <div role="alert" className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
                 {error}
               </div>
             )}
 
             {success && (
-              <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded">
+              <div role="status" className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded">
                 {success}
               </div>
             )}
@@ -134,6 +144,7 @@ export function SetupPage() {
                 placeholder="admin@example.com"
                 required
                 disabled={isSettingUp}
+                autoComplete="email"
               />
 
               <Input
@@ -144,6 +155,7 @@ export function SetupPage() {
                 placeholder="8文字以上で入力してください"
                 required
                 disabled={isSettingUp}
+                autoComplete="new-password"
               />
 
               <Input
@@ -154,6 +166,7 @@ export function SetupPage() {
                 placeholder="パスワードを再度入力してください"
                 required
                 disabled={isSettingUp}
+                autoComplete="new-password"
               />
 
               <Button type="submit" disabled={isSettingUp} className="w-full">

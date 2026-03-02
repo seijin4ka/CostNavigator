@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { apiClient } from "../../api/client";
 import type { SystemSettings, UpdateSystemSettingsRequest } from "@shared/types";
 import { setCurrency } from "../../lib/formatters";
@@ -14,6 +14,16 @@ export function SystemSettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const successTimerRef = useRef<number | null>(null);
+
+  // クリーンアップ: アンマウント時にタイマーをクリア
+  useEffect(() => {
+    return () => {
+      if (successTimerRef.current) {
+        clearTimeout(successTimerRef.current);
+      }
+    };
+  }, []);
   const [formData, setFormData] = useState<UpdateSystemSettingsRequest>({
     brand_name: "",
     logo_url: "",
@@ -65,7 +75,10 @@ export function SystemSettingsPage() {
       setSettings(res.data);
       setCurrency(res.data.currency, res.data.exchange_rate);
       setSuccess("システム設定を保存しました");
-      setTimeout(() => setSuccess(""), 3000);
+      if (successTimerRef.current) {
+        clearTimeout(successTimerRef.current);
+      }
+      successTimerRef.current = window.setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
       console.error("システム設定の保存エラー:", err);
       setError("システム設定の保存に失敗しました");
@@ -87,13 +100,13 @@ export function SystemSettingsPage() {
       <h1 className="text-2xl font-bold text-gray-900">システム設定</h1>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+        <div role="alert" className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
           {error}
         </div>
       )}
 
       {success && (
-        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded">
+        <div role="status" className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded">
           {success}
         </div>
       )}

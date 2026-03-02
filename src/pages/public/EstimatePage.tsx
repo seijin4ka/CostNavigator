@@ -90,7 +90,7 @@ export function EstimatePage() {
           })),
         }
       );
-      navigate(`/result?ref=${res.data.reference_number}`);
+      navigate(`/result?ref=${encodeURIComponent(res.data.reference_number)}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "見積もりの保存に失敗しました");
     } finally {

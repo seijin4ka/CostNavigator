@@ -44,13 +44,31 @@ class ApiClient {
       headers["Authorization"] = `Bearer ${this.token}`;
     }
 
-    const res = await fetch(`${API_BASE}${path}`, {
-      method,
-      headers,
-      body: body ? JSON.stringify(body) : undefined,
-    });
+    let res: Response;
+    try {
+      res = await fetch(`${API_BASE}${path}`, {
+        method,
+        headers,
+        body: body ? JSON.stringify(body) : undefined,
+      });
+    } catch {
+      throw new ApiClientError(
+        "ネットワークエラーが発生しました。接続を確認してください。",
+        "NETWORK_ERROR",
+        0
+      );
+    }
 
-    const data = await res.json();
+    let data: unknown;
+    try {
+      data = await res.json();
+    } catch {
+      throw new ApiClientError(
+        "サーバーから不正なレスポンスを受信しました",
+        "INVALID_RESPONSE",
+        res.status
+      );
+    }
 
     if (!res.ok) {
       const err = data as ApiError;

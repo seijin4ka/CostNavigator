@@ -1,4 +1,4 @@
-import { useState, useEffect, type FormEvent } from "react";
+import { useState, useEffect, useRef, type FormEvent } from "react";
 import { apiClient } from "../../api/client";
 import type { ProductWithTiers, ProductCategory, ProductInput, TierInput, SystemSettings } from "@shared/types";
 import { formatCurrency } from "../../lib/formatters";
@@ -32,6 +32,16 @@ export function ProductsPage() {
   const [markupPercentage, setMarkupPercentage] = useState(20);
   const [isSavingMarkup, setIsSavingMarkup] = useState(false);
   const [markupSuccess, setMarkupSuccess] = useState("");
+  const markupTimerRef = useRef<number | null>(null);
+
+  // クリーンアップ: アンマウント時にタイマーをクリア
+  useEffect(() => {
+    return () => {
+      if (markupTimerRef.current) {
+        clearTimeout(markupTimerRef.current);
+      }
+    };
+  }, []);
 
   const [productForm, setProductForm] = useState<ProductInput>({
     category_id: "",
@@ -232,7 +242,10 @@ export function ProductsPage() {
         default_markup_percentage: markupPercentage,
       });
       setMarkupSuccess("マークアップ設定を保存しました");
-      setTimeout(() => setMarkupSuccess(""), 3000);
+      if (markupTimerRef.current) {
+        clearTimeout(markupTimerRef.current);
+      }
+      markupTimerRef.current = window.setTimeout(() => setMarkupSuccess(""), 3000);
     } catch (err) {
       setError(err instanceof Error ? err.message : "マークアップ設定の保存に失敗しました");
     } finally {

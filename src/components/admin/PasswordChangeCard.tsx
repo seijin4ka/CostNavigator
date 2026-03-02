@@ -72,12 +72,12 @@ export function PasswordChangeCard() {
       <div className="space-y-4">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">パスワード変更</h2>
         {passwordChangeSuccess && (
-          <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded">
+          <div role="status" className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded">
             {passwordChangeSuccess}
           </div>
         )}
         {passwordError && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+          <div role="alert" className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
             {passwordError}
           </div>
         )}
@@ -90,6 +90,7 @@ export function PasswordChangeCard() {
             required
             disabled={isChangingPassword}
             placeholder="現在のパスワードを入力してください"
+            autoComplete="current-password"
           />
           <Input
             label="新しいパスワード"
@@ -99,6 +100,7 @@ export function PasswordChangeCard() {
             required
             disabled={isChangingPassword}
             placeholder="8文字以上で入力してください"
+            autoComplete="new-password"
           />
           <Input
             label="新しいパスワード（確認用）"
@@ -108,6 +110,7 @@ export function PasswordChangeCard() {
             required
             disabled={isChangingPassword}
             placeholder="新しいパスワードを再度入力してください"
+            autoComplete="new-password"
           />
           <Button type="submit" disabled={isChangingPassword}>
             {isChangingPassword ? "変更中..." : "変更する"}
