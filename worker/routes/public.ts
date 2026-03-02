@@ -61,7 +61,7 @@ publicRoutes.get("/estimates/:ref", async (c) => {
     return error(c, "NOT_FOUND", "見積もりが見つかりません", 404);
   }
 
-  // 公開情報のみ返却
+  // 公開情報のみ返却（customer_emailは個人情報のため除外）
   return success(c, {
     reference_number: estimate.reference_number,
     customer_name: estimate.customer_name,
