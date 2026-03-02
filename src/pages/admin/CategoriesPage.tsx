@@ -1,4 +1,4 @@
-import { useState, useEffect, type FormEvent } from "react";
+import { useState, useEffect, useCallback, type FormEvent } from "react";
 import { apiClient } from "../../api/client";
 import type { ProductCategory, CategoryInput } from "@shared/types";
 import { Card } from "../../components/ui/Card";
@@ -15,9 +15,11 @@ export function CategoriesPage() {
   const [form, setForm] = useState<CategoryInput>({ name: "", slug: "", display_order: 0 });
   const [error, setError] = useState("");
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // カテゴリ一覧を取得
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       const res = await apiClient.get<ProductCategory[]>("/admin/categories");
       setCategories(res.data);
@@ -26,11 +28,11 @@ export function CategoriesPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchCategories();
-  }, []);
+  }, [fetchCategories]);
 
   // モーダルを開く（新規 or 編集）
   const openModal = (category?: ProductCategory) => {
@@ -58,6 +60,7 @@ export function CategoriesPage() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
+    setIsSaving(true);
     try {
       if (editingCategory) {
         await apiClient.put(`/admin/categories/${editingCategory.id}`, form);
@@ -68,18 +71,22 @@ export function CategoriesPage() {
       fetchCategories();
     } catch (err) {
       setError(err instanceof Error ? err.message : "保存に失敗しました");
+    } finally {
+      setIsSaving(false);
     }
   };
 
   // カテゴリ削除
   const executeDelete = async () => {
     if (!deleteTargetId) return;
+    setIsDeleting(true);
     try {
       await apiClient.delete(`/admin/categories/${deleteTargetId}`);
       fetchCategories();
     } catch (err) {
       setError(err instanceof Error ? err.message : "削除に失敗しました");
     } finally {
+      setIsDeleting(false);
       setDeleteTargetId(null);
     }
   };
@@ -96,7 +103,7 @@ export function CategoriesPage() {
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-600 mb-4">
+        <div role="alert" className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-600 mb-4">
           {error}
         </div>
       )}
@@ -154,11 +161,11 @@ export function CategoriesPage() {
             onChange={(e) => setForm((prev) => ({ ...prev, display_order: parseInt(e.target.value) || 0 }))}
           />
           <div className="flex justify-end gap-2 pt-2">
-            <Button variant="secondary" type="button" onClick={() => setIsModalOpen(false)}>
+            <Button variant="secondary" type="button" onClick={() => setIsModalOpen(false)} disabled={isSaving}>
               キャンセル
             </Button>
-            <Button type="submit">
-              {editingCategory ? "更新" : "作成"}
+            <Button type="submit" isLoading={isSaving}>
+              {isSaving ? "保存中..." : editingCategory ? "更新" : "作成"}
             </Button>
           </div>
         </form>
@@ -171,13 +178,13 @@ export function CategoriesPage() {
         title="削除確認"
         size="sm"
       >
-        <p className="text-sm text-gray-700 mb-6">このカテゴリを削除しますか？関連する製品も削除されます。</p>
+        <p className="text-sm text-gray-700 mb-6">このカテゴリを削除しますか？製品が紐づいている場合は削除できません。</p>
         <div className="flex justify-end gap-2">
-          <Button variant="secondary" onClick={() => setDeleteTargetId(null)}>
+          <Button variant="secondary" onClick={() => setDeleteTargetId(null)} disabled={isDeleting}>
             キャンセル
           </Button>
-          <Button variant="danger" onClick={executeDelete}>
-            削除
+          <Button variant="danger" onClick={executeDelete} isLoading={isDeleting}>
+            {isDeleting ? "削除中..." : "削除"}
           </Button>
         </div>
       </Modal>
