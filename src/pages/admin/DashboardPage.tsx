@@ -100,6 +100,7 @@ export function DashboardPage() {
         {stats?.recent_estimates.length === 0 ? (
           <p className="text-gray-400 text-sm text-center py-4">見積もりはまだありません</p>
         ) : (
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-200">
@@ -131,6 +132,7 @@ export function DashboardPage() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </Card>
     </div>

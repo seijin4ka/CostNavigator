@@ -340,7 +340,7 @@ export function ProductsPage() {
               <div className="space-y-4">
                 {catProducts.map((product) => (
                   <div key={product.id} className="border border-gray-100 rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-2">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
                       <div>
                         <h4 className="font-medium text-gray-900">{product.name}</h4>
                         <p className="text-xs text-gray-500">
@@ -348,7 +348,7 @@ export function ProductsPage() {
                           {!product.is_active && <span className="ml-2 text-red-500">無効</span>}
                         </p>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 flex-shrink-0">
                         <Button variant="ghost" size="sm" onClick={() => openTierModal(product.id)}>
                           ティア追加
                         </Button>
@@ -363,8 +363,8 @@ export function ProductsPage() {
 
                     {/* ティア一覧 */}
                     {product.tiers.length > 0 && (
-                      <div className="mt-2 bg-gray-50 rounded-lg p-3">
-                        <table className="w-full text-sm">
+                      <div className="mt-2 bg-gray-50 rounded-lg p-3 overflow-x-auto">
+                        <table className="w-full text-sm min-w-[600px]">
                           <thead>
                             <tr className="text-left text-xs text-gray-500">
                               <th className="pb-2">ティア名</th>

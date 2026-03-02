@@ -312,6 +312,7 @@ export function EstimatesPage() {
             {/* 明細テーブル */}
             <div className="border-t pt-4">
               <h4 className="font-medium text-sm mb-2">見積もり明細</h4>
+              <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-200 text-xs text-gray-500">
@@ -348,6 +349,7 @@ export function EstimatesPage() {
                   </tr>
                 </tfoot>
               </table>
+              </div>
             </div>
           </div>
         )}
