@@ -19,4 +19,8 @@ export default defineConfig({
   ssr: {
     target: "webworker",
   },
+  build: {
+    // プロダクションビルドではソースマップを無効化（ソースコード漏洩防止）
+    sourcemap: false,
+  },
 });

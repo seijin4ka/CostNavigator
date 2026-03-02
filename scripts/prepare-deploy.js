@@ -2,10 +2,10 @@
 /**
  * デプロイ準備スクリプト
  *
- * Cloudflare Workers CI/CD環境で実行され、以下を自動的に行います：
+ * Cloudflare Workers CI/CD環境で実行され、以下を自動的に行います:
  * 1. D1データベースの存在確認・作成
  * 2. wrangler.jsonにdatabase_idを動的に設定
- * 3. D1データベースのマイグレーション実行（GitHub Actions環境ではスキップ）
+ * 3. D1データベースのマイグレーション実行（CI環境ではスキップ）
  */
 import { execSync } from 'child_process';
 import fs from 'fs';
@@ -19,88 +19,143 @@ const DB_NAME = 'cost-navigator-db';
 
 // SKIP_PREPARE_DEPLOYが設定されている場合はスクリプト全体をスキップ
 if (process.env.SKIP_PREPARE_DEPLOY === 'true') {
-  console.log('⏭️ SKIP_PREPARE_DEPLOY=true: デプロイ準備をスキップします');
+  console.log('[SKIP] SKIP_PREPARE_DEPLOY=true: デプロイ準備をスキップします');
   process.exit(0);
+}
+
+/**
+ * JSONCファイルからコメントを安全に除去してJSONとしてパースする
+ * 文字列リテラル内のコメント記号は保持する
+ */
+function parseJsonc(text) {
+  let result = '';
+  let i = 0;
+  let inString = false;
+  let escaped = false;
+
+  while (i < text.length) {
+    const ch = text[i];
+
+    if (inString) {
+      result += ch;
+      if (escaped) {
+        escaped = false;
+      } else if (ch === '\\') {
+        escaped = true;
+      } else if (ch === '"') {
+        inString = false;
+      }
+      i++;
+      continue;
+    }
+
+    // 文字列開始
+    if (ch === '"') {
+      inString = true;
+      result += ch;
+      i++;
+      continue;
+    }
+
+    // 単一行コメント
+    if (ch === '/' && i + 1 < text.length && text[i + 1] === '/') {
+      // 行末まで読み飛ばす
+      while (i < text.length && text[i] !== '\n') {
+        i++;
+      }
+      continue;
+    }
+
+    // 複数行コメント
+    if (ch === '/' && i + 1 < text.length && text[i + 1] === '*') {
+      i += 2;
+      while (i + 1 < text.length && !(text[i] === '*' && text[i + 1] === '/')) {
+        i++;
+      }
+      i += 2; // */ を飛ばす
+      continue;
+    }
+
+    result += ch;
+    i++;
+  }
+
+  // 末尾カンマを除去（JSON仕様では許可されないため）
+  const cleaned = result.replace(/,(\s*[}\]])/g, '$1');
+  return JSON.parse(cleaned);
 }
 
 // Cloudflare Vite plugin の出力先を自動検出
 const wranglerConfigPath = path.join(__dirname, '../wrangler.jsonc');
-
-// wrangler.jsoncを読み取る際にコメントを削除して、パースエラーを回避
-let wranglerConfigContent = fs.readFileSync(wranglerConfigPath, 'utf-8');
-// 全てのコメントを削除（単一行コメント // と複数行コメント /* */）
-const wranglerConfigJSON = wranglerConfigContent
-  // 複数行コメントを削除
-  .replace(/\/\*[\s\S]*?\*\//g, '')
-  // 単一行コメントを削除
-  .replace(/\/\/.*$/gm, '')
-  // 余分なカンマを削除（配列やオブジェクトの最後のカンマ）
-  .replace(/,(\s*[}\]])/g, '$1');
-
-const wranglerConfig = JSON.parse(wranglerConfigJSON);
+const wranglerConfigContent = fs.readFileSync(wranglerConfigPath, 'utf-8');
+const wranglerConfig = parseJsonc(wranglerConfigContent);
 
 // Cloudflare Vite Pluginの正規化ルール: ハイフン → アンダースコア
 const projectName = wranglerConfig.name.replace(/-/g, '_');
 const DIST_DIR = path.join(__dirname, '../dist', projectName);
 const WRANGLER_JSON_PATH = path.join(DIST_DIR, 'wrangler.json');
 
-console.log('🚀 CostNavigator デプロイ準備開始\n');
-console.log(`📁 ビルド出力ディレクトリ: ${DIST_DIR}`);
+console.log('[INFO] CostNavigator デプロイ準備開始');
+console.log(`[INFO] ビルド出力ディレクトリ: ${DIST_DIR}`);
 
 // CI/CD環境かどうかをチェック
 const isCI = process.env.CF_PAGES === '1' || process.env.CI === 'true' || process.env.GITHUB_ACTIONS === 'true';
-console.log(`🔍 実行環境: ${isCI ? 'CI/CD' : 'ローカル'}\n`);
+console.log(`[INFO] 実行環境: ${isCI ? 'CI/CD' : 'ローカル'}`);
 
-// GitHub Actions環境ではマイグレーションをスキップ
-const skipMigration = isCI || process.env.SKIP_PREPARE_DEPLOY === 'true';
+// CI環境ではマイグレーションをスキップ（Worker起動時の自動マイグレーションに委譲）
+const skipMigration = isCI;
 
 try {
   // D1データベースの確認・作成
-  console.log('📊 D1データベースを確認中...');
+  console.log('[INFO] D1データベースを確認中...');
   let dbId = null;
 
   try {
-    // JSON形式で出力して確実にパースできるようにする
     const listOutput = execSync('npx wrangler d1 list --json', {
       encoding: 'utf-8',
       stdio: ['pipe', 'pipe', 'pipe']
     });
 
-    // JSON出力をパース
     const databases = JSON.parse(listOutput);
     const targetDb = databases.find(db => db.name === DB_NAME);
 
     if (targetDb) {
       dbId = targetDb.uuid;
-      console.log(`✅ 既存のD1データベースを使用: ${dbId}\n`);
+      console.log(`[OK] 既存のD1データベースを使用: ${dbId}`);
     }
   } catch (error) {
-    console.log('   データベース一覧取得でエラー（新規作成を試みます）');
+    console.log('[WARN] データベース一覧取得でエラー（新規作成を試みます）');
   }
 
   if (!dbId) {
-    console.log('📊 D1データベースを新規作成中...');
+    console.log('[INFO] D1データベースを新規作成中...');
     try {
       const createOutput = execSync(`npx wrangler d1 create ${DB_NAME}`, {
         encoding: 'utf-8',
         stdio: ['pipe', 'pipe', 'pipe']
       });
 
-      // JSON出力をパース
-      const result = JSON.parse(createOutput);
-      if (result && result.uuid) {
-        dbId = result.uuid;
-        console.log(`✅ D1データベースを作成しました: ${dbId}\n`);
-      } else if (result && result.database_id) {
-        dbId = result.database_id;
-        console.log(`✅ D1データベースを作成しました: ${dbId}\n`);
+      // wrangler d1 create の出力からUUIDを取得する
+      // JSON形式の場合
+      try {
+        const result = JSON.parse(createOutput);
+        dbId = result.uuid || result.database_id;
+      } catch {
+        // テキスト形式の場合、UUID（ハイフン付き）を正規表現で抽出
+        const uuidMatch = createOutput.match(/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i);
+        if (uuidMatch) {
+          dbId = uuidMatch[1];
+        }
+      }
+
+      if (dbId) {
+        console.log(`[OK] D1データベースを作成しました: ${dbId}`);
       }
     } catch (error) {
       // データベースが既に存在する場合のエラーを処理
-      const errorMessage = error.message || error.toString();
+      const errorMessage = error.message || String(error);
       if (errorMessage.includes('already exists')) {
-        console.log('   データベースは既に存在します。再度リストから取得を試みます...');
-        // もう一度リストを取得
+        console.log('[INFO] データベースは既に存在します。再度リストから取得を試みます...');
         try {
           const listOutput = execSync('npx wrangler d1 list --json', {
             encoding: 'utf-8',
@@ -110,13 +165,13 @@ try {
           const targetDb = databases.find(db => db.name === DB_NAME);
           if (targetDb) {
             dbId = targetDb.uuid;
-            console.log(`✅ 既存のD1データベースを使用: ${dbId}\n`);
+            console.log(`[OK] 既存のD1データベースを使用: ${dbId}`);
           }
         } catch (retryError) {
-          console.error('   データベースID取得に失敗しました');
+          console.error('[ERROR] データベースID取得に失敗しました');
         }
       } else {
-        console.error('❌ D1データベースの作成に失敗しました');
+        console.error('[ERROR] D1データベースの作成に失敗しました');
         throw error;
       }
     }
@@ -124,36 +179,35 @@ try {
 
   // database_idが取得できた場合のみwrangler.jsonを更新
   if (dbId) {
-    console.log('📝 デプロイ用設定ファイルを更新中...');
+    console.log('[INFO] デプロイ用設定ファイルを更新中...');
     if (fs.existsSync(WRANGLER_JSON_PATH)) {
-      const wranglerConfig = JSON.parse(fs.readFileSync(WRANGLER_JSON_PATH, 'utf-8'));
+      const deployConfig = JSON.parse(fs.readFileSync(WRANGLER_JSON_PATH, 'utf-8'));
 
-      // D1バインディングを更新
-      if (wranglerConfig.d1_databases && wranglerConfig.d1_databases.length > 0) {
-        wranglerConfig.d1_databases[0].database_id = dbId;
-        fs.writeFileSync(WRANGLER_JSON_PATH, JSON.stringify(wranglerConfig, null, 2));
-        console.log('✅ 設定ファイルを更新しました\n');
+      if (deployConfig.d1_databases && deployConfig.d1_databases.length > 0) {
+        deployConfig.d1_databases[0].database_id = dbId;
+        fs.writeFileSync(WRANGLER_JSON_PATH, JSON.stringify(deployConfig, null, 2));
+        console.log('[OK] 設定ファイルを更新しました');
       } else {
-        console.error('❌ wrangler.jsonにd1_databasesが見つかりません');
+        console.error('[ERROR] wrangler.jsonにd1_databasesが見つかりません');
       }
     } else {
-      console.error(`❌ ${WRANGLER_JSON_PATH} が見つかりません`);
-      console.error('   vite build を先に実行してください');
+      console.error(`[ERROR] ${WRANGLER_JSON_PATH} が見つかりません`);
+      console.error('       vite build を先に実行してください');
       process.exit(1);
     }
   } else {
-    console.warn('⚠️  Database IDを取得できませんでした');
-    console.warn('   Cloudflare Workers CI/CDの自動解決機能に頼ります\n');
+    console.warn('[WARN] Database IDを取得できませんでした');
+    console.warn('       Cloudflare Workers CI/CDの自動解決機能に頼ります');
   }
 
-  // マイグレーション実行（GitHub Actions環境ではスキップ）
+  // マイグレーション実行（CI環境ではスキップ）
   if (!skipMigration) {
-    console.log('📊 データベースマイグレーションを実行中...');
+    console.log('[INFO] データベースマイグレーションを実行中...');
+    const tempMigrationFile = path.join(__dirname, '../.tmp-migration.sql');
     try {
-      // マイグレーションSQLファイルを作成
       const migrationSQL = `
 -- CostNavigator 初期化スクリプト（自動生成）
--- 現行スキーマの最終状態を反映（マイグレーション0001-0018適用済み相当）
+-- 現行スキーマの最終状態を反映（マイグレーション0001-0021適用済み相当）
 
 -- schema_migrationsテーブル作成
 CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -318,43 +372,48 @@ INSERT OR IGNORE INTO schema_migrations VALUES (20, '0020_add_exchange_rate_to_s
 INSERT OR IGNORE INTO schema_migrations VALUES (21, '0021_add_markup_to_system_settings', datetime('now'));
 `.trim();
 
-      // 一時ファイルに書き出し
-      const tempMigrationFile = path.join(__dirname, '../.tmp-migration.sql');
       fs.writeFileSync(tempMigrationFile, migrationSQL);
 
-      // wrangler d1 execute でマイグレーション実行
       execSync(`npx wrangler d1 execute ${DB_NAME} --remote --file="${tempMigrationFile}"`, {
         encoding: 'utf-8',
-        stdio: 'inherit' // 出力を表示
+        stdio: 'inherit'
       });
 
-      // 一時ファイルを削除
-      fs.unlinkSync(tempMigrationFile);
-
-      console.log('✅ データベースマイグレーション完了\n');
+      console.log('[OK] データベースマイグレーション完了');
     } catch (migrationError) {
-      console.error('❌ マイグレーション実行エラー:', migrationError.message);
-      console.log('⚠️  マイグレーションは失敗しましたが、デプロイは続行します');
-      console.log('   Worker起動時の自動マイグレーションに頼ります\n');
+      console.error('[ERROR] マイグレーション実行エラー:', migrationError.message);
+      console.log('[WARN] マイグレーションは失敗しましたが、デプロイは続行します');
+      console.log('       Worker起動時の自動マイグレーションに頼ります');
+    } finally {
+      // 一時ファイルを確実に削除
+      if (fs.existsSync(tempMigrationFile)) {
+        fs.unlinkSync(tempMigrationFile);
+      }
     }
   } else {
-    console.log('⏭️ マイグレーションをスキップします（GitHub Actions環境）');
+    console.log('[SKIP] マイグレーションをスキップします（CI環境）');
   }
 
-  console.log('✅ デプロイ準備完了\n');
+  console.log('[OK] デプロイ準備完了');
   process.exit(0);
 } catch (error) {
-  console.error('❌ デプロイ準備中にエラーが発生しました');
+  console.error('[ERROR] デプロイ準備中にエラーが発生しました');
   console.error(error.message);
 
-  console.log('\n📝 トラブルシューティング:');
+  console.log('\n[INFO] トラブルシューティング:');
   console.log('1. wrangler のバージョンを確認: npx wrangler --version');
   console.log('2. Cloudflare認証を確認: npx wrangler whoami');
   console.log('3. 手動でD1データベースを作成: Cloudflare Dashboard > Workers & Pages > D1');
-  console.log('4. データベース作成後、再デプロイしてください\n');
+  console.log('4. データベース作成後、再デプロイしてください');
 
-  // エラーが発生してもビルドは継続（手動設定を期待）
-  // CI/CD環境では、Cloudflare Workers の自動解決機能に頼る
-  console.log('⚠️  ビルドは継続しますが、デプロイ時にエラーになる可能性があります\n');
-  process.exit(0);
+  if (isCI) {
+    // CI環境ではエラーをビルド失敗として伝達
+    console.error('[ERROR] CI環境のため、ビルドを停止します');
+    process.exit(1);
+  } else {
+    // ローカル環境ではビルドを継続（手動設定を期待）
+    console.log('[WARN] ローカル環境のため、ビルドは継続します');
+    console.log('       デプロイ時にエラーになる可能性があります');
+    process.exit(0);
+  }
 }
