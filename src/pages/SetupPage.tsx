@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiClient } from "../api/client";
 import { Button } from "../components/ui/Button";
@@ -21,12 +21,7 @@ export function SetupPage() {
     confirmPassword: "",
   });
 
-  // セットアップ状態を確認
-  useEffect(() => {
-    checkSetupStatus();
-  }, [navigate]);
-
-  const checkSetupStatus = async () => {
+  const checkSetupStatus = useCallback(async () => {
     try {
       const res = await apiClient.get<SetupStatusResponse>("/auth/setup-status");
 
@@ -40,7 +35,12 @@ export function SetupPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [navigate]);
+
+  // セットアップ状態を確認
+  useEffect(() => {
+    checkSetupStatus();
+  }, [checkSetupStatus]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

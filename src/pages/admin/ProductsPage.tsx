@@ -241,7 +241,7 @@ export function ProductsPage() {
   };
 
   if (isLoading) {
-    return <div className="flex justify-center py-12"><div className="animate-spin h-8 w-8 border-4 border-orange-500 border-t-transparent rounded-full" /></div>;
+    return <div className="flex justify-center py-12"><div role="status" aria-label="読み込み中" className="animate-spin h-8 w-8 border-4 border-orange-500 border-t-transparent rounded-full" /></div>;
   }
 
   // カテゴリごとに製品をグループ化

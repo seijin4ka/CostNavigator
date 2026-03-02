@@ -1,4 +1,4 @@
-import { type FormEvent, type CSSProperties } from "react";
+import { type FormEvent, type CSSProperties, useEffect, useId } from "react";
 import { formatCurrency } from "../../lib/formatters";
 import { StepIndicator } from "./StepIndicator";
 import { CloseIcon, ArrowRightIcon } from "./Icons";
@@ -42,6 +42,22 @@ export function CustomerInfoModal({
   error,
   isSubmitting,
 }: CustomerInfoModalProps) {
+  const titleId = useId();
+
+  // Escapeキーで閉じる + body scroll lock
+  useEffect(() => {
+    if (!isOpen) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", handler);
+    return () => {
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", handler);
+    };
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   return (
@@ -49,8 +65,12 @@ export function CustomerInfoModal({
       <div
         className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm"
         onClick={onClose}
+        aria-hidden="true"
       />
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
         className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto cn-scrollbar animate-cn-slide-up opacity-0"
         style={{ animationDelay: "50ms" }}
       >
@@ -62,11 +82,12 @@ export function CustomerInfoModal({
         {/* モーダルヘッダー */}
         <div className="flex items-center justify-between px-6 py-3 border-b border-slate-100">
           <div>
-            <h2 className="text-lg font-bold text-slate-900 font-display">お客様情報の入力</h2>
+            <h2 id={titleId} className="text-lg font-bold text-slate-900 font-display">お客様情報の入力</h2>
             <p className="text-xs text-slate-400 mt-0.5">見積もりの送付先情報をご入力ください</p>
           </div>
           <button
             onClick={onClose}
+            aria-label="閉じる"
             className="p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
           >
             <CloseIcon className="w-5 h-5" />

@@ -351,6 +351,7 @@ export function EstimatePage() {
                               </div>
                               <button
                                 onClick={() => builder.removeItem(index)}
+                                aria-label={`${item.product_name}を削除`}
                                 className="p-1 rounded-md text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100"
                               >
                                 <TrashIcon className="w-3.5 h-3.5" />
@@ -362,6 +363,7 @@ export function EstimatePage() {
                               <div className="flex items-center">
                                 <button
                                   onClick={() => item.quantity <= 1 ? builder.removeItem(index) : builder.updateQuantity(index, item.quantity - 1)}
+                                  aria-label="数量を減らす"
                                   className="w-7 h-7 rounded-l-md border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50 transition-colors"
                                 >
                                   <MinusIcon className="w-3 h-3" />
@@ -371,6 +373,7 @@ export function EstimatePage() {
                                 </div>
                                 <button
                                   onClick={() => builder.updateQuantity(index, item.quantity + 1)}
+                                  aria-label="数量を増やす"
                                   className="w-7 h-7 rounded-r-md border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50 transition-colors"
                                 >
                                   <PlusIcon className="w-3 h-3" />

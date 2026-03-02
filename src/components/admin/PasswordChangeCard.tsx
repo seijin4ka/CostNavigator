@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { apiClient } from "../../api/client";
 import { Card } from "../ui/Card";
 import { Button } from "../ui/Button";
@@ -13,6 +13,16 @@ export function PasswordChangeCard() {
   const [passwordError, setPasswordError] = useState("");
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [passwordChangeSuccess, setPasswordChangeSuccess] = useState("");
+  const successTimerRef = useRef<number | null>(null);
+
+  // クリーンアップ: アンマウント時にタイマーをクリア
+  useEffect(() => {
+    return () => {
+      if (successTimerRef.current) {
+        clearTimeout(successTimerRef.current);
+      }
+    };
+  }, []);
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,7 +48,10 @@ export function PasswordChangeCard() {
 
       if (res.data.message) {
         setPasswordChangeSuccess(res.data.message);
-        setTimeout(() => {
+        if (successTimerRef.current) {
+          clearTimeout(successTimerRef.current);
+        }
+        successTimerRef.current = window.setTimeout(() => {
           setPasswordFormData({
             currentPassword: "",
             newPassword: "",

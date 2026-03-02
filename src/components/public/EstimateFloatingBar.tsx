@@ -18,6 +18,7 @@ export function EstimateFloatingBar({ itemCount, totalMonthly, primaryColor, onS
         </div>
         <button
           onClick={onSubmit}
+          aria-label="見積もりを依頼する"
           className="px-5 py-2.5 rounded-lg text-sm font-bold text-white font-display transition-all hover:opacity-90"
           style={{ backgroundColor: primaryColor }}
         >

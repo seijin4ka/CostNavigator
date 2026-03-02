@@ -1,4 +1,4 @@
-import type { SelectHTMLAttributes, ReactNode } from "react";
+import { useId, type SelectHTMLAttributes, type ReactNode } from "react";
 
 export interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
   label?: string;
@@ -8,7 +8,8 @@ export interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
 }
 
 export function Select({ label, error, options, children, className = "", id, ...props }: SelectProps) {
-  const selectId = id || label?.toLowerCase().replace(/\s+/g, "-");
+  const generatedId = useId();
+  const selectId = id || generatedId;
   return (
     <div className="space-y-1">
       {label && (
