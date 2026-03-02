@@ -1,21 +1,5 @@
+import type { PublicEstimateResult } from "./types";
 import { formatCurrency, formatDate } from "./formatters";
-
-// 見積もり結果型（公開API）
-interface EstimateResult {
-  reference_number: string;
-  customer_name: string;
-  customer_phone: string | null;
-  customer_company: string | null;
-  total_monthly: number;
-  total_yearly: number;
-  created_at: string;
-  items: {
-    product_name: string;
-    tier_name: string | null;
-    quantity: number;
-    final_price: number;
-  }[];
-}
 
 // ブランド情報（SystemSettingsから渡される）
 interface PdfBranding {
@@ -28,7 +12,7 @@ let fontRegistered = false;
 
 // PDF生成（@react-pdf/rendererを遅延読み込み）
 export async function generateEstimatePdf(
-  estimate: EstimateResult,
+  estimate: PublicEstimateResult,
   branding: PdfBranding
 ): Promise<void> {
   const ReactPDF = await import("@react-pdf/renderer");

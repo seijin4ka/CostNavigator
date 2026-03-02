@@ -2,6 +2,7 @@ import { useState, useEffect, type CSSProperties } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { apiClient } from "../../api/client";
 import type { SystemSettings } from "@shared/types";
+import type { PublicPublicEstimateResult } from "../../lib/types";
 import { formatCurrency, formatDate, setCurrency } from "../../lib/formatters";
 import { EstimateHeader } from "../../components/public/EstimateHeader";
 import { StepIndicator } from "../../components/public/StepIndicator";
@@ -15,25 +16,6 @@ import {
   CheckCircleIcon,
 } from "../../components/public/Icons";
 
-// 見積もり結果型（公開API）
-interface EstimateResult {
-  reference_number: string;
-  customer_name: string;
-  customer_phone: string | null;
-  customer_company: string | null;
-  status: string;
-  total_monthly: number;
-  total_yearly: number;
-  created_at: string;
-  items: {
-    product_name: string;
-    tier_name: string | null;
-    quantity: number;
-    usage_quantity: number | null;
-    final_price: number;
-  }[];
-}
-
 // ステータス表示設定
 const statusConfig: Record<string, { label: string; className: string }> = {
   draft: { label: "作成済み", className: "bg-slate-100 text-slate-600" },
@@ -42,11 +24,11 @@ const statusConfig: Record<string, { label: string; className: string }> = {
   expired: { label: "期限切れ", className: "bg-amber-50 text-amber-600" },
 };
 
-export function EstimateResultPage() {
+export function PublicEstimateResultPage() {
   const [searchParams] = useSearchParams();
   const ref = searchParams.get("ref");
   const [systemSettings, setSystemSettings] = useState<SystemSettings | null>(null);
-  const [estimate, setEstimate] = useState<EstimateResult | null>(null);
+  const [estimate, setEstimate] = useState<PublicEstimateResult | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [isDownloading, setIsDownloading] = useState(false);
@@ -63,7 +45,7 @@ export function EstimateResultPage() {
       try {
         const [settingsRes, estimateRes] = await Promise.all([
           apiClient.get<SystemSettings>("/public/system-settings"),
-          apiClient.get<EstimateResult>(`/public/estimates/${ref}`),
+          apiClient.get<PublicEstimateResult>(`/public/estimates/${ref}`),
         ]);
         setSystemSettings(settingsRes.data);
         setCurrency(settingsRes.data.currency, settingsRes.data.exchange_rate);
