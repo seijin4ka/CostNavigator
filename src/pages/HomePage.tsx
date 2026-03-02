@@ -1,6 +1,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { apiClient } from "../api/client";
 import { EstimatePage } from "./public/EstimatePage";
+
+interface SetupStatusResponse {
+  isSetupComplete: boolean;
+}
 
 export function HomePage() {
   const navigate = useNavigate();
@@ -10,16 +15,14 @@ export function HomePage() {
     const initialize = async () => {
       try {
         // セットアップ状態を確認
-        const setupRes = await fetch("/api/auth/setup-status");
-        const setupData = await setupRes.json();
+        const res = await apiClient.get<SetupStatusResponse>("/auth/setup-status");
 
-        if (setupData.success && !setupData.data.isSetupComplete) {
+        if (!res.data.isSetupComplete) {
           // 未セットアップの場合、セットアップページへ
           navigate("/setup");
           return;
         }
-      } catch (error) {
-        console.error("初期化エラー:", error);
+      } catch {
         // エラーの場合でも見積もりページを表示
       } finally {
         setIsLoading(false);
@@ -31,8 +34,13 @@ export function HomePage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500">読み込み中...</div>
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center">
+          <div
+            className="w-10 h-10 border-[3px] border-orange-100 border-t-orange-500 rounded-full animate-spin mx-auto"
+          />
+          <p className="mt-4 text-sm text-slate-400">読み込み中...</p>
+        </div>
       </div>
     );
   }
