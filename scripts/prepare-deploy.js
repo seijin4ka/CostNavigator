@@ -361,6 +361,7 @@ INSERT OR IGNORE INTO schema_migrations VALUES (12, '0012_create_refresh_tokens'
 -- マイグレーション履歴を記録（中間バージョンも記録して整合性を保持）
 INSERT OR IGNORE INTO schema_migrations VALUES (2, '0002_create_partners', datetime('now'));
 INSERT OR IGNORE INTO schema_migrations VALUES (6, '0006_create_markup_rules', datetime('now'));
+INSERT OR IGNORE INTO schema_migrations VALUES (9, '0009_seed_data', datetime('now'));
 INSERT OR IGNORE INTO schema_migrations VALUES (10, '0010_add_customer_phone', datetime('now'));
 INSERT OR IGNORE INTO schema_migrations VALUES (13, '0013_add_jwt_secret_to_system_settings', datetime('now'));
 INSERT OR IGNORE INTO schema_migrations VALUES (15, '0015_update_default_markup_to_20', datetime('now'));

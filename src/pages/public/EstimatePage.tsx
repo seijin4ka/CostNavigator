@@ -483,7 +483,7 @@ export function EstimatePage() {
       />
 
       {/* === フッター === */}
-      <EstimateFooter />
+      <EstimateFooter footerText={systemSettings?.footer_text} />
 
       {/* モバイルフローティングバー用の余白 */}
       {builder.items.length > 0 && <div className="h-20 lg:hidden" />}
