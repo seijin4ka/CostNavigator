@@ -10,6 +10,7 @@ import type {
 } from "../../shared/types";
 import { ESTIMATE_REF_PREFIX, RETRY } from "../../shared/constants";
 import { KVCache, CacheKeys, PRODUCT_CACHE_TTL, CacheTags } from "../utils/kv-cache";
+import { NotFoundError } from "../errors/app-error";
 
 // 販売価格適用済みティア
 export interface TierWithSellingPrice extends ProductTier {
@@ -135,13 +136,13 @@ export class EstimateService {
     for (const item of request.items) {
       const product = productMap.get(item.product_id);
       if (!product) {
-        throw new Error(`製品ID ${item.product_id} が見つかりません`);
+        throw new NotFoundError("製品", item.product_id);
       }
 
       const tier = item.tier_id ? tierMap.get(item.tier_id) ?? null : null;
       // ティアIDが指定されているのにティアが見つからない場合はエラー
       if (item.tier_id && !tier) {
-        throw new Error(`ティアID ${item.tier_id} が見つかりません`);
+        throw new NotFoundError("ティア", item.tier_id);
       }
 
       // 販売価格を使用（selling_price優先、未設定時はbase_priceにマークアップ適用）
