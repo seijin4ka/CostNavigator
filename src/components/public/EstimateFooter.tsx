@@ -1,8 +1,4 @@
-interface EstimateFooterProps {
-  footerText?: string | null;
-}
-
-export function EstimateFooter({ footerText }: EstimateFooterProps) {
+export function EstimateFooter() {
   return (
     <footer className="mt-16 lg:mt-24 border-t border-slate-200 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -29,7 +25,7 @@ export function EstimateFooter({ footerText }: EstimateFooterProps) {
           {/* クレジット */}
           <div className="text-xs text-slate-400 font-display space-y-1">
             <p className="flex flex-col sm:flex-row items-center justify-center gap-2">
-              {footerText ?? "Powered by CostNavigator"}
+              Powered by <span className="font-semibold text-slate-500">Accelia, Inc.</span>
             </p>
             <p>Cloudflare 製品のお見積もりツール</p>
           </div>
